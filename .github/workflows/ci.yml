@@ -5,6 +5,15 @@ on:
     branches: [main, master, develop]
   pull_request:
     branches: [main, master, develop]
+    paths:
+      - 'apps/**'
+      - 'packages/**'
+      - 'infra/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
+      - '.github/workflows/ci.yml'
 
 jobs:
   ci-pipeline:
@@ -38,40 +47,59 @@ jobs:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
 
+      - name: 🔍 Check if Monorepo Base exists
+        id: check-lockfile
+        run: |
+          if [ -f "pnpm-lock.yaml" ]; then
+            echo "has_lockfile=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_lockfile=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No pnpm-lock.yaml found (Docs-only PR). Skipping build stages."
+          fi
+
       - name: ⚡ Setup pnpm
+        if: steps.check-lockfile.outputs.has_lockfile == 'true'
         uses: pnpm/action-setup@v4
         with:
           version: 10.12.1
 
       - name: 🟢 Setup Node.js 20
+        if: steps.check-lockfile.outputs.has_lockfile == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'pnpm'
 
       - name: 📦 Install Dependencies
+        if: steps.check-lockfile.outputs.has_lockfile == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: 🗄️ Generate Prisma Client
+        if: steps.check-lockfile.outputs.has_lockfile == 'true'
         run: pnpm db:generate
 
       # STAGE 1: TYPE INTEGRITY & LINTING
       - name: 🔍 Stage 1 - Strict Type Check (5 Packages)
+        if: steps.check-lockfile.outputs.has_lockfile == 'true'
         run: pnpm type-check
 
       - name: 🧹 Stage 1 - Code Linting
+        if: steps.check-lockfile.outputs.has_lockfile == 'true'
         run: pnpm lint
 
       # STAGE 2: AUTOMATED TESTS SUITE
       - name: 🧪 Stage 2 - Automated Unit & Spec Tests (Jest & Vitest)
+        if: steps.check-lockfile.outputs.has_lockfile == 'true'
         run: pnpm test
 
       # STAGE 3: DATABASE MIGRATION & SEED VALIDATION
       - name: 🔄 Stage 3 - Database Schema Sync & Seed Verification
+        if: steps.check-lockfile.outputs.has_lockfile == 'true'
         run: |
           pnpm db:push
           pnpm db:seed
 
       # STAGE 4: MONOREPO PRODUCTION BUILD
       - name: 🚀 Stage 4 - Monorepo Production Build (Next.js & NestJS)
+        if: steps.check-lockfile.outputs.has_lockfile == 'true'
         run: pnpm build
