@@ -1,0 +1,26 @@
+{
+  "version": "1.0.0",
+  "dialect": "postgresql",
+  "database": "chayfood_db",
+  "entries": [
+    {
+      "id": 1,
+      "name": "0001_initial_schema",
+      "tag": "0001_initial_schema.sql",
+      "executedAt": "2026-08-20T22:00:00.000Z",
+      "status": "APPLIED",
+      "checksum": "a8f9c7e43d1b6e22f019a45638290bc918237d892408c1a932bc61e7a5e82f10",
+      "description": "Initialize core PostgreSQL tables (users, menu_items, menu_item_tags, plans, subscriptions, orders, order_items, user_preferences), enums and performance indexes",
+      "tables": [
+        "users",
+        "menu_items",
+        "menu_item_tags",
+        "plans",
+        "subscriptions",
+        "orders",
+        "order_items",
+        "user_preferences"
+      ]
+    }
+  ]
+}
