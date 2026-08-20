@@ -117,9 +117,9 @@ export default function MenuPage() {
       name: item.name,
       category: typeof item.category === 'string' ? item.category : (item.category as { _id?: string })?._id || '',
       price: item.price,
-      description: item.description,
+      description: item.description || '',
       image: item.image,
-      isAvailable: item.isAvailable
+      isAvailable: item.isAvailable ?? true
     })
     setShowAddForm(true)
   }
@@ -430,20 +430,20 @@ export default function MenuPage() {
               <p className="text-gray-600 text-sm mb-4">{item.description}</p>
               <div className="flex items-center justify-between">
                 <span className={`px-2 py-1 rounded-full text-xs ${
-                  item.isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  (item.isAvailable ?? true) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                 }`}>
-                  {item.isAvailable ? 'Còn món' : 'Hết món'}
+                  {(item.isAvailable ?? true) ? 'Còn món' : 'Hết món'}
                 </span>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => handleToggleAvailability(item._id, item.isAvailable)}
+                    onClick={() => handleToggleAvailability(item._id, item.isAvailable ?? true)}
                     className={`px-2 py-1 rounded text-xs ${
-                      item.isAvailable 
+                      (item.isAvailable ?? true) 
                         ? 'bg-red-100 text-red-800 hover:bg-red-200' 
                         : 'bg-green-100 text-green-800 hover:bg-green-200'
                     }`}
                   >
-                    {item.isAvailable ? 'Đánh dấu hết' : 'Đánh dấu còn'}
+                    {(item.isAvailable ?? true) ? 'Đánh dấu hết' : 'Đánh dấu còn'}
                   </button>
                   <button 
                     onClick={() => handleEditMenuItem(item)}

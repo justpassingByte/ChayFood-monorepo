@@ -194,14 +194,15 @@ export default function PaymentPage() {
     }
 
     // Calculate discount based on promotion type
+    const promoVal = promotion.value ?? promotion.discountValue ?? 0;
     if (promotion.type === 'percentage') {
-      discount = subtotal * (promotion.value / 100);
+      discount = subtotal * (promoVal / 100);
       // Apply max discount if specified
       if (promotion.maxDiscount && discount > promotion.maxDiscount) {
         discount = promotion.maxDiscount;
       }
     } else if (promotion.type === 'fixed') {
-      discount = promotion.value;
+      discount = promoVal;
     } else if (promotion.type === 'free_delivery') {
       discount = 30000; // Assuming delivery fee is 30,000 VND
     }

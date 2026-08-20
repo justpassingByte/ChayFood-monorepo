@@ -1,67 +1,117 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowRightIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
-import { useRedirectByRole } from './hooks/useRedirectByRole'
-import { analyticsService } from './services/analyticsService'
+import { ArrowRight, Layers, BarChart3, CheckCircle2, ChevronLeft, ChevronRight, Leaf, ShieldCheck } from 'lucide-react'
 import { MenuItemCard } from './components/ui/menu-item-card'
-import { ChatAgent } from './components/chat/chat-agent'
+import { useRedirectByRole } from './hooks/useRedirectByRole'
+import { MenuItem } from './lib/services/types'
 
-interface PopularDish {
-  id?: string
-  _id?: string
-  name: string
-  image?: string
-  price?: number
-  revenue?: number
-  description?: string
-  ingredients?: string[]
-  category?: string
-  nutritionInfo?: {
-    calories?: number
-    protein?: number
-    carbs?: number
-    fat?: number
-  }
-  isAvailable?: boolean
-  isBestSeller?: boolean
-  isPopular?: boolean
-}
-
-const defaultDishes: PopularDish[] = [
+const initialFeaturedFoods: MenuItem[] = [
   {
-    id: 'dish-1',
-    name: 'Cơm Gạo Lứt Bát Bửu Hoàng Cung',
-    description: 'Gạo lứt đỏ Điện Biên kết hợp hạt sen Huế, nấm hương rừng, đậu gà và rau củ hữu cơ thanh ngọt.',
-    price: 85000,
-    image: '/meals/meal1.jpg',
-    category: 'Món chính',
-    nutritionInfo: { calories: 420, protein: 18, carbs: 62, fat: 8 },
-    isBestSeller: true
+    _id: 'f-1',
+    id: 'f-1',
+    name: 'Cơm Tấm Sườn Chay Sốt Nấm Đông Cô',
+    description: 'Sườn non làm từ đạm đậu nành ủ sốt nấm đông cô cô đặc, ăn kèm chả nấm, bì thính gạo lứt và đồ chua nhà làm tươi giòn.',
+    price: 55000,
+    image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600',
+    category: 'main',
+    calories: 480,
+    protein: 18.5,
+    carbs: 65.0,
+    fat: 12.0,
+    isAvailable: true,
+    preparationTime: 15,
+    ingredients: ['Đạm đậu nành Non-GMO', 'Gạo tấm', 'Nấm đông cô', 'Bì thính gạo lứt'],
+    isVegetarian: true,
   },
   {
-    id: 'dish-2',
-    name: 'Đậu Hũ Non Sốt Nấm Đông Cô Truffle',
-    description: 'Đậu hũ tươi nghệ nhân hấp mềm mượt cùng nước cốt nấm đông cô cô đặc và dầu truffle thượng hạng.',
-    price: 95000,
-    image: '/meals/meal2.jpg',
-    category: 'Món chính',
-    nutritionInfo: { calories: 340, protein: 22, carbs: 24, fat: 12 },
-    isPopular: true
+    _id: 'f-2',
+    id: 'f-2',
+    name: 'Bún Bò Huế Chay Chả Nấm & Nước Dùng Thảo Mộc',
+    description: 'Nước dùng ninh 8 tiếng từ củ quả và mía lau, thơm ngát sả gừng, topping chả nấm mối, tàu hũ ky và đậu hũ non chiên giòn.',
+    price: 49000,
+    image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=600',
+    category: 'main',
+    calories: 410,
+    protein: 16.0,
+    carbs: 58.0,
+    fat: 9.0,
+    isAvailable: true,
+    preparationTime: 12,
+    ingredients: ['Bún tươi', 'Nấm mối', 'Tàu hũ ky', 'Nước dùng củ quả', 'Rau thơm'],
+    isVegetarian: true,
   },
   {
-    id: 'dish-3',
-    name: 'Súp Dưỡng Nhan Hạt Sen Bạch Quả',
-    description: 'Nước dùng ninh từ lê tuyết, kỷ tử hữu cơ, hạt sen tươi và tuyết nhĩ giúp thanh lọc nhiệt lượng.',
-    price: 65000,
-    image: '/meals/meal3.jpg',
-    category: 'Món súp',
-    nutritionInfo: { calories: 190, protein: 9, carbs: 32, fat: 3 },
-    isPopular: true
-  }
+    _id: 'f-3',
+    id: 'f-3',
+    name: 'Salad Quinoa Bơ Sáp & Hạt Sen Sốt Chanh Dây',
+    description: 'Hạt diêm mạch 3 màu kết hợp bơ sáp Đắk Lắk, hạt sen tươi hấp mềm và xà lách hữu cơ hòa quyện sốt chanh dây thanh mát.',
+    price: 62000,
+    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600',
+    category: 'side',
+    calories: 340,
+    protein: 14.0,
+    carbs: 42.0,
+    fat: 11.5,
+    isAvailable: true,
+    preparationTime: 10,
+    ingredients: ['Hạt Quinoa', 'Bơ sáp', 'Hạt sen', 'Rau hữu cơ', 'Sốt chanh dây'],
+    isVegetarian: true,
+  },
+  {
+    _id: 'f-4',
+    id: 'f-4',
+    name: 'Lẩu Nấm Dưỡng Sinh Hoàng Kim Mini',
+    description: 'Set lẩu mini cho 1 người với 5 loại nấm quý: nấm linh chi, nấm đùi gà, nấm bào ngư cùng nước hầm táo đỏ kỷ tử bổ khí huyết.',
+    price: 89000,
+    image: 'https://images.unsplash.com/photo-1547496502-affa22d38842?w=600',
+    category: 'main',
+    calories: 520,
+    protein: 21.0,
+    carbs: 72.0,
+    fat: 11.0,
+    isAvailable: true,
+    preparationTime: 25,
+    ingredients: ['Nấm linh chi', 'Nấm đùi gà', 'Tàu hũ tươi', 'Rau tần ô', 'Mía lau'],
+    isVegetarian: true,
+  },
+  {
+    _id: 'f-5',
+    id: 'f-5',
+    name: 'Gỏi Cuốn Ngũ Sắc Sốt Tương Bơ Đậu Phộng',
+    description: 'Bánh tráng cuốn bún tươi, xà lách hữu cơ, bơ sáp dẻo, dưa leo, đậu hũ chiên giòn chấm cùng sốt tương bơ đậu phộng béo bùi.',
+    price: 35000,
+    image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600',
+    category: 'side',
+    calories: 280,
+    protein: 11.0,
+    carbs: 45.0,
+    fat: 8.0,
+    isAvailable: true,
+    preparationTime: 10,
+    ingredients: ['Bánh tráng', 'Bún tươi', 'Bơ sáp', 'Đậu hũ', 'Tương bơ đậu phộng'],
+    isVegetarian: true,
+  },
+  {
+    _id: 'f-6',
+    id: 'f-6',
+    name: 'Trà Hoa Cúc Thảo Mộc Thanh Nhiệt Dưỡng Nhan',
+    description: 'Trà hoa cúc nguyên bông ướp mật ong hoa nhãn, kỷ tử đỏ và táo tàu giúp thanh lọc gan, ngủ ngon và đẹp da.',
+    price: 25000,
+    image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=600',
+    category: 'beverage',
+    calories: 85,
+    protein: 1.0,
+    carbs: 21.0,
+    fat: 0.0,
+    isAvailable: true,
+    preparationTime: 5,
+    ingredients: ['Hoa cúc', 'Kỷ tử', 'Táo đỏ', 'Mật ong hoa rừng'],
+    isVegetarian: true,
+  },
 ]
 
 const steps = [
@@ -87,127 +137,316 @@ const steps = [
   }
 ]
 
-const testimonials = [
+const mealPlans = [
   {
-    id: 1,
-    name: "Thu Trang",
-    role: "Huấn luyện viên Thể hình & Yoga",
-    image: "/testimonials/profile1.jpg",
-    content: "Thực đơn High-Protein của ChayFood giúp tôi duy trì cơ bắp hoàn hảo mà không cần bổ sung đạm động vật. Món ăn nêm nếm rất thanh và ngon."
+    id: 'plan-1',
+    name: 'Chay Thanh Tịnh Tuần',
+    tag: 'Gói 7 Ngày',
+    description: 'Thanh lọc cơ thể nhẹ nhàng và hỗ trợ đường tiêu hóa hoạt động êm dịu',
+    price: 350000,
+    duration: '7 ngày (7 bữa)',
+    features: [
+      '1 Bữa chính thanh đạm mỗi ngày',
+      '1 Phần nước thảo mộc thanh nhiệt',
+      'Thực đơn thay đổi luân phiên',
+      'Miễn phí giao hàng nội thành'
+    ]
   },
   {
-    id: 2,
-    name: "Minh Quân",
-    role: "Quản lý Dự án Công nghệ",
-    image: "/testimonials/profile2.jpg",
-    content: "Là người bận rộn, dịch vụ giao bữa ăn đúng giờ của ChayFood là giải pháp cứu cánh. Chỉ số Calo rõ ràng giúp tôi kiểm soát cân nặng rất tốt."
+    id: 'plan-2',
+    name: 'Chay Năng Lượng Gym & Fit',
+    tag: 'Gói Thể Hình Khuyên Dùng',
+    description: 'Khẩu phần giàu Protein thực vật (từ 25g - 35g đạm mỗi bữa) cho người vận động thể thao',
+    price: 550000,
+    duration: '7 ngày (14 bữa)',
+    featured: true,
+    features: [
+      '2 Bữa chính High-Protein chuẩn Macro',
+      '1 Sinh tố hạt dinh dưỡng tăng cơ',
+      'Tư vấn trực tiếp cùng chuyên gia dinh dưỡng',
+      'Ưu tiên giao nóng đúng khung giờ'
+    ]
   },
   {
-    id: 3,
-    name: "Ngọc Lan",
-    role: "Bác sĩ Gia đình",
-    image: "/testimonials/profile3.jpg",
-    content: "Tôi đánh giá rất cao tính năng phân bổ dinh dưỡng Mifflin-St Jeor và mâm cơm gia đình đa thế hệ. Rất an tâm về chất lượng rau củ hữu cơ."
+    id: 'plan-3',
+    name: 'Chay Tháng Cân Bằng',
+    tag: 'Gói 30 Ngày',
+    description: 'Thực đơn 30 ngày đa dạng dinh dưỡng và hỗ trợ duy trì thói quen ăn lành mạnh',
+    price: 1350000,
+    duration: '30 ngày (30 bữa)',
+    features: [
+      '30 Bữa ăn cao cấp đa dạng món',
+      'Tặng 4 set lẩu nấm dưỡng sinh cuối tuần',
+      'Hỗ trợ tạm dừng hoặc đổi ngày linh hoạt',
+      'Tặng thẻ thành viên ChayFood VIP'
+    ]
   }
 ]
 
-const partners = [
-  { id: 1, name: "Nông Trại Hữu Cơ Đà Lạt", logo: "/partners/partner1.png" },
-  { id: 2, name: "Viện Dinh Dưỡng Thực Vật", logo: "/partners/partner2.png" },
-  { id: 3, name: "Hệ Sinh Thái Xanh", logo: "/partners/partner3.png" },
-]
-
 export default function Home() {
-  useRedirectByRole({ adminRedirect: '/admin' })
-  const [popularDishes, setPopularDishes] = useState<PopularDish[]>(defaultDishes)
-  const [testimonialIdx, setTestimonialIdx] = useState(0)
+  useRedirectByRole()
 
-  useEffect(() => {
-    async function loadDishes() {
-      try {
-        const data = await analyticsService.getPopularDishes()
-        if (Array.isArray(data) && data.length > 0) {
-          setPopularDishes(data.slice(0, 3))
-        }
-      } catch {
-        // Fallback
-      }
-    }
-    loadDishes()
-  }, [])
+  const [foods] = useState<MenuItem[]>(initialFeaturedFoods)
+  const [viewMode, setViewMode] = useState<'visual' | 'macro'>('visual')
+  const [selectedGoal, setSelectedGoal] = useState<'all' | 'high-protein' | 'low-cal' | 'beverage'>('all')
+  const [calculatorGoal, setCalculatorGoal] = useState<'fit' | 'lose' | 'zen'>('fit')
 
-  const nextTestimonial = () => setTestimonialIdx((prev) => (prev + 1) % testimonials.length)
-  const prevTestimonial = () => setTestimonialIdx((prev) => (prev - 1 + testimonials.length) % testimonials.length)
+  const filteredFoods = foods.filter((food) => {
+    const protein = Number(food.protein ?? food.nutritionInfo?.protein ?? 0)
+    const calories = Number(food.calories ?? food.nutritionInfo?.calories ?? 0)
+
+    if (selectedGoal === 'high-protein') return protein >= 18
+    if (selectedGoal === 'low-cal') return calories <= 400
+    if (selectedGoal === 'beverage') return food.category === 'beverage'
+    return true
+  })
 
   return (
-    <main className="min-h-screen bg-[#FAFBF9]">
-      {/* 1. HERO BANNER SECTION */}
-      <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
-        <Image
-          src="/hero-bg.jpg"
-          alt="ChayFood Hero"
-          fill
-          className="object-cover brightness-[0.45]"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#081C15]/90 via-[#081C15]/30 to-transparent" />
-        
-        <div className="relative z-10 container-custom text-center text-white py-20 flex flex-col items-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="max-w-3xl"
-          >
-            <span className="inline-block px-3.5 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-semibold uppercase tracking-widest text-[#FAFBF9] mb-6">
-              Nền tảng ẩm thực thực vật chuẩn khoa học
-            </span>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6 tracking-tight">
-              Kế hoạch bữa ăn dinh dưỡng cho lối sống tươi lành
-            </h1>
-            <p className="text-base sm:text-xl text-slate-200 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Trải nghiệm món chay chế biến tươi trong ngày từ nông trại hữu cơ, minh bạch chỉ số vi chất trên từng khẩu phần.
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-4">
-              <Link 
-                href="/menu" 
-                className="btn btn-action !px-8 !py-3.5 !text-sm !font-bold shadow-lg hover:shadow-xl"
-              >
-                Đặt Món Ngay
-              </Link>
-              <Link 
-                href="/nutrition-planner" 
-                className="btn btn-secondary !px-8 !py-3.5 !text-sm !font-semibold !bg-white/15 !text-white !border-white/30 hover:!bg-white/25 backdrop-blur-sm"
-              >
-                Tư Vấn Thể Trạng
-              </Link>
+    <div className="flex flex-col gap-16 pb-20">
+      {/* 1. HERO SECTION: Editorial Food Tech */}
+      <section className="relative overflow-hidden pt-12 pb-16 lg:pt-16 lg:pb-24 bg-gradient-to-b from-stone-100/60 via-white to-stone-50/40">
+        <div className="container-custom">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+            {/* Left Content */}
+            <div className="lg:col-span-7 flex flex-col items-start text-left">
+              {/* Badge Pill */}
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-emerald-200/80 shadow-sm text-xs font-bold text-emerald-900 mb-6">
+                <span className="h-2 w-2 rounded-full bg-emerald-600" />
+                THỰC ĐƠN DINH DƯỠNG THỰC VẬT CHUẨN MỰC
+              </div>
+
+              {/* Main Headline */}
+              <h1 className="text-3xl sm:text-4xl lg:text-[44px] font-extrabold tracking-tight text-slate-900 leading-[1.18] mb-6">
+                <span className="block">Ẩm Thực Chay Tươi Lành</span>
+                <span className="block bg-gradient-to-r from-emerald-800 via-teal-800 to-emerald-950 bg-clip-text text-transparent mt-1">
+                  Dinh Dưỡng Thực Vật Chuẩn Mực
+                </span>
+              </h1>
+
+              {/* Subtitle */}
+              <p className="text-base sm:text-lg text-slate-600 leading-relaxed mb-8 max-w-xl">
+                Minh bạch chỉ số Calo, Protein thực vật và vi chất cho từng khẩu phần. Nguyên liệu hữu cơ tươi sạch canh tác chuẩn tự nhiên được chế biến và giao nóng mỗi ngày.
+              </p>
+
+              {/* Hero Action CTAs */}
+              <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto">
+                <Link
+                  href="/menu"
+                  className="btn-primary-gradient px-7 py-3.5 rounded-2xl text-sm font-bold inline-flex items-center gap-2 shadow-md hover:shadow-lg transition-all text-white cursor-pointer"
+                >
+                  Khám Phá Thực Đơn
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+
+                <Link
+                  href="/subscriptions"
+                  className="px-6 py-3.5 rounded-2xl text-sm font-bold bg-white text-slate-800 border border-slate-200 hover:border-emerald-700 hover:text-emerald-800 shadow-sm transition-colors inline-flex items-center gap-2 cursor-pointer"
+                >
+                  Gói Ăn Định Kỳ
+                </Link>
+              </div>
+
+              {/* Nutrition Guarantees */}
+              <div className="mt-10 pt-8 border-t border-slate-200/80 grid grid-cols-3 gap-6 w-full text-left">
+                <div>
+                  <div className="text-2xl font-extrabold text-slate-900 font-mono">Hữu Cơ</div>
+                  <div className="text-xs text-slate-500 font-medium mt-0.5">Nông trại liên kết</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-extrabold text-blue-700 font-mono">≥25g</div>
+                  <div className="text-xs text-slate-500 font-medium mt-0.5">Đạm thực vật mỗi phần Fit</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-extrabold text-emerald-700 font-mono">Chuẩn ATTP</div>
+                  <div className="text-xs text-slate-500 font-medium mt-0.5">Không phụ gia độc hại</div>
+                </div>
+              </div>
             </div>
-          </motion.div>
+
+            {/* Right Hero Visual Card */}
+            <div className="lg:col-span-5 relative w-full">
+              <div className="relative mx-auto max-w-md rounded-3xl p-3.5 bg-white border border-slate-200/90 shadow-xl">
+                <div className="relative w-full h-72 sm:h-80 rounded-2xl overflow-hidden shadow-inner bg-slate-100">
+                  <Image
+                    src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800"
+                    alt="Buddha Bowl Quinoa"
+                    fill
+                    className="object-cover"
+                    priority
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-transparent" />
+                  
+                  {/* Calorie Badge */}
+                  <div className="absolute top-3.5 right-3.5 px-3 py-1 rounded-full bg-slate-900/85 backdrop-blur-sm text-white text-xs font-bold font-mono">
+                    460 kcal
+                  </div>
+
+                  <div className="absolute bottom-3.5 left-3.5 right-3.5 text-white">
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-700">
+                      Khẩu Phần Mẫu
+                    </span>
+                    <h3 className="font-extrabold text-base sm:text-lg mt-1 text-white leading-snug">
+                      Buddha Bowl Quinoa & Đậu Hũ Nướng
+                    </h3>
+                  </div>
+                </div>
+
+                {/* Macro Nutrition Specs */}
+                <div className="mt-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                    <span>Phân Bổ Vi Chất Chuẩn Hóa</span>
+                    <span className="text-emerald-700 font-medium text-[11px]">ISO-Nutri 2.0</span>
+                  </div>
+                  <div className="macro-progress-track">
+                    <div className="macro-seg-protein" style={{ width: '30%' }} title="Đạm: 24g" />
+                    <div className="macro-seg-carbs" style={{ width: '50%' }} title="Tinh bột: 48g" />
+                    <div className="macro-seg-fat" style={{ width: '20%' }} title="Chất béo: 14g" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-center text-xs font-semibold pt-1">
+                    <span className="text-blue-700 font-mono">Đạm: 24g</span>
+                    <span className="text-amber-700 font-mono">Carbs: 48g</span>
+                    <span className="text-pink-700 font-mono">Béo: 14g</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* 2. HOW IT WORKS - 4 STEPS */}
-      <section className="py-20 bg-white border-b border-[#E5E9E2]">
+      {/* 2. DUAL VIEW MODE FEATURED MENU SECTION */}
+      <section className="container-custom">
+        {/* Section Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-slate-200">
+          <div>
+            <div className="text-xs font-bold uppercase tracking-wider text-emerald-800 mb-1">
+              Thực Đơn Khoa Học
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+              Món Chay Dinh Dưỡng Hôm Nay
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">
+              Lựa chọn món ăn theo mục tiêu thể trạng và chế độ ăn của riêng bạn
+            </p>
+          </div>
+
+          {/* DUAL VIEW MODE SWITCHER */}
+          <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-2xl border border-slate-200">
+            <button
+              type="button"
+              onClick={() => setViewMode('visual')}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                viewMode === 'visual'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Layers className="w-4 h-4 text-emerald-700" />
+              Thực Đơn Trực Quan
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setViewMode('macro')}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                viewMode === 'macro'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <BarChart3 className="w-4 h-4 text-blue-700" />
+              Dinh Dưỡng Macro
+            </button>
+          </div>
+        </div>
+
+        {/* GOAL-ORIENTED FILTER PILLS */}
+        <div className="flex items-center gap-2 overflow-x-auto py-6 no-scrollbar">
+          <button
+            type="button"
+            onClick={() => setSelectedGoal('all')}
+            className={`px-4 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+              selectedGoal === 'all'
+                ? 'bg-slate-900 text-white shadow-sm'
+                : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300'
+            }`}
+          >
+            Tất Cả Thực Đơn ({foods.length})
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setSelectedGoal('high-protein')}
+            className={`px-4 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+              selectedGoal === 'high-protein'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'bg-white text-blue-700 border border-blue-200 hover:bg-blue-50'
+            }`}
+          >
+            Tăng Cơ Giàu Đạm (Protein ≥ 18g)
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setSelectedGoal('low-cal')}
+            className={`px-4 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+              selectedGoal === 'low-cal'
+                ? 'bg-amber-600 text-white shadow-sm'
+                : 'bg-white text-amber-800 border border-amber-200 hover:bg-amber-50'
+            }`}
+          >
+            Giảm Mỡ Low-Calo (≤ 400 kcal)
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setSelectedGoal('beverage')}
+            className={`px-4 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+              selectedGoal === 'beverage'
+                ? 'bg-emerald-700 text-white shadow-sm'
+                : 'bg-white text-emerald-800 border border-emerald-200 hover:bg-emerald-50'
+            }`}
+          >
+            Trà Thảo Mộc Dưỡng Nhan
+          </button>
+        </div>
+
+        {/* FOOD GRID */}
+        <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <AnimatePresence>
+            {filteredFoods.map((food) => (
+              <MenuItemCard
+                key={food._id || food.name}
+                item={food}
+                viewMode={viewMode}
+              />
+            ))}
+          </AnimatePresence>
+        </motion.div>
+      </section>
+
+      {/* 3. 4-STEP ORDERING PROCESS */}
+      <section className="py-12 bg-white border-y border-slate-200">
         <div className="container-custom">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <span className="text-xs font-bold uppercase tracking-widest text-[#2D6A4F] mb-2 block">
-              Trải nghiệm tiện lợi
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 mb-1 block">
+              Quy Trình Tiện Lợi
             </span>
-            <h2 className="text-2xl sm:text-3xl font-bold text-[#0F172A]">
-              Quy Trình Đặt Bữa Ăn Dễ Dàng
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+              Thưởng Thức Bữa Ăn Dễ Dàng
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {steps.map((step, idx) => (
-              <div key={idx} className="food-card p-6 flex flex-col items-center text-center bg-[#FAFBF9]/60">
-                <div className="w-12 h-12 rounded-2xl bg-[#1B4332] text-white flex items-center justify-center font-bold text-lg mb-5 shadow-sm">
+              <div key={idx} className="food-card p-6 flex flex-col items-center text-center bg-slate-50/50">
+                <div className="w-12 h-12 rounded-2xl bg-[#1B4332] text-white flex items-center justify-center font-bold text-lg mb-4 shadow-sm">
                   {step.number}
                 </div>
-                <h3 className="text-base font-bold text-[#0F172A] mb-2">
+                <h3 className="text-base font-bold text-slate-900 mb-2">
                   {step.title}
                 </h3>
-                <p className="text-xs text-[#475569] leading-relaxed">
+                <p className="text-xs text-slate-500 leading-relaxed">
                   {step.description}
                 </p>
               </div>
@@ -216,337 +455,192 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 3. SIGNATURE POPULAR DISHES */}
-      <section className="py-20 bg-[#FAFBF9] border-b border-[#E5E9E2]">
-        <div className="container-custom">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-widest text-[#2D6A4F] mb-1 block">
-                Món ăn bán chạy
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-bold text-[#0F172A]">
-                Thực Đơn Tinh Tuyển Hôm Nay
-              </h2>
-            </div>
-            <Link 
-              href="/menu" 
-              className="mt-3 md:mt-0 text-xs font-bold text-[#059669] hover:text-[#047857] inline-flex items-center gap-1"
+      {/* 4. INTERACTIVE CLINICAL NUTRITION CALCULATOR */}
+      <section className="container-custom">
+        <div className="bg-white rounded-3xl p-8 sm:p-12 border border-slate-200 shadow-sm">
+          <div className="max-w-2xl mx-auto text-center mb-10 space-y-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">
+              Công Nghệ Mifflin-St Jeor
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+              Tính Toán Nhu Cầu Dinh Dưỡng Khoa Học
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500">
+              Chọn mục tiêu thể trạng để xem định lượng vi chất phù hợp nhất cho bạn
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto mb-8">
+            <button
+              type="button"
+              onClick={() => setCalculatorGoal('fit')}
+              className={`p-4 rounded-2xl border text-center transition-all cursor-pointer ${
+                calculatorGoal === 'fit'
+                  ? 'border-blue-600 bg-blue-50/60 shadow-sm'
+                  : 'border-slate-200 hover:bg-slate-50'
+              }`}
             >
-              Xem tất cả món ăn <ArrowRightIcon className="w-4 h-4" />
+              <div className="text-sm font-bold text-slate-900 mb-1">Tăng Cơ & Thể Thao</div>
+              <div className="text-xs text-slate-500">Đạm cao, phục hồi cơ bắp</div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCalculatorGoal('lose')}
+              className={`p-4 rounded-2xl border text-center transition-all cursor-pointer ${
+                calculatorGoal === 'lose'
+                  ? 'border-amber-600 bg-amber-50/60 shadow-sm'
+                  : 'border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              <div className="text-sm font-bold text-slate-900 mb-1">Giảm Mỡ & Thon Gọn</div>
+              <div className="text-xs text-slate-500">Kiểm soát calo, no lâu</div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCalculatorGoal('zen')}
+              className={`p-4 rounded-2xl border text-center transition-all cursor-pointer ${
+                calculatorGoal === 'zen'
+                  ? 'border-emerald-600 bg-emerald-50/60 shadow-sm'
+                  : 'border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              <div className="text-sm font-bold text-slate-900 mb-1">Dưỡng Sinh & Thải Độc</div>
+              <div className="text-xs text-slate-500">Thanh lọc nhẹ nhàng</div>
+            </button>
+          </div>
+
+          {/* Target Result Box */}
+          <div className="max-w-xl mx-auto p-6 rounded-2xl bg-slate-50 border border-slate-200 text-center space-y-4">
+            <div className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              Khuyến Nghị Khẩu Phần Hằng Ngày
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="p-3 rounded-xl bg-white border border-slate-200">
+                <div className="text-xs text-slate-500 mb-1">Năng lượng</div>
+                <div className="text-lg font-extrabold text-slate-900 font-mono">
+                  {calculatorGoal === 'fit' ? '2.150' : calculatorGoal === 'lose' ? '1.550' : '1.800'} kcal
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-white border border-slate-200">
+                <div className="text-xs text-blue-700 font-semibold mb-1">Đạm thực vật</div>
+                <div className="text-lg font-extrabold text-blue-800 font-mono">
+                  {calculatorGoal === 'fit' ? '110g' : calculatorGoal === 'lose' ? '75g' : '85g'}
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-white border border-slate-200">
+                <div className="text-xs text-amber-700 font-semibold mb-1">Tinh bột chậm</div>
+                <div className="text-lg font-extrabold text-amber-800 font-mono">
+                  {calculatorGoal === 'fit' ? '240g' : calculatorGoal === 'lose' ? '140g' : '190g'}
+                </div>
+              </div>
+            </div>
+
+            <Link
+              href="/nutrition-planner"
+              className="btn-primary-gradient px-6 py-3 rounded-xl text-xs font-bold inline-flex items-center gap-2 text-white shadow-sm mt-2 cursor-pointer"
+            >
+              Thiết Kế Thực Đơn Theo Thể Trạng Cá Nhân
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {popularDishes.map((dish, idx) => (
-              <MenuItemCard
-                key={dish.id || dish._id || idx}
-                id={dish.id || dish._id || `dish-${idx}`}
-                name={dish.name}
-                description={dish.description || 'Món chay chế biến tươi trong ngày từ nguyên liệu sạch'}
-                price={dish.price || dish.revenue || 75000}
-                image={dish.image || '/meals/meal1.jpg'}
-                category={dish.category || 'Món chính'}
-                nutritionInfo={dish.nutritionInfo}
-                isBestSeller={dish.isBestSeller}
-                isPopular={dish.isPopular}
-              />
-            ))}
-          </div>
         </div>
       </section>
 
-      {/* 4. NUTRI-PLANNER 2.0 CLINICAL SHOWCASE */}
-      <section className="py-20 bg-white border-b border-[#E5E9E2]">
-        <div className="container-custom">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            <div className="lg:col-span-6">
-              <span className="text-xs font-bold uppercase tracking-widest text-[#2D6A4F] mb-2 block">
-                Công nghệ dinh dưỡng y khoa
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-bold text-[#0F172A] mb-4">
-                Phòng Khám Dinh Dưỡng Nutri-Planner 2.0
-              </h2>
-              <p className="text-sm text-[#475569] leading-relaxed mb-6">
-                Tính toán chính xác năng lượng tiêu hao theo phương trình lâm sàng Mifflin-St Jeor, tự động phân bổ tỷ lệ đạm thực vật, carbs chậm và loại trừ các chất gây dị ứng giao thoa.
-              </p>
-              <div className="space-y-3 text-xs text-[#0F172A] mb-8">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-2 h-2 rounded-full bg-[#059669]" />
-                  <span>Cá nhân hóa theo độ tuổi, giới tính và mục tiêu vóc dáng</span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <div className="w-2 h-2 rounded-full bg-[#059669]" />
-                  <span>Chế độ ăn hỗ trợ đường huyết, tim mạch và giảm axit uric</span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <div className="w-2 h-2 rounded-full bg-[#059669]" />
-                  <span>Mâm cơm gia đình đa thế hệ hài hòa khẩu vị mọi lứa tuổi</span>
-                </div>
-              </div>
-              <Link 
-                href="/nutrition-planner" 
-                className="btn btn-action !px-6 !py-3 text-xs font-bold inline-flex items-center gap-2"
-              >
-                Trải Nghiệm Tính Phác Đồ Ngay
-                <ArrowRightIcon className="w-4 h-4" />
-              </Link>
-            </div>
-
-            <div className="lg:col-span-6 food-card p-6 bg-[#FAFBF9] border-2 border-[#1B4332]">
-              <div className="flex items-center justify-between border-b border-[#E5E9E2] pb-3 mb-4">
-                <span className="text-xs font-bold text-[#0F172A]">Mô phỏng phác đồ mẫu</span>
-                <span className="badge-macro text-[10px]">Mifflin-St Jeor</span>
-              </div>
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <div className="p-3 rounded-xl bg-white border border-[#E5E9E2]">
-                  <p className="text-[10px] text-[#475569]">BMR (Chuyển hóa cơ bản)</p>
-                  <p className="text-base font-bold text-[#0F172A] mt-0.5">1,420 Kcal</p>
-                </div>
-                <div className="p-3 rounded-xl bg-white border border-[#E5E9E2]">
-                  <p className="text-[10px] text-[#475569]">TDEE (Năng lượng tiêu hao)</p>
-                  <p className="text-base font-bold text-[#0F172A] mt-0.5">1,950 Kcal</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-2.5 text-center text-xs">
-                <div className="p-2.5 rounded-xl bg-white border border-[#E5E9E2]">
-                  <p className="text-[10px] text-[#2D6A4F] font-bold">Đạm Thực Vật</p>
-                  <p className="text-base font-bold text-[#0F172A] mt-0.5">98g</p>
-                </div>
-                <div className="p-2.5 rounded-xl bg-white border border-[#E5E9E2]">
-                  <p className="text-[10px] text-[#D97706] font-bold">Carbs Chậm</p>
-                  <p className="text-base font-bold text-[#0F172A] mt-0.5">195g</p>
-                </div>
-                <div className="p-2.5 rounded-xl bg-white border border-[#E5E9E2]">
-                  <p className="text-[10px] text-[#475569] font-bold">Chất Béo Tốt</p>
-                  <p className="text-base font-bold text-[#0F172A] mt-0.5">43g</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 5. SUBSCRIPTION PLANS SHOWCASE */}
-      <section className="py-20 bg-[#FAFBF9] border-b border-[#E5E9E2]">
-        <div className="container-custom">
-          <div className="text-center max-w-2xl mx-auto mb-14">
-            <span className="text-xs font-bold uppercase tracking-widest text-[#2D6A4F] mb-1 block">
-              Gói ăn định kỳ tiện lợi
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-bold text-[#0F172A] mb-2">
-              Duy Trì Lối Sống Lành Mạnh Mỗi Ngày
-            </h2>
-            <p className="text-[#475569] text-xs leading-relaxed">
-              Tiết kiệm thời gian chuẩn bị bữa ăn, giao nóng tận cửa đúng khung giờ, đổi món linh hoạt không trùng lặp.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            <div className="food-card p-6 flex flex-col bg-white">
-              <span className="text-[11px] font-bold text-[#2D6A4F] uppercase tracking-wider mb-1">Thanh lọc thể trạng</span>
-              <h3 className="text-lg font-bold text-[#0F172A] mb-1">Gói Detox 7 Ngày</h3>
-              <p className="text-xs text-[#475569] mb-4">Tối ưu chất xơ tự nhiên, thanh nhiệt cơ thể và cải thiện hệ vi sinh đường ruột.</p>
-              <div className="text-2xl font-bold text-[#1B4332] mb-5">
-                490.000₫ <span className="text-xs font-normal text-[#475569]">/ tuần</span>
-              </div>
-              <ul className="space-y-2 text-xs text-[#475569] mb-6">
-                <li>• Giao nóng trước 11:30 sáng</li>
-                <li>• Kèm nước ép thanh lọc rau má hữu cơ</li>
-                <li>• Tạm dừng gói ăn linh hoạt</li>
-              </ul>
-              <Link href="/subscriptions" className="btn btn-secondary !w-full !text-xs !py-2.5 mt-auto">
-                Đăng Ký Gói Ăn
-              </Link>
-            </div>
-
-            <div className="food-card p-6 flex flex-col bg-white border-2 border-[#059669] shadow-md relative">
-              <div className="absolute -top-2.5 right-5 bg-[#059669] text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full">
-                Phổ biến nhất
-              </div>
-              <span className="text-[11px] font-bold text-[#059669] uppercase tracking-wider mb-1">Thể thao & Tăng cơ</span>
-              <h3 className="text-lg font-bold text-[#0F172A] mb-1">Gói High-Protein 30 Ngày</h3>
-              <p className="text-xs text-[#475569] mb-4">Bổ sung 45g đạm thực vật sinh học mỗi ngày từ đậu nành hữu cơ, diêm mạch và nấm đông cô.</p>
-              <div className="text-2xl font-bold text-[#1B4332] mb-5">
-                1.950.000₫ <span className="text-xs font-normal text-[#475569]">/ tháng</span>
-              </div>
-              <ul className="space-y-2 text-xs text-[#475569] mb-6">
-                <li>• Đạt chuẩn 45g Đạm mỗi ngày</li>
-                <li>• Miễn phí vận chuyển toàn thành phố</li>
-                <li>• Tùy chỉnh lịch ăn thứ 2 đến thứ 6</li>
-              </ul>
-              <Link href="/subscriptions" className="btn btn-action !w-full !text-xs !py-2.5 mt-auto">
-                Chọn Gói Ăn Này
-              </Link>
-            </div>
-
-            <div className="food-card p-6 flex flex-col bg-white">
-              <span className="text-[11px] font-bold text-[#2D6A4F] uppercase tracking-wider mb-1">Mâm cơm gia đình</span>
-              <h3 className="text-lg font-bold text-[#0F172A] mb-1">Gói Hài Hòa 4 Thành Viên</h3>
-              <p className="text-xs text-[#475569] mb-4">Mâm cơm ấm cúng 4 món gồm canh dưỡng nhan, món mặn xào nấm và rau luộc chấm kho quẹt chay.</p>
-              <div className="text-2xl font-bold text-[#1B4332] mb-5">
-                2.800.000₫ <span className="text-xs font-normal text-[#475569]">/ tháng</span>
-              </div>
-              <ul className="space-y-2 text-xs text-[#475569] mb-6">
-                <li>• Khẩu phần chuẩn cho 4 người</li>
-                <li>• Không sử dụng bột ngọt hay chất bảo quản</li>
-                <li>• Tùy chọn giảm muối theo yêu cầu</li>
-              </ul>
-              <Link href="/subscriptions" className="btn btn-secondary !w-full !text-xs !py-2.5 mt-auto">
-                Đăng Ký Mâm Cơm
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 6. ENVIRONMENTAL SUSTAINABILITY SECTION */}
-      <section className="py-20 bg-white border-b border-[#E5E9E2]">
-        <div className="container-custom">
-          <div className="text-center max-w-2xl mx-auto mb-14">
-            <span className="text-xs font-bold uppercase tracking-widest text-[#2D6A4F] mb-1 block">
-              Trách nhiệm xanh
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-bold text-[#0F172A] mb-2">
-              Chung Tay Bảo Vệ Môi Trường
-            </h2>
-            <p className="text-[#475569] text-xs leading-relaxed">
-              Các sáng kiến thân thiện với môi trường nhằm giảm thiểu rác thải nhựa và khí thải carbon.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="food-card p-6 bg-[#FAFBF9]/60">
-              <h3 className="text-base font-bold text-[#0F172A] mb-2">Bao Bì Bã Mía Tự Nhiên</h3>
-              <p className="text-xs text-[#475569] leading-relaxed">
-                Sử dụng 100% hộp bã mía và muỗng gỗ có thể phân hủy sinh học hoàn toàn trong môi trường đất.
-              </p>
-            </div>
-            <div className="food-card p-6 bg-[#FAFBF9]/60">
-              <h3 className="text-base font-bold text-[#0F172A] mb-2">Tối Ưu Tuyến Đường Giao Hàng</h3>
-              <p className="text-xs text-[#475569] leading-relaxed">
-                Thuật toán định tuyến thông minh giúp gộp đơn theo cụm khu vực, cắt giảm 35% lượng khí thải vận chuyển.
-              </p>
-            </div>
-            <div className="food-card p-6 bg-[#FAFBF9]/60">
-              <h3 className="text-base font-bold text-[#0F172A] mb-2">Không Lãng Phí Thực Phẩm</h3>
-              <p className="text-xs text-[#475569] leading-relaxed">
-                Quản lý kho nguyên liệu theo định lượng BOM chính xác, chế biến tươi vừa đủ theo số lượng đơn đặt trước.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 7. CUSTOMER TESTIMONIALS SLIDER */}
-      <section className="py-20 bg-[#FAFBF9] border-b border-[#E5E9E2]">
-        <div className="container-custom">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <span className="text-xs font-bold uppercase tracking-widest text-[#2D6A4F] mb-1 block">
-              Trải nghiệm thực tế
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-bold text-[#0F172A]">
-              Câu Chuyện Của Khách Hàng
-            </h2>
-          </div>
-
-          <div className="relative max-w-3xl mx-auto food-card p-8 bg-white shadow-sm">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={testimonialIdx}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.2 }}
-                className="flex flex-col sm:flex-row items-center gap-6"
-              >
-                <div className="w-20 h-20 rounded-full overflow-hidden relative flex-shrink-0 border-2 border-[#1B4332]">
-                  <Image
-                    src={testimonials[testimonialIdx].image}
-                    alt={testimonials[testimonialIdx].name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <div className="flex-1 text-center sm:text-left">
-                  <p className="text-sm text-[#0F172A] italic leading-relaxed mb-4">
-                    &ldquo;{testimonials[testimonialIdx].content}&rdquo;
-                  </p>
-                  <h4 className="text-sm font-bold text-[#1B4332]">{testimonials[testimonialIdx].name}</h4>
-                  <span className="text-xs text-[#475569]">{testimonials[testimonialIdx].role}</span>
-                </div>
-              </motion.div>
-            </AnimatePresence>
-
-            <div className="flex items-center justify-center gap-3 mt-6 pt-4 border-t border-[#E5E9E2]">
-              <button
-                type="button"
-                onClick={prevTestimonial}
-                className="p-2 rounded-full border border-[#E5E9E2] hover:bg-[#FAFBF9] text-[#475569]"
-                aria-label="Previous testimonial"
-              >
-                <ChevronLeftIcon className="w-4 h-4" />
-              </button>
-              <span className="text-xs font-medium text-[#475569]">
-                {testimonialIdx + 1} / {testimonials.length}
-              </span>
-              <button
-                type="button"
-                onClick={nextTestimonial}
-                className="p-2 rounded-full border border-[#E5E9E2] hover:bg-[#FAFBF9] text-[#475569]"
-                aria-label="Next testimonial"
-              >
-                <ChevronRightIcon className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 8. PARTNERS SECTION */}
-      <section className="py-16 bg-white border-b border-[#E5E9E2]">
-        <div className="container-custom text-center">
-          <span className="text-xs font-bold uppercase tracking-widest text-[#2D6A4F] mb-2 block">
-            Hợp tác bền vững
+      {/* 5. MEAL PLANS SUBSCRIPTION SHOWCASE */}
+      <section className="bg-slate-950 text-white py-20 rounded-3xl mx-4 sm:mx-6 lg:mx-8 px-6 lg:px-12 shadow-2xl relative overflow-hidden">
+        <div className="max-w-3xl mx-auto text-center mb-14">
+          <span className="px-3.5 py-1.5 rounded-full bg-emerald-950 border border-emerald-800 text-emerald-400 text-xs font-bold uppercase tracking-wider">
+            Gói Ăn Cá Nhân Hóa
           </span>
-          <h2 className="text-2xl font-bold text-[#0F172A] mb-8">
-            Đối Tác Nông Trại & Tổ Chức Dinh Dưỡng
+          <h2 className="text-3xl sm:text-4xl font-extrabold mt-4 mb-3 text-white tracking-tight">
+            Gói Ăn Chay Dinh Dưỡng Định Kỳ
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            {partners.map((partner) => (
-              <div key={partner.id} className="p-4 rounded-xl border border-[#E5E9E2] bg-[#FAFBF9] flex items-center justify-center text-xs font-semibold text-[#1B4332]">
-                {partner.name}
+          <p className="text-slate-400 text-xs sm:text-sm">
+            Tiết kiệm chi phí, đổi mới khẩu vị mỗi ngày, giao tận nơi đúng khung giờ bạn chọn
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {mealPlans.map((plan) => (
+            <div
+              key={plan.id}
+              className={`p-8 rounded-3xl border flex flex-col justify-between transition-all ${
+                plan.featured
+                  ? 'bg-gradient-to-b from-emerald-950 to-slate-900 border-emerald-500 shadow-xl lg:scale-105'
+                  : 'bg-slate-900 border-slate-800'
+              }`}
+            >
+              <div>
+                <span className={`text-[11px] font-bold uppercase ${plan.featured ? 'text-emerald-400' : 'text-slate-400'}`}>
+                  {plan.tag}
+                </span>
+                <h3 className="text-xl font-bold text-white mt-1 mb-2">
+                  {plan.name}
+                </h3>
+                <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+                  {plan.description}
+                </p>
+                <div className="text-3xl font-extrabold text-white mb-6 font-mono">
+                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(plan.price)}
+                  <span className="text-xs font-normal text-slate-400 ml-1 font-sans">/ {plan.duration}</span>
+                </div>
+                <ul className="space-y-3 text-xs text-slate-300 mb-8">
+                  {plan.features.map((feat, i) => (
+                    <li key={i} className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>{feat}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-            ))}
-          </div>
+
+              <Link
+                href="/subscriptions"
+                className={`w-full py-3.5 rounded-2xl font-bold text-xs text-center transition-all cursor-pointer ${
+                  plan.featured
+                    ? 'btn-primary-gradient text-white shadow-md'
+                    : 'bg-slate-800 hover:bg-slate-700 text-white'
+                }`}
+              >
+                Đăng Ký Gói Này
+              </Link>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* 9. CULINARY COMMITMENTS */}
-      <section className="py-14 bg-[#081C15] text-[#FAFBF9]">
-        <div className="container-custom">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
-            <div>
-              <h4 className="text-base font-bold text-white mb-1.5">Nông Trại Hữu Cơ</h4>
-              <p className="text-xs text-slate-300 leading-relaxed">Rau củ chuẩn VietGAP và hữu cơ thu hoạch trong ngày từ các nông trại liên kết.</p>
-            </div>
-            <div>
-              <h4 className="text-base font-bold text-white mb-1.5">Thuần Thực Vật Tươi Lành</h4>
-              <p className="text-xs text-slate-300 leading-relaxed">Nói không với chất bảo quản, màu nhân tạo và hương liệu tổng hợp.</p>
-            </div>
-            <div>
-              <h4 className="text-base font-bold text-white mb-1.5">Minh Bạch Dinh Dưỡng</h4>
-              <p className="text-xs text-slate-300 leading-relaxed">Đo lường định lượng Calo và Macros chuẩn xác trên từng khẩu phần.</p>
-            </div>
-            <div>
-              <h4 className="text-base font-bold text-white mb-1.5">Giao Nóng Tận Nơi</h4>
-              <p className="text-xs text-slate-300 leading-relaxed">Đóng gói hộp bã mía thân thiện môi trường, giữ trọn hương vị và độ ấm.</p>
-            </div>
+      {/* 6. GREEN RESPONSIBILITY & ORGANIC FARMS */}
+      <section className="container-custom">
+        <div className="food-card p-8 bg-gradient-to-r from-emerald-950 to-slate-950 text-white border border-emerald-800/60 shadow-xl grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+          <div className="space-y-3">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-900/60 border border-emerald-700 text-emerald-300">
+              <Leaf className="w-3.5 h-3.5" />
+              Trách Nhiệm Xanh
+            </span>
+            <h3 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+              Bao Bì Bã Mía & Không Lãng Phí Thực Phẩm
+            </h3>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Mỗi khẩu phần giao tận nơi đều sử dụng hộp bã mía và muỗng gỗ tự phân hủy sinh học. Thuật toán định lượng nguyên liệu chuẩn xác giúp tối ưu hóa chuỗi cung ứng và giảm thiểu dư thừa.
+            </p>
+          </div>
+
+          <div className="space-y-3 md:border-l md:border-slate-800 md:pl-8">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-teal-900/60 border border-teal-700 text-teal-300">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              Nông Trại Hữu Cơ Liên Kết
+            </span>
+            <h3 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+              Nguồn Nông Sản Tươi Lành Mỗi Ngày
+            </h3>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Hợp tác trực tiếp cùng các nông trại hữu cơ tại Đà Lạt và Củ Chi. Rau củ quả và nấm tươi được sơ chế và nấu nóng ngay trong ngày, giữ trọn vẹn hương vị và dưỡng chất tự nhiên.
+            </p>
           </div>
         </div>
       </section>
-
-      {/* Floating AI Chat Agent */}
-      <ChatAgent />
-    </main>
+    </div>
   )
 }

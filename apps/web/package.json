@@ -46,7 +46,6 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@radix-ui/react-scroll-area": "^1.2.3",
-    "@tailwindcss/postcss": "^4",
     "@types/node": "^20.17.30",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19",

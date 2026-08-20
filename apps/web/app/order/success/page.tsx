@@ -1,16 +1,15 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { CheckCircle, ArrowRight, Home, ShoppingBag } from 'lucide-react';
+import { CheckCircle, ArrowRight, Home, ShoppingBag, Loader2 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
-import { Loader2 } from 'lucide-react';
 import { orderService, Order } from '../../services/orderService';
 import { useCart } from '../../hooks/useCart';
 import CartToast from '../../components/cart-toast';
 
-export default function OrderSuccessPage() {
+function OrderSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
@@ -174,5 +173,17 @@ export default function OrderSuccessPage() {
         <CartToast message={message} isError={false} onDismiss={dismissMessage} duration={4000} />
       )}
     </div>
+  );
+}
+
+export default function OrderSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-emerald-700" />
+      </div>
+    }>
+      <OrderSuccessContent />
+    </Suspense>
   );
 } 

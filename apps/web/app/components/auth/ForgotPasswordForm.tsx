@@ -5,21 +5,10 @@ import { useAuth } from '../../context/AuthContext';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { XCircle, Loader2 } from 'lucide-react';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Alert, AlertDescription } from '../../components/ui/alert';
+import { Mail, ArrowLeft, Loader2, CheckCircle2 } from 'lucide-react';
 
 const formSchema = z.object({
-  email: z.string().email('Email không hợp lệ'),
+  email: z.string().email('Địa chỉ email không hợp lệ'),
 });
 
 interface ForgotPasswordFormProps {
@@ -53,84 +42,90 @@ export default function ForgotPasswordForm({
     try {
       const result = await forgotPassword(values.email);
       if (result.success) {
-        setSuccess(result.message);
+        setSuccess('Đã gửi liên kết khôi phục vào hộp thư của bạn. Vui lòng kiểm tra email.');
         form.reset();
-        if (onSuccess) {
-          onSuccess();
-        }
+        if (onSuccess) onSuccess();
       } else {
-        setError(result.message);
+        setError(result.message || 'Không thể gửi email khôi phục. Vui lòng thử lại');
       }
     } catch {
-      setError('Đã xảy ra lỗi khi gửi yêu cầu. Vui lòng thử lại sau.');
+      setError('Đã có lỗi xảy ra. Vui lòng thử lại');
     } finally {
       setIsLoading(false);
     }
   }
 
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Quên mật khẩu</h2>
-        {onClose && (
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <XCircle className="h-5 w-5" />
-          </Button>
-        )}
-      </div>
-
+    <div className="space-y-4 w-full text-xs">
       {error && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
+        <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold animate-fade-in">
+          {error}
+        </div>
       )}
 
-      {success && (
-        <Alert className="mb-4 bg-green-50 border-green-500 text-green-700">
-          <AlertDescription>{success}</AlertDescription>
-        </Alert>
-      )}
+      {success ? (
+        <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-200 text-center space-y-2">
+          <CheckCircle2 className="w-8 h-8 text-emerald-700 mx-auto" />
+          <p className="text-xs font-bold text-emerald-950">{success}</p>
+          <button
+            type="button"
+            onClick={onToggleForm}
+            className="btn-primary-gradient px-4 py-2 rounded-xl text-white font-bold inline-flex items-center gap-1.5 mt-2 cursor-pointer"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Quay lại đăng nhập</span>
+          </button>
+        </div>
+      ) : (
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3.5">
+          <p className="text-slate-500 leading-relaxed">
+            Nhập email đã đăng ký. Hệ thống sẽ gửi cho bạn liên kết đặt lại mật khẩu an toàn.
+          </p>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="email" 
-                    placeholder="Email của bạn" 
-                    {...field} 
-                    disabled={isLoading}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+          <div>
+            <label className="block text-slate-700 font-bold mb-1">Địa chỉ Email</label>
+            <div className="relative">
+              <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="email"
+                placeholder="tenban@gmail.com"
+                disabled={isLoading}
+                {...form.register('email')}
+                className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/60 focus:bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 transition-all"
+              />
+            </div>
+            {form.formState.errors.email && (
+              <p className="text-rose-600 text-[10px] mt-1">{form.formState.errors.email.message}</p>
             )}
-          />
+          </div>
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="btn-primary-gradient w-full py-3 rounded-2xl text-xs font-bold text-white shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+          >
             {isLoading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Đang gửi...
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Đang gửi mã...</span>
               </>
             ) : (
-              'Gửi email đặt lại mật khẩu'
+              <span>Gửi Liên Kết Khôi Phục</span>
             )}
-          </Button>
+          </button>
 
-          {onToggleForm && (
-            <div className="mt-4 text-center">
-              <Button variant="link" onClick={onToggleForm} type="button">
-                Quay lại đăng nhập
-              </Button>
-            </div>
-          )}
+          <div className="text-center pt-2">
+            <button
+              type="button"
+              onClick={onToggleForm}
+              className="text-[11px] font-bold text-slate-500 hover:text-emerald-800 inline-flex items-center gap-1 cursor-pointer"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Quay lại đăng nhập</span>
+            </button>
+          </div>
         </form>
-      </Form>
+      )}
     </div>
   );
-} 
+}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { notFound, useRouter } from 'next/navigation';
 import { promotionService } from '@/lib/services';
 import { Promotion } from '@/lib/services/types';
@@ -26,9 +26,9 @@ import {
 } from "@/components/ui/dialog";
 
 interface PromotionDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 interface PromotionStats {
@@ -38,6 +38,7 @@ interface PromotionStats {
 }
 
 export default function PromotionDetailPage({ params }: PromotionDetailPageProps) {
+  const resolvedParams = use(params);
   const router = useRouter();
   const [promotion, setPromotion] = useState<Promotion | null>(null);
   const [stats, setStats] = useState<PromotionStats | null>(null);
@@ -48,7 +49,7 @@ export default function PromotionDetailPage({ params }: PromotionDetailPageProps
   useEffect(() => {
     const fetchPromotion = async () => {
       try {
-        const response = await promotionService.getStats(params.id);
+        const response = await promotionService.getStats(resolvedParams.id);
         setPromotion(response.data.promotion);
         setStats(response.data.stats as PromotionStats);
       } catch (err: unknown) {
@@ -61,11 +62,11 @@ export default function PromotionDetailPage({ params }: PromotionDetailPageProps
     };
 
     fetchPromotion();
-  }, [params.id]);
+  }, [resolvedParams.id]);
 
   const handleDelete = async () => {
     try {
-      await promotionService.delete(params.id);
+      await promotionService.delete(resolvedParams.id);
       router.push('/admin/promotions');
     } catch (err: unknown) {
       const error = err as { message?: string };
@@ -134,7 +135,7 @@ export default function PromotionDetailPage({ params }: PromotionDetailPageProps
           </h1>
         </div>
         <div className="flex gap-2">
-          <Link href={`/admin/promotions/${params.id}/edit`}>
+          <Link href={`/admin/promotions/${resolvedParams.id}/edit`}>
             <Button variant="outline" className="flex items-center gap-2">
               <PencilIcon className="h-4 w-4" />
               Edit
@@ -192,9 +193,9 @@ export default function PromotionDetailPage({ params }: PromotionDetailPageProps
                 <p className="mt-1 flex items-center">
                   <CurrencyDollarIcon className="h-5 w-5 text-gray-400 mr-1" />
                   {promotion.type === 'percentage' 
-                    ? `${promotion.value}% off` 
+                    ? `${promotion.value ?? promotion.discountValue ?? 0}% off` 
                     : promotion.type === 'fixed' 
-                      ? `${promotion.value.toLocaleString()} VND off`
+                      ? `${(promotion.value ?? promotion.discountValue ?? 0).toLocaleString()} VND off`
                       : promotion.type === 'free_item'
                         ? 'Free item'
                         : 'Free delivery'}
@@ -263,19 +264,19 @@ export default function PromotionDetailPage({ params }: PromotionDetailPageProps
               <div>
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-sm">Used Codes</span>
-                  <span className="font-medium">{promotion.usedCodes} / {promotion.totalCodes}</span>
+                  <span className="font-medium">{promotion.usedCodes ?? 0} / {promotion.totalCodes ?? 0}</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div 
                     className="bg-green-600 h-2 rounded-full" 
-                    style={{ width: `${(promotion.usedCodes / promotion.totalCodes) * 100}%` }}
+                    style={{ width: `${((promotion.usedCodes ?? 0) / (promotion.totalCodes || 1)) * 100}%` }}
                   ></div>
                 </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4 pt-2">
                 <div className="bg-gray-50 p-3 rounded-lg text-center">
-                  <p className="text-2xl font-bold text-green-600">{promotion.totalCodes - promotion.usedCodes}</p>
+                  <p className="text-2xl font-bold text-green-600">{(promotion.totalCodes ?? 0) - (promotion.usedCodes ?? 0)}</p>
                   <p className="text-xs text-gray-500">Remaining Codes</p>
                 </div>
                 <div className="bg-gray-50 p-3 rounded-lg text-center">

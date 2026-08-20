@@ -247,17 +247,17 @@ export default function MenuItemDetail() {
                 <div
                   key={level}
                   className={`w-6 h-6 rounded-full mr-1 ${
-                    level <= item.spicyLevel
+                    level <= (item.spicyLevel ?? 0)
                       ? "bg-red-500"
                       : "bg-gray-200"
                   }`}
                 />
               ))}
               <span className="ml-2 text-sm text-gray-600">
-                {item.spicyLevel === 0 && "Không cay"}
-                {item.spicyLevel === 1 && "Cay nhẹ"}
-                {item.spicyLevel === 2 && "Cay vừa"}
-                {item.spicyLevel === 3 && "Rất cay"}
+                {(item.spicyLevel ?? 0) === 0 && "Không cay"}
+                {(item.spicyLevel ?? 0) === 1 && "Cay nhẹ"}
+                {(item.spicyLevel ?? 0) === 2 && "Cay vừa"}
+                {(item.spicyLevel ?? 0) === 3 && "Rất cay"}
               </span>
             </div>
           </div>
@@ -323,19 +323,19 @@ export default function MenuItemDetail() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-primary/10 p-4 rounded-lg text-center">
                   <p className="text-sm text-gray-500">Calo</p>
-                  <p className="text-xl font-bold">{item.nutritionInfo.calories}</p>
+                  <p className="text-xl font-bold">{item.nutritionInfo?.calories ?? item.calories ?? 0}</p>
                 </div>
                 <div className="bg-primary/10 p-4 rounded-lg text-center">
                   <p className="text-sm text-gray-500">Protein</p>
-                  <p className="text-xl font-bold">{item.nutritionInfo.protein}g</p>
+                  <p className="text-xl font-bold">{item.nutritionInfo?.protein ?? item.protein ?? 0}g</p>
                 </div>
                 <div className="bg-primary/10 p-4 rounded-lg text-center">
                   <p className="text-sm text-gray-500">Carbs</p>
-                  <p className="text-xl font-bold">{item.nutritionInfo.carbs}g</p>
+                  <p className="text-xl font-bold">{item.nutritionInfo?.carbs ?? item.carbs ?? 0}g</p>
                 </div>
                 <div className="bg-primary/10 p-4 rounded-lg text-center">
                   <p className="text-sm text-gray-500">Chất béo</p>
-                  <p className="text-xl font-bold">{item.nutritionInfo.fat}g</p>
+                  <p className="text-xl font-bold">{item.nutritionInfo?.fat ?? item.fat ?? 0}g</p>
                 </div>
               </div>
             </CardContent>
@@ -353,7 +353,7 @@ export default function MenuItemDetail() {
               <div className="mb-6">
                 <h3 className="font-medium mb-2">Thành phần:</h3>
                 <div className="flex flex-wrap gap-2">
-                  {item.ingredients.map((ingredient, index) => (
+                  {(item.ingredients || []).map((ingredient, index) => (
                     <Badge key={index} variant="secondary">
                       {ingredient}
                     </Badge>

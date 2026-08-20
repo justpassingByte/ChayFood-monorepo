@@ -52,10 +52,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Check authentication status on mount
   useEffect(() => {
+    // Quick hydrate from localStorage
+    try {
+      const cachedUser = localStorage.getItem('currentUser');
+      if (cachedUser) {
+        setUser(JSON.parse(cachedUser));
+      }
+    } catch {}
+
     const checkAuth = async () => {
-      setIsLoading(true);
       try {
-        // Check if token exists
         const token = localStorage.getItem('authToken');
         
         if (!token) {
@@ -65,31 +71,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        // Verify token with the API
-        const response = await authService.checkStatus();
+        // Verify token with API with timeout
+        const timeoutPromise = new Promise<{ user?: User; isAuthenticated?: boolean }>((_, reject) =>
+          setTimeout(() => reject(new Error('Auth check timeout')), 2000)
+        );
+
+        const response = await Promise.race([
+          authService.checkStatus(),
+          timeoutPromise
+        ]);
         
         if (response.user) {
           setUser(response.user);
           updateCookies(response.user, token);
+          localStorage.setItem('currentUser', JSON.stringify(response.user));
         } else if (response.isAuthenticated === true) {
-          // Try to decode the token to get user info
           try {
             const tokenParts = token.split('.');
             if (tokenParts.length === 3) {
               const payload = JSON.parse(atob(tokenParts[1]));
-              
-              // Create minimal user from token payload
-              const tokenUser = {
-                _id: payload._id,
-                email: payload.email,
+              const tokenUser: User = {
+                _id: payload._id || 'user_id',
+                email: payload.email || 'user@chayfood.vn',
                 role: payload.role || 'user',
-                name: payload.email.split('@')[0] // Use part of email as name if missing
+                name: payload.name || (payload.email ? payload.email.split('@')[0] : 'Thành viên')
               };
               
               setUser(tokenUser);
               updateCookies(tokenUser, token);
-              
-              // Store this user in localStorage for future use
               localStorage.setItem('currentUser', JSON.stringify(tokenUser));
             }
           } catch {
@@ -103,9 +112,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           localStorage.removeItem('authToken');
         }
       } catch {
-        setUser(null);
-        updateCookies(null, null);
-        localStorage.removeItem('authToken');
+        // In case API is unreachable, keep cached user if present or clear
+        const cachedUser = localStorage.getItem('currentUser');
+        if (!cachedUser) {
+          setUser(null);
+          updateCookies(null, null);
+        }
       } finally {
         setIsLoading(false);
       }

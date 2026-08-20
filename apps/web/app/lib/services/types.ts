@@ -1,44 +1,60 @@
 export interface MenuItem {
   _id: string;
+  id?: string;
   name: string;
-  description: string;
+  description?: string;
   price: number;
-  category: 'main' | 'side' | 'dessert' | 'beverage';
+  category: 'main' | 'side' | 'dessert' | 'beverage' | string;
   image: string;
-  nutritionInfo: {
+  calories?: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
+  nutritionInfo?: {
     calories: number;
     protein: number;
     carbs: number;
     fat: number;
   };
-  isAvailable: boolean;
-  preparationTime: number;
-  ingredients: string[];
+  isAvailable?: boolean;
+  preparationTime?: number;
+  ingredients?: string[];
   allergens?: string[];
-  isVegetarian: boolean;
-  spicyLevel: number; // 0-3: 0 = not spicy, 3 = very spicy
+  tags?: string[];
+  isPopular?: boolean;
+  isSignature?: boolean;
+  dietaryRestrictions?: string[];
+  isVegetarian?: boolean;
+  spicyLevel?: number;
+}
+
+export interface OrderItem {
+  item?: string | MenuItem;
+  menuItem?: string | MenuItem;
+  quantity: number;
+  price: number;
+  specialInstructions?: string;
 }
 
 export interface Order {
   _id: string;
-  user: string;
-  items: Array<{
-    menuItem: string | MenuItem;
-    quantity: number;
-    price: number;
-    specialInstructions?: string;
-  }>;
+  id?: string;
+  user: string | User;
+  items: OrderItem[];
   totalAmount: number;
-  status: 'pending' | 'confirmed' | 'preparing' | 'delivering' | 'ready' | 'delivered' | 'cancelled';
+  status: 'PENDING' | 'PREPARING' | 'DELIVERING' | 'DELIVERED' | 'CANCELLED' | string;
   deliveryAddress: {
     street: string;
+    ward?: string;
+    district?: string;
     city: string;
-    state: string;
-    postalCode: string;
+    state?: string;
+    postalCode?: string;
     additionalInfo?: string;
+    phone?: string;
   };
-  paymentStatus: 'pending' | 'paid' | 'failed';
-  paymentMethod: 'cod' | 'card' | 'banking';
+  paymentMethod: 'CASH' | 'CARD' | 'MOMO' | 'ZALOPAY' | string;
+  paymentStatus: 'PENDING' | 'PAID' | 'FAILED' | string;
   deliveryTime?: string;
   specialInstructions?: string;
   createdAt: string;
@@ -47,121 +63,168 @@ export interface Order {
 
 export interface CreateOrderDto {
   items: Array<{
-    menuItem: string;
+    item?: string;
+    menuItem?: string;
     quantity: number;
-    price: number;
+    price?: number;
     specialInstructions?: string;
   }>;
-  totalAmount: number;
+  totalAmount?: number;
   deliveryAddress: {
     street: string;
+    ward?: string;
+    district?: string;
     city: string;
-    state: string;
-    postalCode: string;
+    state?: string;
+    postalCode?: string;
     additionalInfo?: string;
+    phone?: string;
   };
-  paymentMethod: 'cod' | 'card' | 'banking';
+  paymentMethod: string;
   specialInstructions?: string;
 }
 
-export interface Plan {
+export interface User {
   _id: string;
+  id?: string;
   name: string;
-  code: string;
-  price: number;
-  duration: number;
-  description: string;
-  mealsPerDay: number;
-  snacksPerDay: number;
-  features: string[];
-  isRecommended: boolean;
-  isPremiumMenu: boolean;
-  hasDietitianSupport: boolean;
-  hasCustomization: boolean;
-  hasPriorityDelivery: boolean;
-  has24HrSupport: boolean;
-  isActive: boolean;
-}
-
-export interface Subscription {
-  _id: string;
-  user: string;
-  plan: Plan;
-  startDate: string;
-  endDate: string;
-  isActive: boolean;
-  deliveryAddress: {
+  email: string;
+  phone?: string;
+  role: 'USER' | 'ADMIN' | 'CHEF' | 'DELIVERY' | 'user' | 'admin' | string;
+  address?: {
     street: string;
+    ward?: string;
+    district?: string;
     city: string;
-    state: string;
-    postalCode: string;
-    additionalInfo?: string;
+    state?: string;
+    postalCode?: string;
+    phone?: string;
   };
-  selectedMenuItems?: Array<{
-    menuItemId: string;
-    quantity: number;
-    dayOfWeek: number;
-    mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
-  }>;
-  paymentStatus: 'pending' | 'paid' | 'failed';
-  paymentMethod: 'card' | 'banking';
-  totalAmount: number;
-  specialInstructions?: string;
+  preferences?: {
+    dietaryRestrictions: string[];
+    favoriteCategories: string[];
+    spicyPreference: number;
+    allergens: string[];
+  };
+  healthProfile?: {
+    dailyCalorieTarget?: number;
+    proteinTarget?: number;
+    carbTarget?: number;
+    fatTarget?: number;
+    primaryGoal?: string;
+  };
+  avatar?: string;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface CreateSubscriptionDto {
-  planId: string;
-  startDate: string;
-  deliveryAddress: {
-    street: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    additionalInfo?: string;
-  };
-  paymentMethod: 'card' | 'banking';
-  specialInstructions?: string;
-}
-
-export interface Promotion {
+export interface Customer {
   _id: string;
+  id?: string;
   name: string;
-  description: string;
-  code: string;
-  type: 'percentage' | 'fixed' | 'free_item' | 'free_delivery';
-  value: number;
-  minOrderValue?: number;
-  maxDiscount?: number;
-  isActive: boolean;
-  startDate: string;
-  endDate: string;
-  isFlashSale?: boolean;
-  flashSaleHours?: Array<{
-    dayOfWeek: number; // 0-6 for Sunday-Saturday
-    startHour: number; // 0-23
-    endHour: number; // 0-23
-  }>;
-  usageLimit?: number;
-  usageCount?: number;
-  isReferral?: boolean;
-  referralBonusPoints?: number;
-  notificationSent?: boolean;
-  totalCodes: number;
-  usedCodes: number;
-  promotionType: 'regular' | 'flash_sale';
+  email: string;
+  phone?: string;
+  role?: string;
+  joinDate?: string;
+  address?: {
+    street: string;
+    ward?: string;
+    district?: string;
+    city: string;
+    state?: string;
+    postalCode?: string;
+    phone?: string;
+  };
+  totalOrders?: number;
+  totalSpent?: number;
   createdAt?: string;
   updatedAt?: string;
 }
 
-export interface Customer {
+export interface Promotion {
   _id: string;
-  name: string;
-  email: string;
-  phone: string;
-  totalOrders: number;
-  totalSpent: number | null | undefined;
-  joinDate: string;
-  // Add any missing fields from the API response if needed
-} 
+  id?: string;
+  code: string;
+  name?: string;
+  title?: string;
+  description: string;
+  type?: 'percentage' | 'fixed' | string;
+  value?: number;
+  discountType?: 'PERCENTAGE' | 'FIXED' | 'percentage' | 'fixed' | string;
+  discountValue?: number;
+  promotionType?: string;
+  isFlashSale?: boolean;
+  minOrderValue?: number;
+  maxDiscount?: number;
+  startDate: string;
+  endDate: string;
+  usageLimit?: number;
+  usedCount?: number;
+  usedCodes?: number;
+  totalCodes?: number;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Subscription {
+  _id: string;
+  id?: string;
+  user: string | User;
+  planName: string;
+  planType: 'WEEKLY' | 'MONTHLY' | 'weekly' | 'monthly' | string;
+  price: number;
+  status: 'ACTIVE' | 'PAUSED' | 'CANCELLED' | 'EXPIRED' | string;
+  startDate: string;
+  endDate: string;
+  deliveryTimeSlot?: string;
+  deliveryDays?: string[];
+  selectedMenuItems?: string[];
+  deliveryAddress?: {
+    street: string;
+    ward?: string;
+    district?: string;
+    city: string;
+    state?: string;
+    postalCode?: string;
+    phone?: string;
+  };
+  specialInstructions?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateSubscriptionDto {
+  planName: string;
+  planType: string;
+  price: number;
+  startDate: string;
+  endDate: string;
+  deliveryTimeSlot?: string;
+  deliveryDays?: string[];
+  selectedMenuItems?: string[];
+  deliveryAddress: {
+    street: string;
+    ward?: string;
+    district?: string;
+    city: string;
+    state?: string;
+    postalCode?: string;
+    phone?: string;
+  };
+  specialInstructions?: string;
+}
+
+export interface ApiResponse<T> {
+  statusCode: number;
+  message: string;
+  data: T;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}

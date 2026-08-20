@@ -134,7 +134,7 @@ export default function CustomersPage() {
                           : '0 ₫'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {new Date(customer.joinDate).toLocaleDateString('vi-VN')}
+                        {new Date(customer.joinDate || customer.createdAt || Date.now()).toLocaleDateString('vi-VN')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button 

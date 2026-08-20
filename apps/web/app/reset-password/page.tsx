@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import ResetPasswordForm from '../components/auth/ResetPasswordForm';
 
 export default function ResetPasswordPage() {
@@ -14,9 +15,11 @@ export default function ResetPasswordPage() {
         </div>
         
         <div className="mt-8">
-          <ResetPasswordForm />
+          <Suspense fallback={<div className="text-center text-sm text-slate-500 py-4">Đang tải biểu mẫu...</div>}>
+            <ResetPasswordForm />
+          </Suspense>
         </div>
       </div>
     </div>
   );
-} 
+}

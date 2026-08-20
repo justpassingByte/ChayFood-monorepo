@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import { promotionService } from '@/lib/services';
@@ -10,12 +10,13 @@ import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 
 interface EditPromotionPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default function EditPromotionPage({ params }: EditPromotionPageProps) {
+  const resolvedParams = use(params);
   const [promotion, setPromotion] = useState<Promotion | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -23,7 +24,7 @@ export default function EditPromotionPage({ params }: EditPromotionPageProps) {
   useEffect(() => {
     const fetchPromotion = async () => {
       try {
-        const response = await promotionService.getById(params.id);
+        const response = await promotionService.getById(resolvedParams.id);
         setPromotion(response.data as Promotion);
       } catch (err: unknown) {
         const error = err as { message?: string };
@@ -35,7 +36,7 @@ export default function EditPromotionPage({ params }: EditPromotionPageProps) {
     };
 
     fetchPromotion();
-  }, [params.id]);
+  }, [resolvedParams.id]);
 
   if (isLoading) {
     return (
@@ -65,4 +66,4 @@ export default function EditPromotionPage({ params }: EditPromotionPageProps) {
       </Suspense>
     </div>
   );
-} 
+}

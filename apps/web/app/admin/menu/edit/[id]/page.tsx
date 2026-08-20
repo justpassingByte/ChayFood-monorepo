@@ -6,15 +6,12 @@ export const metadata: Metadata = {
 };
 
 interface PageProps {
-  params: { id: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export default async function EditMenuItemPage(props: PageProps) {
-  const { id } = props.params;
-  
-  // Add async operation to satisfy Promise requirement
-  await new Promise(resolve => setTimeout(resolve, 0));
+  const { id } = await props.params;
   
   return (
     <div className="space-y-6">
@@ -27,4 +24,4 @@ export default async function EditMenuItemPage(props: PageProps) {
       </div>
     </div>
   );
-} 
+}

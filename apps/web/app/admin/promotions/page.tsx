@@ -242,8 +242,8 @@ export default function PromotionsAdmin() {
                   <TableCell className="font-mono">{promotion.code}</TableCell>
                   <TableCell>
                     {promotion.type === 'percentage' 
-                      ? `${promotion.value}%` 
-                      : `${promotion.value.toLocaleString()} VND`}
+                      ? `${promotion.value ?? promotion.discountValue ?? 0}%` 
+                      : `${(promotion.value ?? promotion.discountValue ?? 0).toLocaleString()} VND`}
                   </TableCell>
                   <TableCell>
                     {promotion.promotionType === 'regular' ? (
