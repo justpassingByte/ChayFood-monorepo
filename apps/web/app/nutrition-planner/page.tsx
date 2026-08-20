@@ -112,7 +112,7 @@ export default function NutritionPlannerPage() {
           setTimeout(() => reject(new Error('timeout')), 1500)
         )
         const res = await Promise.race([menuService.getAll(), timeoutPromise])
-        const items = (Array.isArray(res.data) ? res.data : (res.data as { data?: MenuItem[] })?.data) || fallbackMenuItems
+        const items = (Array.isArray(res?.data) ? res.data : fallbackMenuItems) || fallbackMenuItems
         if (items.length > 0) {
           setMenuItems(items)
         }
