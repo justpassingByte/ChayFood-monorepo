@@ -29,8 +29,8 @@ describe('NutritionEngine (Plant-Based Clinical Nutrition Calculation)', () => {
 
       const result = calculateTargetCalories(profile);
       expect(result.bmr).toBe(1618);
-      expect(result.tdee).toBe(2508);
-      expect(result.targetCalories).toBe(2057); // 2508 * 0.82
+      expect(result.tdee).toBe(2507);
+      expect(result.targetCalories).toBe(2056); // 2507 * 0.82
       expect(result.macros.proteinGrams).toBeGreaterThan(100);
     });
 

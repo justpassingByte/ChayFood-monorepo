@@ -283,43 +283,21 @@ export default function MenuPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-green-50 to-white">
-      {/* Banner Section */}
-      <section className="relative h-[320px] md:h-[420px] flex items-center justify-center overflow-hidden mb-8">
-        <Image
-          src="/banner-menu.jpg"
-          alt="Menu Banner"
-          fill
-          className="object-cover brightness-75"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-green-900/60 to-green-500/30" />
-        <div className="relative z-10 flex flex-col items-center justify-center text-white text-center px-4">
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-4xl md:text-5xl font-bold mb-4 drop-shadow-lg"
-          >
-            Khám phá Thực Đơn Chayfood
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-lg md:text-2xl mb-6 max-w-2xl drop-shadow"
-          >
-            Đa dạng món ăn thuần chay, dinh dưỡng, tươi ngon mỗi ngày. Đặt món dễ dàng, giao tận nơi!
-          </motion.p>
-          <motion.a
-            href="#menu-section"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="btn btn-primary px-8 py-3 rounded-full text-lg font-semibold shadow-lg hover:scale-105 transition-transform"
-          >
-            Khám phá thực đơn
-          </motion.a>
+    <div className="min-h-screen bg-[#FAFBF9] pt-16">
+      {/* Compact Subpage Header - RULE-UI-005 */}
+      <section className="py-6 border-b border-[#E5E9E2] bg-white mb-6">
+        <div className="container-custom flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <span className="text-[11px] font-bold text-[#2D6A4F] uppercase tracking-wider block mb-1">
+              Thực đơn thuần thực vật
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#0F172A]">
+              Danh Mục Món Chay Tinh Tuyển
+            </h1>
+          </div>
+          <p className="text-xs text-[#475569] max-w-md text-left md:text-right">
+            Đổi vị mỗi ngày với nguyên liệu rau củ hữu cơ tươi sạch, minh bạch chỉ số Calo và Đạm trên từng khẩu phần.
+          </p>
         </div>
       </section>
 

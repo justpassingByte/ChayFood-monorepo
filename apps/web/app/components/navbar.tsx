@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { UserIcon } from '@heroicons/react/24/outline'
+import { UserIcon, ShoppingBagIcon } from '@heroicons/react/24/outline'
 import { useCart } from '../hooks/useCart'
 import { useAuth } from '../context/AuthContext'
 import MobileNav from './MobileNav'
@@ -13,8 +13,9 @@ import AuthModal from './auth/AuthModal'
 const navLinks = [
   { href: '/', label: 'Trang chủ' },
   { href: '/menu', label: 'Thực đơn' },
-  { href: '/subscriptions', label: 'Đăng ký gói' },
-  { href: '/about', label: 'Giới thiệu' },
+  { href: '/nutrition-planner', label: 'Dinh dưỡng cá nhân' },
+  { href: '/subscriptions', label: 'Gói ăn định kỳ' },
+  { href: '/party', label: 'Đặt tiệc chay' },
 ]
 
 export default function Navbar() {
@@ -28,219 +29,215 @@ export default function Navbar() {
   const [lastRefresh, setLastRefresh] = useState<number | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
   
-  // Always call hooks first, then conditionally render
   useEffect(() => {
     const checkAuthState = async () => {
-      // Kiểm tra nếu đang refresh, hoặc đã refresh gần đây, tránh lặp vô hạn
-      const now = Date.now();
+      const now = Date.now()
       if (isRefreshing || now - (lastRefresh ?? 0) < 5000) {
-        return;
+        return
       }
       
-      const token = localStorage.getItem('authToken');
-      const shouldRefresh = token && !isAuthenticated && !isLoading;
+      const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null
+      const shouldRefresh = token && !isAuthenticated && !isLoading
       
       if (shouldRefresh) {
-        setIsRefreshing(true);
-        await refreshAuthState();
-        setLastRefresh(Date.now());
-        setIsRefreshing(false);
+        setIsRefreshing(true)
+        await refreshAuthState()
+        setLastRefresh(Date.now())
+        setIsRefreshing(false)
       }
-    };
+    }
     
-    checkAuthState();
-  }, [isAuthenticated, isLoading, refreshAuthState, lastRefresh, isRefreshing]);
+    checkAuthState()
+  }, [isAuthenticated, isLoading, refreshAuthState, lastRefresh, isRefreshing])
   
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 10)
+      setScrolled(window.scrollY > 12)
     }
     
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
-  
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setShowUserMenu(false)
-    }
-    
-    if (showUserMenu) {
-      document.addEventListener('click', handleClickOutside)
-    }
-    
-    return () => {
-      document.removeEventListener('click', handleClickOutside)
-    }
-  }, [showUserMenu])
-  
-  if (pathname?.startsWith('/admin')) {
-    return null
-  }
-  
-  const openSignIn = () => {
-    setAuthModalView('signin')
-    setShowAuthModal(true)
-  }
-  
-  const openSignUp = () => {
-    setAuthModalView('signup')
-    setShowAuthModal(true)
-  }
-  
+
   return (
     <>
       <header 
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled ? 'bg-white shadow-md py-2' : 'bg-white/80 backdrop-blur-sm py-4'
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-180 ${
+          scrolled 
+            ? 'glassmorphism border-b border-[#E5E9E2] shadow-sm py-2.5' 
+            : 'bg-[#FAFBF9]/95 backdrop-blur-sm py-3.5 border-b border-[#E5E9E2]/60'
         }`}
       >
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <Link href="/" className="flex items-center">
-              <span className="text-xl font-bold text-green-600">ChayFood</span>
-            </Link>
-            
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-8">
-              {navLinks.map((link) => (
+        <div className="container-custom flex items-center justify-between">
+          {/* Brand Logo - RULE-UI-001 */}
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="w-9 h-9 rounded-xl bg-[#1B4332] flex items-center justify-center text-[#FFFFFF] shadow-sm group-hover:bg-[#2D6A4F] transition-colors">
+              <span className="font-bold text-lg">C</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="font-bold text-xl text-[#0F172A] tracking-tight leading-none group-hover:text-[#1B4332] transition-colors">
+                ChayFood
+              </span>
+              <span className="text-[10px] tracking-widest uppercase font-semibold text-[#2D6A4F] mt-0.5">
+                Precision Nutrition
+              </span>
+            </div>
+          </Link>
+
+          {/* Desktop Nav Links - RULE-UI-003: No trailing dots */}
+          <nav className="hidden lg:flex items-center gap-7">
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href
+              return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`transition-colors ${
-                    pathname === link.href
-                      ? 'text-green-600 font-medium'
-                      : 'text-gray-700 hover:text-green-600'
+                  className={`text-sm transition-colors relative py-1 ${
+                    isActive 
+                      ? 'text-[#1B4332] font-bold' 
+                      : 'text-[#475569] font-medium hover:text-[#0F172A]'
                   }`}
                 >
                   {link.label}
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeNavTab"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#059669] rounded-full"
+                      transition={{ duration: 0.18 }}
+                    />
+                  )}
                 </Link>
-              ))}
-            </nav>
-            
-            {/* Right side buttons - desktop */}
-            <div className="hidden md:flex items-center space-x-4">
-              {/* Cart button */}
-              <Link
-                href="/cart"
-                className="relative p-2 text-gray-700 hover:text-green-600 transition-colors"
-              >
-                <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.35 2.7A2 2 0 007.48 19h9.04a2 2 0 001.83-1.3L17 13M7 13V6h10v7"
-                  />
-                </svg>
-                {totalItems > 0 && (
-                  <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-green-500 rounded-full">
-                    {totalItems}
+              )
+            })}
+          </nav>
+
+          {/* Right Actions */}
+          <div className="flex items-center gap-3.5">
+            {/* Cart Button */}
+            <Link
+              href="/cart"
+              aria-label="Giỏ hàng"
+              className="relative p-2 rounded-xl text-[#1B4332] hover:bg-[#F3F6F2] transition-colors"
+            >
+              <ShoppingBagIcon className="w-5 h-5" />
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#059669] text-[#FFFFFF] text-[10px] font-bold flex items-center justify-center">
+                  {totalItems > 99 ? '99+' : totalItems}
+                </span>
+              )}
+            </Link>
+
+            {/* Auth Button */}
+            {isLoading ? (
+              <div className="w-8 h-8 rounded-full bg-slate-200 animate-pulse" />
+            ) : isAuthenticated && user ? (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center gap-2 p-1 rounded-full hover:bg-[#F3F6F2] transition-colors focus:outline-none"
+                >
+                  <div className="w-8 h-8 rounded-full bg-[#1B4332] text-[#FFFFFF] font-semibold text-xs flex items-center justify-center">
+                    {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                  <span className="hidden sm:inline text-xs font-semibold text-[#0F172A] max-w-[100px] truncate">
+                    {user.name || 'Tài khoản'}
                   </span>
-                )}
-              </Link>
-              
-              {/* User account */}
-              {isAuthenticated ? (
-                <div className="relative">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setShowUserMenu(!showUserMenu)
-                    }}
-                    className="flex items-center text-gray-700 hover:text-green-600"
-                  >
-                    <UserIcon className="h-6 w-6" />
-                    <span className="ml-2">{user?.name?.split(' ')[0] || 'Account'}</span>
-                  </button>
-                  
-                  {/* Dropdown menu */}
-                  <AnimatePresence>
-                    {showUserMenu && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
-                        className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50"
-                        onClick={(e) => e.stopPropagation()}
+                </button>
+
+                <AnimatePresence>
+                  {showUserMenu && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 6 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 mt-2 w-48 rounded-xl bg-white border border-[#E5E9E2] shadow-lg py-1.5 z-50 text-xs"
+                    >
+                      <div className="px-3.5 py-2 border-b border-[#E5E9E2]">
+                        <p className="font-bold text-[#0F172A] truncate">{user.name}</p>
+                        <p className="text-[11px] text-[#475569] truncate">{user.email}</p>
+                      </div>
+                      
+                      {user.role === 'admin' && (
+                        <Link
+                          href="/admin"
+                          onClick={() => setShowUserMenu(false)}
+                          className="block px-3.5 py-2 font-semibold text-[#1B4332] hover:bg-[#F3F6F2]"
+                        >
+                          Cổng Quản Trị Viên
+                        </Link>
+                      )}
+
+                      <Link
+                        href="/account"
+                        onClick={() => setShowUserMenu(false)}
+                        className="block px-3.5 py-2 text-[#475569] hover:bg-[#F3F6F2]"
                       >
-                        <Link
-                          href="/account/profile"
-                          className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-                          onClick={() => setShowUserMenu(false)}
-                        >
-                          Profile
-                        </Link>
-                        <Link
-                          href="/account/orders"
-                          className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-                          onClick={() => setShowUserMenu(false)}
-                        >
-                          My Orders
-                        </Link>
-                        <Link
-                          href="/account/subscriptions"
-                          className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-                          onClick={() => setShowUserMenu(false)}
-                        >
-                          My Subscriptions
-                        </Link>
-                        <div className="border-t border-gray-100 my-1"></div>
+                        Hồ sơ & Sổ địa chỉ
+                      </Link>
+                      <Link
+                        href="/account/orders"
+                        onClick={() => setShowUserMenu(false)}
+                        className="block px-3.5 py-2 text-[#475569] hover:bg-[#F3F6F2]"
+                      >
+                        Lịch sử đơn hàng
+                      </Link>
+
+                      <div className="border-t border-[#E5E9E2] mt-1 pt-1">
                         <button
+                          type="button"
                           onClick={() => {
                             setShowUserMenu(false)
                             logout()
                           }}
-                          className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
+                          className="w-full text-left px-3.5 py-2 text-red-600 hover:bg-red-50 font-medium"
                         >
-                          Logout
+                          Đăng xuất
                         </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              ) : (
-                <div className="flex items-center space-x-4">
-                  <button
-                    onClick={openSignIn}
-                    className="text-gray-700 hover:text-green-600 transition-colors"
-                  >
-                    Sign In
-                  </button>
-                  <button
-                    onClick={openSignUp}
-                    className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-md transition-colors"
-                  >
-                    Sign Up
-                  </button>
-                </div>
-              )}
-            </div>
-            
-            {/* Hamburger Menu - Mobile */}
-            <div className="md:hidden">
-              <MobileNav 
-                isAuthenticated={isAuthenticated}
-                user={user}
-                cartItemCount={totalItems}
-                onSignIn={openSignIn}
-                onSignUp={openSignUp}
-                onLogout={async () => {
-                  await logout();
-                }}
-              />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthModalView('signin')
+                    setShowAuthModal(true)
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-[#475569] hover:text-[#0F172A] transition-colors"
+                >
+                  Đăng nhập
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthModalView('signup')
+                    setShowAuthModal(true)
+                  }}
+                  className="btn btn-action !px-4 !py-1.5 !text-xs"
+                >
+                  Trải nghiệm
+                </button>
+              </div>
+            )}
+
+            {/* Mobile Navigation */}
+            <div className="lg:hidden">
+              <MobileNav />
             </div>
           </div>
         </div>
       </header>
-      
-      {/* Auth Modal */}
-      <AuthModal 
-        isOpen={showAuthModal} 
-        onClose={() => setShowAuthModal(false)} 
-        initialView={authModalView} 
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        initialView={authModalView}
       />
     </>
   )
-} 
+}
