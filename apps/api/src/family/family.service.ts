@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import * as crypto from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   CreateFamilyMemberDto,
@@ -6,9 +7,11 @@ import {
   JoinFamilyGroupDto,
   UpdateFamilyMemberDto,
 } from './dto/family.dto';
-import { FamilyRelation, ActivityLevel, FamilyMember as SharedFamilyMember } from '@chayfood/shared-types';
+import { ActivityLevel, FamilyMember as SharedFamilyMember, FamilyRelation } from '@chayfood/shared-types';
 import { FamilyNutritionService } from './family-nutrition.service';
 import { FamilyGroup as DbFamilyGroup, FamilyMember as DbFamilyMember } from '@chayfood/db';
+
+const MAX_FAMILY_MEMBERS = 10;
 
 type FamilyGroupWithMembers = DbFamilyGroup & {
   members?: DbFamilyMember[];
@@ -20,6 +23,14 @@ export class FamilyService {
     private prisma: PrismaService,
     private nutritionService: FamilyNutritionService,
   ) {}
+
+  /**
+   * 🔑 Tạo Mã Mời Gia Đình 8 Ký Tự Ngẫu Nhiên Bảo Mật Cao (Chống Brute-Force)
+   */
+  private generateSecureInviteCode(): string {
+    const randomHex = crypto.randomBytes(4).toString('hex').toUpperCase();
+    return `FAM-${randomHex}`;
+  }
 
   async getOrCreateFamilyGroup(userId: string) {
     let group = await this.prisma.familyGroup.findFirst({
@@ -38,7 +49,7 @@ export class FamilyService {
 
     if (!group) {
       const user = await this.prisma.user.findUnique({ where: { id: userId } });
-      const inviteCode = `CF-FAM-${Math.floor(1000 + Math.random() * 9000)}`;
+      const inviteCode = this.generateSecureInviteCode();
 
       group = await this.prisma.familyGroup.create({
         data: {
@@ -72,6 +83,11 @@ export class FamilyService {
   async addMember(userId: string, dto: CreateFamilyMemberDto) {
     const group = await this.getOrCreateFamilyGroup(userId);
 
+    // 🛡️ Chặn Bơm Thành Viên Ma (Family Member Cap DoS Defense)
+    if (group.members && group.members.length >= MAX_FAMILY_MEMBERS) {
+      throw new BadRequestException(`Nhóm gia đình đã đạt giới hạn tối đa ${MAX_FAMILY_MEMBERS} thành viên`);
+    }
+
     const calculatedCalories = this.nutritionService.estimateDailyCalories(
       dto.age,
       dto.gender,
@@ -103,6 +119,8 @@ export class FamilyService {
 
   async updateMember(userId: string, memberId: string, dto: UpdateFamilyMemberDto) {
     const group = await this.getOrCreateFamilyGroup(userId);
+
+    // 🛡️ Chống Lỗ Hổng IDOR: Xác thực thành viên thực sự thuộc về nhóm gia đình của user
     const existing = await this.prisma.familyMember.findFirst({
       where: { id: memberId, familyGroupId: group.id },
     });
@@ -142,6 +160,8 @@ export class FamilyService {
 
   async deleteMember(userId: string, memberId: string) {
     const group = await this.getOrCreateFamilyGroup(userId);
+
+    // 🛡️ Chống Lỗ Hổng IDOR: Xác thực quyền sở hữu nhóm
     const existing = await this.prisma.familyMember.findFirst({
       where: { id: memberId, familyGroupId: group.id },
     });
@@ -150,7 +170,8 @@ export class FamilyService {
       throw new NotFoundException(`Không tìm thấy thành viên với mã ${memberId} trong gia đình`);
     }
 
-    if (existing.relation === FamilyRelation.SELF && existing.userId === userId) {
+    // 👑 Bất Biến Chủ Hộ (Self-Demotion / Last Admin Standing Defense)
+    if (existing.relation === FamilyRelation.SELF || existing.userId === userId) {
       throw new BadRequestException('Không thể xóa tài khoản chủ hộ khỏi nhóm gia đình');
     }
 
@@ -168,9 +189,15 @@ export class FamilyService {
       throw new NotFoundException('Mã mời gia đình không hợp lệ hoặc không tồn tại');
     }
 
+    // 🛡️ Chặn Bơm Thành Viên Quá Giới Hạn
+    if (targetGroup.members.length >= MAX_FAMILY_MEMBERS) {
+      throw new BadRequestException(`Nhóm gia đình đã đạt giới hạn tối đa ${MAX_FAMILY_MEMBERS} thành viên`);
+    }
+
+    // 🛡️ Chống Gia Nhập Trùng Lặp (Duplicate Join Defense)
     const isAlreadyIn = targetGroup.members.some((m) => m.userId === userId);
     if (isAlreadyIn) {
-      throw new BadRequestException('Bạn đã là thành viên trong gia đình này');
+      throw new BadRequestException('Bạn đã là thành viên trong nhóm gia đình này');
     }
 
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
@@ -180,7 +207,7 @@ export class FamilyService {
         familyGroupId: targetGroup.id,
         userId,
         name: user?.name || 'Thành Viên Mới',
-        relation: dto.relation,
+        relation: dto.relation || FamilyRelation.OTHER,
         isManaged: false,
       },
     });
