@@ -68,4 +68,15 @@ describe('UserService (Profile & Addresses)', () => {
       expect(res.data.name).toBe('Nguyễn Văn B');
     });
   });
+
+  describe('changePassword', () => {
+    it('ném BadRequestException khi mật khẩu mới trùng với mật khẩu hiện tại', async () => {
+      await expect(
+        service.changePassword('user-1', {
+          currentPassword: 'Password@123',
+          newPassword: 'Password@123',
+        }),
+      ).rejects.toThrow('Mật khẩu mới phải khác mật khẩu hiện tại');
+    });
+  });
 });

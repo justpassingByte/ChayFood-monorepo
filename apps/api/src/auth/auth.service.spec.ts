@@ -2,11 +2,21 @@ import { AuthService } from './auth.service';
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { Role } from '@chayfood/db';
+import { PrismaService } from '../prisma/prisma.service';
+import { JwtService } from '@nestjs/jwt';
 
 describe('AuthService', () => {
   let service: AuthService;
-  let mockPrisma: any;
-  let mockJwtService: any;
+  let mockPrisma: {
+    user: {
+      findUnique: jest.Mock;
+      create: jest.Mock;
+    };
+  };
+  let mockJwtService: {
+    sign: jest.Mock;
+    verify: jest.Mock;
+  };
 
   beforeEach(() => {
     mockPrisma = {
@@ -17,8 +27,12 @@ describe('AuthService', () => {
     };
     mockJwtService = {
       sign: jest.fn().mockReturnValue('mock-jwt-token'),
+      verify: jest.fn().mockReturnValue({ sub: 'u-1', email: 'test@chayfood.vn', role: Role.USER }),
     };
-    service = new AuthService(mockPrisma, mockJwtService);
+    service = new AuthService(
+      mockPrisma as unknown as PrismaService,
+      mockJwtService as unknown as JwtService,
+    );
   });
 
   describe('register', () => {
@@ -89,6 +103,38 @@ describe('AuthService', () => {
           password: 'WrongPassword',
         }),
       ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('ném UnauthorizedException an toàn khi email không tồn tại (Timing Safe)', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.login({
+          email: 'nonexistent@chayfood.vn',
+          password: 'AnyPassword@123',
+        }),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+  });
+
+  describe('checkStatus', () => {
+    it('trả về isAuthenticated false khi không có auth header', async () => {
+      const result = await service.checkStatus(undefined);
+      expect(result.isAuthenticated).toBe(false);
+      expect(result.user).toBeNull();
+    });
+
+    it('trả về isAuthenticated true khi token hợp lệ', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u-1',
+        email: 'test@chayfood.vn',
+        name: 'Test User',
+        role: Role.USER,
+      });
+
+      const result = await service.checkStatus('Bearer valid-jwt-token');
+      expect(result.isAuthenticated).toBe(true);
+      expect(result.user?.email).toBe('test@chayfood.vn');
     });
   });
 });

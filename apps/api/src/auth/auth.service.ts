@@ -6,6 +6,13 @@ import { RegisterDto, LoginDto } from './dto/auth.dto';
 import { Role } from '@chayfood/db';
 import { getJwtSecret } from './jwt.strategy';
 
+/**
+ * Dummy Hash chuẩn Bcrypt cost 10 để chống tấn công phân tích độ trễ (Timing Attack / Email Enumeration).
+ * Đảm bảo thời gian phản hồi bằng nhau (~80-100ms) bất kể email có tồn tại trong hệ thống hay không.
+ */
+const TIMING_SAFE_DUMMY_HASH =
+  '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -57,12 +64,11 @@ export class AuthService {
       where: { email: dto.email.toLowerCase().trim() },
     });
 
-    if (!user || !user.passwordHash) {
-      throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
-    }
+    // Phòng thủ Timing Attack: Luôn thực hiện bcrypt.compare ngay cả khi user không tồn tại trong DB
+    const passwordHash = user?.passwordHash || TIMING_SAFE_DUMMY_HASH;
+    const isMatch = await bcrypt.compare(dto.password, passwordHash);
 
-    const isMatch = await bcrypt.compare(dto.password, user.passwordHash);
-    if (!isMatch) {
+    if (!user || !user.passwordHash || !isMatch) {
       throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
     }
 
@@ -81,6 +87,31 @@ export class AuthService {
       },
       token,
     };
+  }
+
+  async checkStatus(authHeader?: string) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return { isAuthenticated: false, user: null };
+    }
+
+    const token = authHeader.split(' ')[1];
+    try {
+      const payload = this.jwtService.verify<{ sub: string; email: string; role: Role }>(token, {
+        secret: getJwtSecret(),
+      });
+      const user = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+        select: { id: true, email: true, name: true, phone: true, address: true, role: true, picture: true },
+      });
+
+      if (!user) {
+        return { isAuthenticated: false, user: null };
+      }
+
+      return { isAuthenticated: true, user };
+    } catch {
+      return { isAuthenticated: false, user: null };
+    }
   }
 
   private generateToken(userId: string, email: string, role: Role): string {
