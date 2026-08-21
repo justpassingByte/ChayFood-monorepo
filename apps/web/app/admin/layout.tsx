@@ -1,91 +1,166 @@
-'use client'
+'use client';
 
-import { ReactNode, useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { ReactNode, useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
+import {
+  ArrowTopRightOnSquareIcon,
+  BellIcon,
+  ChevronRightIcon,
+} from '@heroicons/react/24/outline';
 import AdminSidebar from '../components/admin/AdminSidebar';
 import { useAuth } from '../context/AuthContext';
-import AuthModal from '../components/auth/AuthModal';
 
-export default function AdminLayout({
-  children,
-}: {
+interface AdminLayoutProps {
   children: ReactNode;
-}) {
-  const { isAuthenticated, isAdmin, isLoading } = useAuth();
+}
+
+const routeNameMap: Record<string, string> = {
+  admin: 'Tổng quan',
+  orders: 'Quản lý đơn hàng',
+  menu: 'Thực đơn & Món ăn',
+  promotions: 'Chương trình ưu đãi',
+  customers: 'Danh sách khách hàng',
+  analytics: 'Báo cáo & Phân tích',
+  revenue: 'Báo cáo doanh thu',
+  settings: 'Cài đặt hệ thống',
+  create: 'Thêm mới',
+  edit: 'Chỉnh sửa',
+};
+
+export default function AdminLayout({ children }: AdminLayoutProps) {
+  const { isAuthenticated, isAdmin, isLoading, user } = useAuth();
   const router = useRouter();
-  const [showAuthModal, setShowAuthModal] = useState(false);
+  const pathname = usePathname();
 
-  // Kiểm tra xác thực khi component mount
+  // Strict Enterprise RBAC Guard: Redirect unauthorized users to home
   useEffect(() => {
-    // Nếu đã load xong và không có xác thực hoặc không phải admin, hiển thị form đăng nhập
-    if (!isLoading && !isAuthenticated) {
-      setShowAuthModal(true);
-    }
-  }, [isAuthenticated, isLoading]);
-
-  // Chuyển hướng về trang chủ nếu không phải admin
-  useEffect(() => {
-    if (!isLoading && isAuthenticated && !isAdmin) {
-      router.push('/');
+    if (!isLoading) {
+      if (!isAuthenticated || !isAdmin) {
+        router.replace('/');
+      }
     }
   }, [isAuthenticated, isAdmin, isLoading, router]);
 
-  // Khi đang loading, hiển thị loading indicator
+  // Generate dynamic breadcrumb segments
+  const pathSegments = pathname.split('/').filter(Boolean);
+  const breadcrumbs = pathSegments.map((segment, index) => {
+    const href = '/' + pathSegments.slice(0, index + 1).join('/');
+    const title = routeNameMap[segment] || segment;
+    const isLast = index === pathSegments.length - 1;
+    return { title, href, isLast };
+  });
+
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-green-500 border-r-transparent"></div>
-          <p className="mt-4 text-gray-600">Đang kiểm tra xác thực...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Nếu chưa xác thực, hiển thị trang đăng nhập
-  if (!isAuthenticated) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-100">
-        <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-lg">
-          <h1 className="mb-6 text-center text-2xl font-bold text-gray-800">Admin Login</h1>
-          <p className="mb-6 text-center text-gray-600">
-            Bạn cần đăng nhập với quyền admin để truy cập trang này
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-100">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="w-10 h-10 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin" />
+          <p className="text-sm font-medium text-slate-400">
+            Đang xác thực quyền quản trị viên...
           </p>
-          <button
-            onClick={() => setShowAuthModal(true)}
-            className="w-full rounded-md bg-green-500 py-2 px-4 text-white hover:bg-green-600"
-          >
-            Đăng nhập
-          </button>
-          <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} initialView="signin" />
         </div>
       </div>
     );
   }
 
-  // Nếu đã xác thực và là admin, hiển thị layout admin
+  if (!isAuthenticated || !isAdmin) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-100">
+        <div className="flex flex-col items-center space-y-4 text-center max-w-sm px-6">
+          <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center">
+            <span className="text-xl font-bold">!</span>
+          </div>
+          <h2 className="text-lg font-semibold text-white">Yêu cầu quyền Quản trị viên</h2>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Bạn không có quyền truy cập vào cổng quản trị này. Đang chuyển hướng về trang chủ...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <>
-      {/* CSS to hide navbar and footer in admin section */}
-      <style jsx global>{`
-        /* Remove top padding from main content in admin area */
-        main.pt-20 {
-          padding-top: 0 !important;
-        }
-        
-        /* Hide the main site header and footer in admin section */
-        body > div > header,
-        body > div > footer {
-          display: none !important;
-        }
-      `}</style>
-      
-      <div className="flex min-h-screen bg-gray-100">
-        <AdminSidebar />
-        <main className="flex-1 p-6 overflow-auto">
+    <div className="flex h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
+      {/* Collapsible Luxury Admin Sidebar */}
+      <AdminSidebar />
+
+      {/* Main View Area with Dedicated Topbar */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Dedicated Admin Topbar */}
+        <header className="h-16 px-6 bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 flex items-center justify-between z-10 select-none">
+          {/* Breadcrumb Navigation */}
+          <nav className="flex items-center space-x-2 text-xs font-medium text-slate-400" aria-label="Breadcrumb">
+            <Link
+              href="/admin"
+              className="text-slate-300 hover:text-emerald-400 transition-colors flex items-center"
+            >
+              Cổng Quản Trị
+            </Link>
+            {breadcrumbs.slice(1).map((crumb) => (
+              <div key={crumb.href} className="flex items-center space-x-2">
+                <ChevronRightIcon className="w-3.5 h-3.5 text-slate-600" />
+                {crumb.isLast ? (
+                  <span className="text-emerald-400 font-semibold truncate max-w-[200px]">
+                    {crumb.title}
+                  </span>
+                ) : (
+                  <Link
+                    href={crumb.href}
+                    className="text-slate-400 hover:text-slate-200 transition-colors truncate max-w-[150px]"
+                  >
+                    {crumb.title}
+                  </Link>
+                )}
+              </div>
+            ))}
+          </nav>
+
+          {/* Quick Action Utilities */}
+          <div className="flex items-center space-x-4">
+            {/* Storefront Quick Switcher */}
+            <Link
+              href="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-xl text-xs font-medium bg-slate-800/70 hover:bg-emerald-500/10 text-slate-300 hover:text-emerald-300 border border-slate-700/60 hover:border-emerald-500/30 transition-all duration-150 shadow-sm"
+              title="Mở giao diện khách hàng ở tab mới"
+            >
+              <span>Xem Cửa Hàng</span>
+              <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
+            </Link>
+
+            {/* Notification Indicator */}
+            <button
+              className="p-2 rounded-xl bg-slate-800/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors border border-slate-700/50 relative"
+              title="Thông báo hệ thống"
+            >
+              <BellIcon className="w-4 h-4" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-slate-900 animate-pulse" />
+            </button>
+
+            {/* Admin User Chip */}
+            <div className="flex items-center space-x-2.5 pl-3 border-l border-slate-800">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold text-xs shadow-md shadow-emerald-950/50">
+                {user?.name?.charAt(0)?.toUpperCase() || 'A'}
+              </div>
+              <div className="hidden sm:flex flex-col text-left">
+                <span className="text-xs font-medium text-slate-200 leading-tight">
+                  {user?.name || 'Quản Trị Viên'}
+                </span>
+                <span className="text-[10px] text-emerald-400 font-mono tracking-tight">
+                  ADMINISTRATOR
+                </span>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Scrollable Main Admin Content Area */}
+        <main className="flex-1 overflow-y-auto p-6 bg-slate-950 custom-scrollbar">
           {children}
         </main>
       </div>
-    </>
+    </div>
   );
-} 
+}
