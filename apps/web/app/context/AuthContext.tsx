@@ -74,9 +74,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        // Verify token with API with timeout
+        // Xác thực token với API (Giới hạn timeout 4000ms để chống treo luồng nhưng đủ kiên nhẫn với mạng 3G/4G)
         const timeoutPromise = new Promise<{ user?: User; isAuthenticated?: boolean }>((_, reject) =>
-          setTimeout(() => reject(new Error('Auth check timeout')), 2000)
+          setTimeout(() => reject(new Error('Auth check timeout')), 4000)
         );
 
         const response = await Promise.race([
@@ -110,14 +110,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             localStorage.removeItem('authToken');
           }
         } else {
+          // Token bị từ chối rõ ràng bởi máy chủ (401 / Invalid) -> Xóa phiên đăng nhập
           setUser(null);
           updateCookies(null, null);
           localStorage.removeItem('authToken');
         }
-      } catch {
-        // In case API is unreachable, keep cached user if present or clear
+      } catch (error) {
+        /**
+         * Graceful Network Fallback: Khi xảy ra lỗi mạng chập chờn hoặc timeout kết nối,
+         * tuyệt đối KHÔNG tự ý xóa token của khách hàng. Duy trì trạng thái đăng nhập từ
+         * bộ nhớ đệm (localStorage) để đảm bảo trải nghiệm người dùng không bị gián đoạn.
+         */
         const cachedUser = localStorage.getItem('currentUser');
-        if (!cachedUser) {
+        if (cachedUser) {
+          try {
+            setUser(JSON.parse(cachedUser));
+          } catch {
+            // Không parse được cache
+          }
+        } else {
           setUser(null);
           updateCookies(null, null);
         }
