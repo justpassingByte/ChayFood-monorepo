@@ -35,13 +35,13 @@ export default function MobileNav({
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const { totalItems } = useCart();
-  const { isAuthenticated: authIsAuthenticated, logout: authLogout } = useAuth();
+  const { isAuthenticated: authIsAuthenticated, logout: authLogout, user: authUser } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalView, setAuthModalView] = useState<'signin' | 'signup'>('signin');
 
   // Use props if provided, otherwise fall back to context values
   const isAuthenticated = propsIsAuthenticated !== undefined ? propsIsAuthenticated : authIsAuthenticated;
-  const user = propsUser;
+  const user = propsUser !== undefined ? propsUser : authUser;
   const totalCartItems = propsCartItemCount !== undefined ? propsCartItemCount : totalItems;
   const logout = propsOnLogout || authLogout;
   
@@ -56,10 +56,10 @@ export default function MobileNav({
   ];
   
   const adminMenuItems = [
-    { href: '/admin/dashboard', label: 'Dashboard' },
-    { href: '/admin/orders', label: 'Manage Orders' },
-    { href: '/admin/menu', label: 'Manage Menu' },
-    { href: '/admin/users', label: 'Manage Users' },
+    { href: '/admin/dashboard', label: 'Bảng tổng quan' },
+    { href: '/admin/orders', label: 'Quản lý đơn hàng' },
+    { href: '/admin/menu', label: 'Quản lý thực đơn' },
+    { href: '/admin/users', label: 'Quản lý người dùng' },
   ];
   
   const menuItems = isAdmin ? adminMenuItems : regularMenuItems;

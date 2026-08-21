@@ -6,8 +6,16 @@ export class HttpLoggerMiddleware implements NestMiddleware {
   private readonly logger = new Logger('HTTP');
 
   use(req: Request, res: Response, next: NextFunction): void {
-    const { method, originalUrl, ip } = req;
-    const userAgent = req.get('user-agent') || '-';
+    const { method, originalUrl } = req;
+    /**
+     * Trích xuất địa chỉ IP thực tế của Client khi ứng dụng đứng sau Reverse Proxy / Cloudflare / Nginx.
+     * Thứ tự ưu tiên: CF-Connecting-IP -> X-Forwarded-For -> req.ip
+     */
+    const clientIp =
+      (req.headers['cf-connecting-ip'] as string) ||
+      ((req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim()) ||
+      req.ip ||
+      '-';
     const startTime = Date.now();
 
     res.on('finish', () => {
@@ -32,7 +40,7 @@ export class HttpLoggerMiddleware implements NestMiddleware {
         statusColor = cyan;
       }
 
-      const formattedLog = `${bold}${method}${reset} ${originalUrl} ${statusColor}${bold}${statusCode}${reset} - ${duration}ms (${contentLength} bytes) [${ip}]`;
+      const formattedLog = `${bold}${method}${reset} ${originalUrl} ${statusColor}${bold}${statusCode}${reset} - ${duration}ms (${contentLength} bytes) [${clientIp}]`;
 
       if (statusCode >= 500) {
         this.logger.error(formattedLog);

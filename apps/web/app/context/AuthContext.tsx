@@ -3,6 +3,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authService } from '../lib/services';
 import Cookies from 'js-cookie';
+import { getSafeRedirectUrl } from '../lib/auth/safeRedirect';
+
+export { getSafeRedirectUrl };
 
 interface User {
   _id: string;
