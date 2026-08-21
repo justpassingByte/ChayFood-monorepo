@@ -15,6 +15,7 @@ import {
   ChevronDoubleLeftIcon,
   ChevronDoubleRightIcon,
   SparklesIcon,
+  BeakerIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../context/AuthContext';
 import { useAdminLayout } from '../../context/AdminLayoutContext';
@@ -29,6 +30,7 @@ const navigation: NavigationItem[] = [
   { name: 'Tổng quan', href: '/admin', icon: HomeIcon },
   { name: 'Đơn hàng', href: '/admin/orders', icon: ClipboardDocumentListIcon },
   { name: 'Thực đơn & Món', href: '/admin/menu', icon: ShoppingBagIcon },
+  { name: 'Công thức & Kho', href: '/admin/recipes', icon: BeakerIcon },
   { name: 'Ưu đãi', href: '/admin/promotions', icon: TagIcon },
   { name: 'Khách hàng', href: '/admin/customers', icon: UsersIcon },
   { name: 'Báo cáo & Phân tích', href: '/admin/analytics', icon: ChartBarIcon },

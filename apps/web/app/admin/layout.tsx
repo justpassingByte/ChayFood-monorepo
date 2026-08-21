@@ -21,6 +21,7 @@ const routeNameMap: Record<string, string> = {
   admin: 'Tổng quan',
   orders: 'Quản lý đơn hàng',
   menu: 'Thực đơn & Món ăn',
+  recipes: 'Công thức & Định lượng',
   promotions: 'Chương trình ưu đãi',
   customers: 'Danh sách khách hàng',
   analytics: 'Báo cáo & Phân tích',

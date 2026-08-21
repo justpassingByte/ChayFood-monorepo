@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PlusIcon, PencilIcon, TrashIcon, XMarkIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import Link from 'next/link';
+import { PlusIcon, PencilIcon, TrashIcon, XMarkIcon, SparklesIcon, BeakerIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 import { categoryService, Category } from '../../services/categoryService';
 import { menuService } from '@/lib/services';
@@ -366,16 +367,26 @@ export default function MenuPage() {
             </div>
 
             <div className="p-4 pt-0 flex items-center justify-between border-t border-slate-800/60 mt-3 pt-3">
-              <button
-                onClick={() => handleToggleAvailability(item._id, item.isAvailable ?? true)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition ${
-                  item.isAvailable ?? true
-                    ? 'bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/20'
-                    : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20'
-                }`}
-              >
-                {item.isAvailable ?? true ? 'Tạm ngưng' : 'Mở bán'}
-              </button>
+              <div className="flex items-center space-x-1.5">
+                <button
+                  onClick={() => handleToggleAvailability(item._id, item.isAvailable ?? true)}
+                  className={`px-2 py-1 rounded-lg text-[11px] font-medium transition ${
+                    item.isAvailable ?? true
+                      ? 'bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/20'
+                      : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20'
+                  }`}
+                >
+                  {item.isAvailable ?? true ? 'Tạm ngưng' : 'Mở bán'}
+                </button>
+                <Link
+                  href="/admin/recipes"
+                  className="px-2 py-1 rounded-lg text-[11px] font-medium text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 transition flex items-center space-x-1"
+                  title="Xem định lượng nguyên liệu & giá vốn"
+                >
+                  <BeakerIcon className="w-3 h-3" />
+                  <span>BOM</span>
+                </Link>
+              </div>
               <div className="flex gap-1.5">
                 <button
                   onClick={() => handleEditMenuItem(item)}
