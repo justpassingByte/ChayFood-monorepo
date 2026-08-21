@@ -1,38 +1,51 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+interface JwtPayload {
+  sub?: string;
+  email?: string;
+  role?: string;
+  exp?: number;
+}
+
+function parseJwtPayload(token: string): JwtPayload | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const jsonStr = atob(base64);
+    return JSON.parse(jsonStr) as JwtPayload;
+  } catch {
+    return null;
+  }
+}
+
 export function middleware(request: NextRequest) {
-  // Get the pathname of the request
   const pathname = request.nextUrl.pathname;
-  
-  // Only process the root path '/'
-  if (pathname === '/') {
-    // Get the auth token from cookies
-    const authToken = request.cookies.get('authToken')?.value;
-    
-    // Check if there's a current user cookie that contains role information
-    const currentUserCookie = request.cookies.get('currentUser')?.value;
-    let isAdmin = false;
-    
-    if (currentUserCookie) {
-      try {
-        const userData = JSON.parse(currentUserCookie);
-        isAdmin = userData.role?.toUpperCase() === 'ADMIN';
-      } catch (error) {
-        console.error('Error parsing currentUser cookie:', error);
-      }
-    }
-    
-    // If the user is authenticated and is an admin, redirect to admin dashboard
-    if (authToken && isAdmin) {
-      return NextResponse.redirect(new URL('/admin', request.url));
+  const authToken = request.cookies.get('authToken')?.value;
+  const payload = authToken ? parseJwtPayload(authToken) : null;
+  const isTokenExpired = payload?.exp ? payload.exp * 1000 < Date.now() : false;
+  const isValidAuth = !!payload && !isTokenExpired;
+  const isAdmin = isValidAuth && payload.role?.toUpperCase() === 'ADMIN';
+
+  // 1. Bảo vệ các tuyến đường Quản trị viên (/admin và /admin/*)
+  if (pathname.startsWith('/admin')) {
+    if (!isValidAuth || !isAdmin) {
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
     }
   }
-  
+
+  // 2. Tự động chuyển hướng Admin từ trang chủ '/' sang trang quản trị '/admin'
+  if (pathname === '/' && isValidAuth && isAdmin) {
+    return NextResponse.redirect(new URL('/admin', request.url));
+  }
+
   return NextResponse.next();
 }
 
-// Only run middleware on homepage requests
+// Khai báo matcher bao phủ trang chủ và toàn bộ tuyến đường quản trị
 export const config = {
-  matcher: '/',
+  matcher: ['/', '/admin/:path*'],
 }; 

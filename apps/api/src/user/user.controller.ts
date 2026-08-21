@@ -72,8 +72,11 @@ export class UserController {
 
   @Delete('addresses/:id')
   @ApiOperation({ summary: 'Xóa địa chỉ giao hàng' })
-  deleteAddress() {
-    return { status: 'success', message: 'Đã xóa địa chỉ thành công' };
+  deleteAddress(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') addressId: string,
+  ) {
+    return this.userService.deleteAddress(user.id, addressId);
   }
 
   @Put('preference')

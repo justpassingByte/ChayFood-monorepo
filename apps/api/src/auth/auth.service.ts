@@ -4,6 +4,7 @@ import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
 import { Role } from '@chayfood/db';
+import { getJwtSecret } from './jwt.strategy';
 
 @Injectable()
 export class AuthService {
@@ -18,7 +19,7 @@ export class AuthService {
     });
 
     if (existing) {
-      throw new ConflictException('Email này đã được sử dụng.');
+      throw new ConflictException('Email này đã được sử dụng');
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
@@ -57,12 +58,12 @@ export class AuthService {
     });
 
     if (!user || !user.passwordHash) {
-      throw new UnauthorizedException('Email hoặc mật khẩu không chính xác.');
+      throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
     }
 
     const isMatch = await bcrypt.compare(dto.password, user.passwordHash);
     if (!isMatch) {
-      throw new UnauthorizedException('Email hoặc mật khẩu không chính xác.');
+      throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
     }
 
     const token = this.generateToken(user.id, user.email, user.role);
@@ -86,7 +87,7 @@ export class AuthService {
     return this.jwtService.sign(
       { sub: userId, email, role },
       {
-        secret: process.env.JWT_SECRET || 'super_secret_chayfood_jwt_token_2026',
+        secret: getJwtSecret(),
         expiresIn: '7d',
       },
     );

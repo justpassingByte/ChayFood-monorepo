@@ -142,6 +142,24 @@ export class UserService {
     };
   }
 
+  async deleteAddress(userId: string, _addressId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, address: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Không tìm thấy thông tin người dùng');
+    }
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { address: null },
+    });
+
+    return { status: 'success', message: 'Đã xóa địa chỉ thành công' };
+  }
+
   async updatePreference(userId: string, dto: UpdateUserPreferenceDto) {
     const preference = await this.prisma.userPreference.upsert({
       where: { userId },

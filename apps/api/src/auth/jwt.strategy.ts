@@ -29,13 +29,25 @@ export const CurrentUser = createParamDecorator(
   },
 );
 
+/**
+ * Lấy JWT Secret an toàn từ biến môi trường.
+ * Áp dụng cơ chế Fail-Fast ở môi trường Production để ngăn chặn việc sử dụng fallback secret không an toàn.
+ */
+export function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret && process.env.NODE_ENV === 'production') {
+    throw new Error('FATAL: Biến môi trường JWT_SECRET chưa được cấu hình trên môi trường Production');
+  }
+  return secret || 'dev_secret_chayfood_jwt_token_local_only';
+}
+
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private prisma: PrismaService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET || 'super_secret_chayfood_jwt_token_2026',
+      secretOrKey: getJwtSecret(),
     });
   }
 

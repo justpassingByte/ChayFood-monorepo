@@ -2,7 +2,7 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, UseGuards } fro
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
-import { JwtAuthGuard, CurrentUser } from './jwt.strategy';
+import { JwtAuthGuard, CurrentUser, getJwtSecret } from './jwt.strategy';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import { PrismaService } from '../prisma/prisma.service';
@@ -50,7 +50,7 @@ export class AuthController {
     const token = authHeader.split(' ')[1];
     try {
       const payload = this.jwtService.verify(token, {
-        secret: process.env.JWT_SECRET || 'super_secret_chayfood_jwt_token_2026',
+        secret: getJwtSecret(),
       });
       const user = await this.prisma.user.findUnique({
         where: { id: payload.sub },
