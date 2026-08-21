@@ -158,5 +158,47 @@ describe('OrdersService', () => {
 
       expect(updated.status).toBe(OrderStatus.CONFIRMED);
     });
+
+    it('phải ném BadRequestException nếu chuyển trạng thái vi phạm State Machine (ví dụ: PENDING -> PREPARING)', async () => {
+      mockPrisma.order.findUnique.mockResolvedValue({
+        id: 'order-20',
+        status: OrderStatus.PENDING,
+      });
+
+      await expect(
+        service.updateStatus('order-20', {
+          status: OrderStatus.PREPARING,
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('cancelOrder', () => {
+    it('cho phép user hủy khi đơn đang ở trạng thái PENDING', async () => {
+      mockPrisma.order.findUnique.mockResolvedValue({
+        id: 'order-30',
+        userId: 'user-1',
+        status: OrderStatus.PENDING,
+      });
+
+      mockPrisma.order.update.mockResolvedValue({
+        id: 'order-30',
+        status: OrderStatus.CANCELLED,
+      });
+
+      const result = await service.cancelOrder('order-30', 'user-1');
+      expect(result.status).toBe(OrderStatus.CANCELLED);
+    });
+
+    it('từ chối user hủy khi đơn đã CONFIRMED', async () => {
+      mockPrisma.order.findUnique.mockResolvedValue({
+        id: 'order-31',
+        userId: 'user-1',
+        status: OrderStatus.CONFIRMED,
+      });
+
+      await expect(service.cancelOrder('order-31', 'user-1')).rejects.toThrow(BadRequestException);
+    });
   });
 });
+

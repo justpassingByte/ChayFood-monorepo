@@ -1,26 +1,25 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import api from '@/lib/services/apiClient';
 import Link from 'next/link';
+import { Eye, Loader2 } from 'lucide-react';
+import { orderService, Order } from '@/services/orderService';
+import { ORDER_STATUS_LABELS, OrderStatus } from '@chayfood/shared-types';
 
-type Order = {
-  id: string;
-  customerName: string;
-  date: string;
-  totalAmount: number;
-  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered' | 'cancelled';
-  items: number;
-  paymentMethod: string;
+const statusBadgeStyles: Record<string, string> = {
+  PENDING: 'bg-amber-50 text-amber-900 border-amber-200',
+  CONFIRMED: 'bg-blue-50 text-blue-900 border-blue-200',
+  PREPARING: 'bg-purple-50 text-purple-900 border-purple-200',
+  READY: 'bg-indigo-50 text-indigo-900 border-indigo-200',
+  DELIVERING: 'bg-cyan-50 text-cyan-900 border-cyan-200',
+  DELIVERED: 'bg-emerald-50 text-emerald-900 border-emerald-200',
+  CANCELLED: 'bg-red-50 text-red-900 border-red-200',
 };
 
-const statusColors = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  confirmed: 'bg-blue-100 text-blue-800',
-  preparing: 'bg-indigo-100 text-indigo-800',
-  ready: 'bg-purple-100 text-purple-800',
-  delivered: 'bg-green-100 text-green-800',
-  cancelled: 'bg-red-100 text-red-800',
+const paymentBadgeStyles: Record<string, string> = {
+  PENDING: 'bg-amber-100 text-amber-900',
+  PAID: 'bg-emerald-100 text-emerald-900',
+  FAILED: 'bg-red-100 text-red-900',
 };
 
 export default function OrdersTable() {
@@ -31,12 +30,10 @@ export default function OrdersTable() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await api.get('/admin/recent-orders');
-        const apiData = response.data.data || response.data.items || response.data || [];
-        setOrders(apiData as Order[]);
+        const data = await orderService.getAll({ sortBy: 'createdAt', sortOrder: 'desc' });
+        setOrders(data.slice(0, 10));
         setLoading(false);
       } catch (err: unknown) {
-        console.error('Error fetching recent orders:', err);
         setError('Không thể tải danh sách đơn hàng gần đây');
         setLoading(false);
         setOrders([]);
@@ -47,116 +44,122 @@ export default function OrdersTable() {
   }, []);
 
   if (loading) {
-    return <div className="flex justify-center items-center h-48">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-48 space-x-2">
+        <Loader2 className="w-5 h-5 animate-spin text-emerald-600" />
+        <span className="text-xs text-slate-500 font-medium">Đang tải...</span>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="text-red-500">Error: {error}</div>;
+    return <div className="text-xs text-red-500 font-bold p-4">{error}</div>;
   }
 
   if (orders.length === 0) {
-    return <div className="flex justify-center items-center h-48">No recent orders available</div>;
+    return (
+      <div className="flex justify-center items-center h-48 text-xs text-slate-400 font-medium">
+        Chưa có đơn hàng nào
+      </div>
+    );
   }
 
-  // Format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('vi-VN', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
+      day: '2-digit',
+      month: '2-digit',
     }).format(date);
   };
 
-  // Format number as VND currency
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND',
-      minimumFractionDigits: 0,
     }).format(value);
   };
 
   return (
     <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+      <table className="min-w-full text-left text-xs divide-y divide-slate-100">
+        <thead className="bg-slate-50/80 text-slate-500 font-bold uppercase tracking-wider">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Order ID
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Customer
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Date
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Total
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Status
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Items
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Payment
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Actions
-            </th>
+            <th className="px-5 py-3">Mã Đơn</th>
+            <th className="px-5 py-3">Khách Hàng</th>
+            <th className="px-5 py-3">Ngày Đặt</th>
+            <th className="px-5 py-3">Tổng Tiền</th>
+            <th className="px-5 py-3">Trạng Thái Đơn</th>
+            <th className="px-5 py-3">Thanh Toán</th>
+            <th className="px-5 py-3 text-right">Thao Tác</th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {orders.map((order) => (
-            <tr key={order.id} className="hover:bg-gray-50">
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                {order.id}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {order.customerName}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {formatDate(order.date)}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {formatCurrency(order.totalAmount)}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColors[order.status]}`}>
-                  {order.status}
-                </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {order.items}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {order.paymentMethod}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <Link href={`/admin/orders/${order.id}`} className="text-blue-500 hover:text-blue-700 mr-4">
-                  View
-                </Link>
-                <button className="text-gray-500 hover:text-gray-700">
-                  Update
-                </button>
-              </td>
-            </tr>
-          ))}
+        <tbody className="bg-white divide-y divide-slate-100">
+          {orders.map((order) => {
+            const normStatus = order.status.toUpperCase();
+            const normPayment = order.paymentStatus.toUpperCase();
+
+            return (
+              <tr key={order.id} className="hover:bg-slate-50/60 transition">
+                <td className="px-5 py-3.5 font-mono font-bold text-slate-950">
+                  #{order.orderNumber}
+                </td>
+                <td className="px-5 py-3.5 font-bold text-slate-900">
+                  {order.user?.name || 'Khách vãng lai'}
+                </td>
+                <td className="px-5 py-3.5 text-slate-500 whitespace-nowrap">
+                  {formatDate(order.createdAt)}
+                </td>
+                <td className="px-5 py-3.5 font-black text-emerald-800">
+                  {formatCurrency(Number(order.totalAmount))}
+                </td>
+                <td className="px-5 py-3.5">
+                  <span
+                    className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                      statusBadgeStyles[normStatus] || 'bg-slate-100 text-slate-700'
+                    }`}
+                  >
+                    {ORDER_STATUS_LABELS[normStatus as OrderStatus] || normStatus}
+                  </span>
+                </td>
+                <td className="px-5 py-3.5">
+                  <span
+                    className={`inline-flex px-2 py-0.5 rounded text-[10px] font-black ${
+                      paymentBadgeStyles[normPayment] || 'bg-slate-100 text-slate-700'
+                    }`}
+                  >
+                    {normPayment === 'PAID'
+                      ? 'ĐÃ TT'
+                      : normPayment === 'PENDING'
+                      ? 'CHỜ TT'
+                      : 'THẤT BẠI'}
+                  </span>
+                </td>
+                <td className="px-5 py-3.5 text-right">
+                  <Link
+                    href={`/admin/orders/${order.id}`}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] transition"
+                  >
+                    <Eye className="w-3 h-3" />
+                    <span>Xem</span>
+                  </Link>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
-      
-      <div className="flex justify-between items-center mt-4">
-        <div className="text-sm text-gray-500">
-          Showing {orders.length} of {orders.length} orders
-        </div>
-        <Link href="/admin/orders" className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
-          View All Orders
+
+      <div className="flex justify-between items-center mt-4 pt-3 border-t border-slate-100 text-xs">
+        <span className="text-slate-400">Hiển thị {orders.length} đơn hàng gần nhất</span>
+        <Link
+          href="/admin/orders"
+          className="text-xs font-bold text-emerald-700 hover:text-emerald-800"
+        >
+          Xem tất cả đơn hàng &rarr;
         </Link>
       </div>
     </div>
   );
-} 
+}

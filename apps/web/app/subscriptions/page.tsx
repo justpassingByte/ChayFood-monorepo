@@ -398,11 +398,11 @@ export default function SubscriptionsPage() {
               Chuyên viên dinh dưỡng của ChayFood sẽ liên hệ qua số điện thoại <strong>{formData.phone}</strong> để xác nhận khẩu vị và lịch giao bữa ăn đầu tiên.
             </p>
             <div className="pt-4 flex justify-center gap-3">
+              <Link href="/account/subscriptions" className="btn-primary-gradient px-5 py-2.5 rounded-xl text-xs font-bold text-white shadow-sm">
+                Xem Gói Ăn Của Tôi
+              </Link>
               <Link href="/menu" className="btn-secondary px-5 py-2.5 rounded-xl text-xs font-bold">
                 Xem Thực Đơn
-              </Link>
-              <Link href="/" className="btn-primary-gradient px-5 py-2.5 rounded-xl text-xs font-bold text-white shadow-sm">
-                Về Trang Chủ
               </Link>
             </div>
           </div>

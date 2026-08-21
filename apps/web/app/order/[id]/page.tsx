@@ -1,602 +1,552 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useAuth } from '../../context/AuthContext';
-import { orderService } from '../../lib/services';
+import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
-import { CheckCircleIcon, XCircleIcon, TruckIcon, ClockIcon } from '@heroicons/react/24/outline';
+import {
+  ArrowLeft,
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
+  XCircle,
+  QrCode,
+  RotateCcw,
+  MapPin,
+  Phone,
+  User,
+  CreditCard,
+  Truck,
+  ShieldCheck,
+  Headphones,
+  Calendar,
+  Clock,
+  Sparkles,
+  ChevronRight,
+  FileText,
+} from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import { orderService, Order, OrderItem } from '../../services/orderService';
+import { OrderStatusTimeline } from '../components/OrderStatusTimeline';
+import { VietQRPaymentView } from '../../checkout/payment/[orderId]/components/VietQRPaymentView';
+import { ORDER_STATUS_LABELS, OrderStatus } from '@chayfood/shared-types';
+import { useCartStore } from '../../store/useCartStore';
+import { MenuItem } from '../../lib/services/types';
 
-// Type for Order Details
-interface OrderDetails {
-  _id: string;
-  user: string;
-  items: Array<OrderItem>;
-  totalAmount: number;
-  status: string;
-  deliveryAddress: {
-    street: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    additionalInfo?: string;
-  };
-  paymentMethod: 'cod' | 'card' | 'banking';
-  specialInstructions?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// Helper to format date
-const formatDate = (dateString: string) => {
-  const options: Intl.DateTimeFormatOptions = {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: 'numeric',
-  };
-  return new Date(dateString).toLocaleDateString(undefined, options);
+const statusBadgeStyles: Record<string, string> = {
+  PENDING: 'bg-amber-50 text-amber-900 border-amber-300 ring-4 ring-amber-50/50',
+  CONFIRMED: 'bg-blue-50 text-blue-900 border-blue-300 ring-4 ring-blue-50/50',
+  PREPARING: 'bg-purple-50 text-purple-900 border-purple-300 ring-4 ring-purple-50/50',
+  READY: 'bg-indigo-50 text-indigo-900 border-indigo-300 ring-4 ring-indigo-50/50',
+  DELIVERING: 'bg-cyan-50 text-cyan-900 border-cyan-300 ring-4 ring-cyan-50/50',
+  DELIVERED: 'bg-emerald-50 text-emerald-900 border-emerald-300 ring-4 ring-emerald-50/50',
+  CANCELLED: 'bg-red-50 text-red-900 border-red-300 ring-4 ring-red-50/50',
 };
 
-// Status badge component
-const StatusBadge = ({ status }: { status: string }) => {
-  let color = '';
-  let icon = null;
-  
-  switch (status) {
-    case 'pending':
-      color = 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      icon = <ClockIcon className="h-4 w-4 mr-1" />;
-      break;
-    case 'preparing':
-      color = 'bg-blue-100 text-blue-800 border-blue-200';
-      icon = <ClockIcon className="h-4 w-4 mr-1" />;
-      break;
-    case 'out_for_delivery':
-      color = 'bg-purple-100 text-purple-800 border-purple-200';
-      icon = <TruckIcon className="h-4 w-4 mr-1" />;
-      break;
-    case 'delivered':
-      color = 'bg-green-100 text-green-800 border-green-200';
-      icon = <CheckCircleIcon className="h-4 w-4 mr-1" />;
-      break;
-    case 'cancelled':
-      color = 'bg-red-100 text-red-800 border-red-200';
-      icon = <XCircleIcon className="h-4 w-4 mr-1" />;
-      break;
-    default:
-      color = 'bg-gray-100 text-gray-800 border-gray-200';
-  }
-  
-  return (
-    <span className={`${color} px-4 py-2 rounded-full text-sm font-medium border flex items-center`}>
-      {icon}
-      {status.replace('_', ' ')}
-    </span>
-  );
+const paymentBadgeStyles: Record<string, string> = {
+  PENDING: 'bg-amber-100 text-amber-900 border border-amber-200',
+  PAID: 'bg-emerald-100 text-emerald-900 border border-emerald-200',
+  FAILED: 'bg-red-100 text-red-900 border border-red-200',
 };
 
-// Payment method badge component
-const PaymentMethodBadge = ({ method }: { method: string }) => {
-  let label = '';
-  let color = '';
-  
-  switch (method) {
-    case 'cod':
-      label = 'Cash on Delivery';
-      color = 'bg-blue-50 text-blue-700 border-blue-100';
-      break;
-    case 'card':
-      label = 'Credit/Debit Card';
-      color = 'bg-purple-50 text-purple-700 border-purple-100';
-      break;
-    case 'banking':
-      label = 'Online Banking';
-      color = 'bg-green-50 text-green-700 border-green-100';
-      break;
-    default:
-      label = method;
-      color = 'bg-gray-50 text-gray-700 border-gray-100';
-  }
-  
-  return (
-    <span className={`${color} px-3 py-1 rounded-full text-xs font-medium border`}>
-      {label}
-    </span>
-  );
+const paymentMethodLabels: Record<string, string> = {
+  BANKING: 'Chuyển khoản VietQR',
+  COD: 'Thanh toán khi nhận hàng (COD)',
+  CARD: 'Thẻ thanh toán quốc tế (Stripe)',
 };
-
-// Interface for order item with menuItemDetails
-interface OrderItem {
-  menuItem: string;
-  quantity: number;
-  price: number;
-  specialInstructions?: string;
-  menuItemDetails?: {
-    name: string;
-    image?: string;
-  };
-}
 
 export default function OrderDetailsPage() {
-  const { id } = useParams() as { id: string };
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const params = useParams();
   const router = useRouter();
-  const [order, setOrder] = useState<OrderDetails | null>(null);
+  const id = params.id as string;
+
+  const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [cancelLoading, setCancelLoading] = useState(false);
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [cancelFeedback, setCancelFeedback] = useState("");
-  const [receivedLoading, setReceivedLoading] = useState(false);
-  const [receivedSuccess, setReceivedSuccess] = useState(false);
-  const [showReceivedConfirm, setShowReceivedConfirm] = useState(false);
-  const [receivedFeedback, setReceivedFeedback] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const cartStore = useCartStore();
+
+  const fetchOrderDetails = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await orderService.getById(id);
+      if (data) {
+        setOrder(data);
+      } else {
+        setError('Không tìm thấy thông tin đơn hàng');
+      }
+    } catch {
+      setError('Không thể tải thông tin đơn hàng');
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
 
   useEffect(() => {
-    const fetchOrderDetails = async () => {
-      if (authLoading) return;
-      
-      if (!isAuthenticated) {
-        router.push('/');
-        return;
-      }
-      
-      try {
-        setLoading(true);
-        const response = await orderService.getById(id);
-        if (response && response.status === 'success' && response.data) {
-          console.log('Order details:', response.data);
-          console.log('Order status:', response.data.status);
-          setOrder(response.data);
-        } else {
-          setError('Failed to load order details. Unexpected data format.');
-        }
-      } catch (err) {
-        console.error('Error fetching order details:', err);
-        setError('Failed to load order details. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (id) {
+      fetchOrderDetails();
+    }
+  }, [id, fetchOrderDetails]);
 
-    fetchOrderDetails();
-  }, [id, isAuthenticated, router, authLoading]);
-
-  // Monitor showReceivedConfirm changes
-  useEffect(() => {
-    console.log('showReceivedConfirm changed:', showReceivedConfirm);
-  }, [showReceivedConfirm]);
-
+  // Hủy đơn hàng (User chỉ được hủy khi PENDING)
   const handleCancelOrder = async () => {
     if (!order || !id) return;
-    
+    if (!window.confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')) return;
+
     try {
-      setCancelLoading(true);
-      
-      try { 
-        // Send cancellation with feedback
-        const response = await orderService.cancel(id, cancelFeedback);
-        console.log('Cancel order response:', response);
-        
-      
-        setShowCancelConfirm(false);
-        
-        // Update the order status in the UI
-        setOrder((prev: OrderDetails | null) => prev ? { ...prev, status: 'cancelled' } : null);
-      } catch (apiError) {
-        console.error('API error when cancelling order:', apiError);
-        // Even if API fails, still show success UI for now
-        // In a production app, you'd want to show an error instead
-    
-        setShowCancelConfirm(false);
-        setOrder((prev: OrderDetails | null) => prev ? { ...prev, status: 'cancelled' } : null);
-      }
-    } catch (err) {
-      console.error('Error in cancel order handler:', err);
-      setError('Failed to cancel order. Please try again.');
+      setActionLoading(true);
+      await orderService.cancel(id);
+      toast.success('Đã hủy đơn hàng');
+      await fetchOrderDetails();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Không thể hủy đơn hàng';
+      toast.error(msg);
     } finally {
-      setCancelLoading(false);
+      setActionLoading(false);
     }
   };
 
-  /**
-   * Handle marking an order as received (delivered)
-   */
-  const handleReceivedOrder = async () => {
+  // Xác nhận đã nhận món (User chỉ được xác nhận khi DELIVERING)
+  const handleMarkReceived = async () => {
     if (!order || !id) return;
-    
+    if (!window.confirm('Xác nhận bạn đã nhận được món ăn tươi ngon?')) return;
+
     try {
-      setReceivedLoading(true);
-      
-      try {
-        // Send cancellation with feedback
-        const response = await orderService.markAsReceived(id, receivedFeedback);
-        console.log('Cancel order response:', response);
-        
-        // Success
-        setReceivedSuccess(true);
-        setShowReceivedConfirm(false);
-        
-        // Update the order status in the UI
-        setOrder((prev: OrderDetails | null) => prev ? { ...prev, status: 'delivered' } : null);
-      } catch (apiError) {
-        console.error('API error when confirming order:', apiError);
-        // Even if API fails, still show success UI for now
-        // In a production app, you'd want to show an error instead
-        setReceivedSuccess(true);
-        setShowReceivedConfirm(false);
-        setOrder((prev: OrderDetails | null) => prev ? { ...prev, status: 'delivered' } : null);
-      }
-    } catch (err) {
-      console.error('Error in received order handler:', err);
-      setError('Failed to received order. Please try again.');
+      setActionLoading(true);
+      await orderService.markAsReceived(id);
+      toast.success('Cảm ơn bạn đã xác nhận nhận hàng');
+      await fetchOrderDetails();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Không thể cập nhật trạng thái';
+      toast.error(msg);
     } finally {
-      setReceivedLoading(false);
+      setActionLoading(false);
     }
   };
- 
 
-  if (authLoading || loading) {
+  // Mua lại đơn này (Reorder)
+  const handleReorder = () => {
+    if (!order) return;
+    let addedCount = 0;
+    order.items.forEach((item: OrderItem) => {
+      if (item.menuItem) {
+        const itemId = item.menuItemId || item.menuItem.id || 'item';
+        const dummyMenuItem: MenuItem = {
+          _id: itemId,
+          id: itemId,
+          name: item.menuItem.name,
+          price: Number(item.price),
+          image: item.menuItem.image || '',
+          category: 'MON_CHINH',
+          description: '',
+          isAvailable: true,
+          calories: 0,
+          protein: 0,
+          carbs: 0,
+          fat: 0,
+        };
+        cartStore.addItem(dummyMenuItem, item.quantity);
+        addedCount++;
+      }
+    });
+
+    if (addedCount > 0) {
+      toast.success(`Đã thêm ${addedCount} món vào giỏ hàng`);
+      cartStore.setCartDrawerOpen(true);
+    }
+  };
+
+  const formatDate = (isoString: string) => {
+    try {
+      const d = new Date(isoString);
+      return new Intl.DateTimeFormat('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      }).format(d);
+    } catch {
+      return isoString;
+    }
+  };
+
+  const formatCurrency = (val: number) =>
+    new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
+
+  if (loading) {
     return (
-      <div className="container mx-auto px-4 py-16 mt-16 text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mx-auto"></div>
-        <p className="mt-4 text-gray-600">Loading order details...</p>
+      <div className="min-h-[70vh] flex flex-col items-center justify-center space-y-3">
+        <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+          Đang tải thông tin đơn hàng...
+        </p>
       </div>
     );
   }
 
-  if (error) {
+  if (error || !order) {
     return (
-      <div className="container mx-auto px-4 py-16 mt-16">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg shadow-sm">
-          <h2 className="text-lg font-medium mb-2">Something went wrong</h2>
-          <p>{error}</p>
-          <button
-            onClick={() => router.push('/account/orders')}
-            className="mt-4 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
+      <div className="min-h-[70vh] flex flex-col items-center justify-center px-4">
+        <div className="max-w-md w-full text-center space-y-4 bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
+          <h1 className="text-xl font-bold text-slate-900">Không Tìm Thấy Đơn Hàng</h1>
+          <p className="text-xs text-slate-500">{error || 'Vui lòng kiểm tra lại đường dẫn'}</p>
+          <Link
+            href="/account/orders"
+            className="inline-block px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl transition"
           >
-            Back to Orders
-          </button>
+            Về Danh Sách Đơn Hàng
+          </Link>
         </div>
       </div>
     );
   }
 
-  if (!order) {
-    return (
-      <div className="container mx-auto px-4 py-16 mt-16">
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-6 py-4 rounded-lg shadow-sm">
-          <h2 className="text-lg font-medium mb-2">Order not found</h2>
-          <p>We could not find the order you are looking for.</p>
-          <button
-            onClick={() => router.push('/account/orders')}
-            className="mt-4 bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 transition-colors"
-          >
-            Back to Orders
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Check if user can cancel the order or mark as received
-  const canCancel = order && ['pending', 'preparing'].some(
-    status => order.status === status
-  );
-  const canMarkReceived = order && ['confirmed', 'delivered'].some(
-    status => order.status === status
-  );
-  
-  console.log('Order status exactly:', JSON.stringify(order.status));
-  console.log('Can cancel order:', canCancel, 'Current status:', order?.status);
-  console.log('Can mark as received:', canMarkReceived, 'Current status:', order?.status);
-  
-  const orderAddress = `${order.deliveryAddress.street}, ${order.deliveryAddress.city}, ${order.deliveryAddress.state}, ${order.deliveryAddress.postalCode}`;
+  const normStatus = order.status.toUpperCase() as OrderStatus;
+  const normPayment = order.paymentStatus.toUpperCase();
+  const isPending = normStatus === 'PENDING';
+  const isDelivering = normStatus === 'DELIVERING';
+  const isDelivered = normStatus === 'DELIVERED';
+  const needsVietQRPayment = isPending && order.paymentMethod === 'BANKING' && normPayment === 'PENDING';
 
   return (
-    <div className="container mx-auto px-4 py-16 mt-16">
-
-      {/* Header with back button and order ID */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
-        <h1 className="text-3xl font-bold mb-2 sm:mb-0">Order <span className="text-green-600">#{order._id.slice(-6)}</span></h1>
-        <button
-          onClick={() => router.push('/account/orders')}
-          className="text-gray-600 hover:text-gray-900 flex items-center"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-          Back to Orders
-        </button>
-      </div>
-      
-      {/* Success message for cancellation */}
-      {receivedSuccess && (
-        <motion.div 
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-green-50 border border-green-200 text-green-700 px-6 py-4 rounded-lg shadow-sm mb-6"
-        >
-          <div className="flex items-center">
-            <CheckCircleIcon className="h-5 w-5 mr-2" />
-            <p className="font-medium">Thank you for confirming your order delivery!</p>
+    <div className="min-h-screen bg-[#FAFBF9] pb-24">
+      {/* 1. Header with Breadcrumbs */}
+      <div className="bg-white border-b border-slate-200/80 mb-6 py-5">
+        <div className="container-custom max-w-6xl">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 text-xs text-slate-500 mb-3">
+            <Link href="/" className="hover:text-emerald-800 font-medium">
+              Trang chủ
+            </Link>
+            <ChevronRight className="w-3 h-3 text-slate-400" />
+            <Link href="/account/orders" className="hover:text-emerald-800 font-medium">
+              Lịch sử đơn hàng
+            </Link>
+            <ChevronRight className="w-3 h-3 text-slate-400" />
+            <span className="text-slate-900 font-bold">#{order.orderNumber}</span>
           </div>
-        </motion.div>
-      )}
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main order details */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Order status and summary */}
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <div className="bg-gray-50 border-b px-6 py-4">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
-                <div className="mb-4 sm:mb-0">
-                  <h2 className="text-xl font-semibold">Order Status</h2>
-                  <p className="text-gray-600 text-sm">Placed on {formatDate(order.createdAt)}</p>
+
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Link
+                href="/account/orders"
+                className="p-2.5 bg-slate-100 hover:bg-slate-200 rounded-2xl text-slate-700 transition"
+                title="Quay lại danh sách"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </Link>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight">
+                    Đơn Hàng #{order.orderNumber}
+                  </h1>
+                  <span
+                    className={`inline-flex px-3 py-1 rounded-full text-xs font-bold border ${
+                      statusBadgeStyles[normStatus] || 'bg-slate-100 text-slate-700'
+                    }`}
+                  >
+                    {ORDER_STATUS_LABELS[normStatus] || normStatus}
+                  </span>
+                  <span
+                    className={`inline-flex px-2.5 py-0.5 rounded-md text-[10px] font-black ${
+                      paymentBadgeStyles[normPayment] || 'bg-slate-100 text-slate-700'
+                    }`}
+                  >
+                    {normPayment === 'PAID'
+                      ? 'ĐÃ THANH TOÁN'
+                      : normPayment === 'PENDING'
+                      ? 'CHỜ THANH TOÁN'
+                      : 'THẤT BẠI'}
+                  </span>
                 </div>
-                <StatusBadge status={order.status} />
+                <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5 font-medium">
+                  <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Đặt lúc: {formatDate(order.createdAt)}</span>
+                </p>
               </div>
             </div>
-            
-            <div className="px-6 py-4">
-              <h3 className="font-semibold text-lg mb-4">Order Items</h3>
-              <div className="divide-y">
-                {order.items.map((item: OrderItem, index: number) => (
-                  <div key={index} className="py-4 flex">
-                    <div className="relative h-20 w-20 rounded-md overflow-hidden flex-shrink-0 bg-gray-100">
-                      <Image
-                        src={item.menuItemDetails?.image || 'https://placekitten.com/200/200'}
-                        alt={item.menuItemDetails?.name || 'Menu item'}
-                        fill
-                        className="object-cover"
-                      />
+
+            {/* Quick Actions in Header */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleReorder}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs transition border border-emerald-200/80 shadow-xs"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Đặt Lại Đơn Này</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Main Content Container */}
+      <div className="container-custom max-w-6xl space-y-6">
+        {/* If user needs to pay via VietQR */}
+        {needsVietQRPayment && (
+          <div className="animate-fadeIn">
+            <VietQRPaymentView
+              orderId={order.id}
+              orderNumber={order.orderNumber}
+              sequenceNumber={order.sequenceNumber || 1}
+              totalAmount={Number(order.totalAmount)}
+              createdAt={order.createdAt}
+              onPaymentSuccess={fetchOrderDetails}
+            />
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Left Column (8 cols): Visual Timeline & Items Breakdown */}
+          <div className="lg:col-span-7 xl:col-span-8 space-y-6">
+            {/* Timeline Stepper */}
+            <OrderStatusTimeline
+              currentStatus={order.status}
+              createdAt={order.createdAt}
+              updatedAt={order.updatedAt}
+            />
+
+            {/* Items Breakdown Card */}
+            <div className="bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-7 shadow-xs space-y-5">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-slate-950 tracking-tight">
+                      Món Ăn Đã Đặt ({order.items.length})
+                    </h3>
+                    <p className="text-[11px] text-slate-500">
+                      Chế biến tươi trong ngày theo tiêu chuẩn thuần thực vật
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Items List */}
+              <div className="divide-y divide-slate-100">
+                {order.items.map((item: OrderItem, idx: number) => {
+                  const itemTotal = Number(item.price) * item.quantity;
+                  return (
+                    <div key={idx} className="py-3.5 flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3.5">
+                        <div className="relative w-14 h-14 rounded-2xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200/80 shadow-2xs">
+                          {item.menuItem?.image ? (
+                            <Image
+                              src={item.menuItem.image}
+                              alt={item.menuItem.name || 'Món chay'}
+                              fill
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-[10px] text-slate-400 font-bold">
+                              Chay
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-0.5">
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">
+                            {item.menuItem?.name || 'Món chay tươi ngon'}
+                          </h4>
+                          <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
+                            <span>Đơn giá: {formatCurrency(Number(item.price))}</span>
+                            <span>•</span>
+                            <span className="font-bold text-slate-700">SL: {item.quantity}</span>
+                          </div>
+                          {item.specialInstructions && (
+                            <p className="text-[10px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md inline-block mt-1">
+                              Ghi chú: {item.specialInstructions}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <span className="text-xs sm:text-sm font-black text-slate-950 shrink-0 font-mono">
+                        {formatCurrency(itemTotal)}
+                      </span>
                     </div>
-                    <div className="flex-grow ml-4">
-                      <div className="flex justify-between">
-                        <h4 className="font-medium">
-                          {item.menuItemDetails?.name || 'Unknown Item'}
-                        </h4>
-                        <p className="text-gray-700 font-medium">{(item.price * item.quantity).toLocaleString()} VNĐ</p>
-                      </div>
-                      <div className="flex justify-between mt-1">
-                        <p className="text-sm text-gray-500">
-                          Quantity: {item.quantity} × {item.price.toLocaleString()} VNĐ
-                        </p>
-                      </div>
-                      
-                      {item.specialInstructions && (
-                        <p className="text-sm text-gray-500 mt-2 bg-gray-50 p-2 rounded-md">
-                          <span className="font-medium">Note:</span> {item.specialInstructions}
-                        </p>
-                      )}
+                  );
+                })}
+              </div>
+
+              {/* Pricing Summary */}
+              <div className="pt-4 border-t border-slate-100 space-y-2 text-xs">
+                <div className="flex items-center justify-between text-slate-500">
+                  <span>Tạm tính món ăn</span>
+                  <span className="font-bold text-slate-700">
+                    {formatCurrency(Number(order.totalAmount))}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-slate-500">
+                  <span>Phí giao hàng tận nơi</span>
+                  <span className="font-bold text-emerald-700">Miễn phí giao hàng</span>
+                </div>
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between font-black text-sm text-slate-950">
+                  <span>Tổng Thanh Toán</span>
+                  <span className="text-emerald-700 font-black text-lg sm:text-xl font-mono">
+                    {formatCurrency(Number(order.totalAmount))}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column (4 cols): Delivery & Customer Info & Context Actions */}
+          <div className="lg:col-span-5 xl:col-span-4 space-y-6">
+            {/* Delivery Address & Customer Info */}
+            <div className="bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
+                <MapPin className="w-4 h-4 text-emerald-700" />
+                <h3 className="text-sm font-black text-slate-950">Địa Chỉ Nhận Món</h3>
+              </div>
+
+              <div className="space-y-3 text-xs text-slate-600">
+                {order.user && (
+                  <div className="flex items-start gap-2.5">
+                    <User className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold text-slate-900 block">{order.user.name}</span>
+                      <span className="text-slate-400 text-[11px]">{order.user.email}</span>
                     </div>
                   </div>
-                ))}
-              </div>
-              
-              <div className="border-t mt-6 pt-4">
-                <div className="flex justify-between py-2">
-                  <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium">{order.totalAmount.toLocaleString()} VNĐ</span>
+                )}
+
+                <div className="flex items-start gap-2.5">
+                  <MapPin className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                  <div className="leading-relaxed">
+                    <span className="font-bold text-slate-900 block">
+                      {order.deliveryAddress.street}
+                    </span>
+                    <span className="text-slate-500">{order.deliveryAddress.city}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-gray-600">Delivery Fee</span>
-                  <span className="font-medium">0 VNĐ</span>
-                </div>
-                <div className="flex justify-between py-2 border-t border-dashed">
-                  <span className="text-gray-800 font-semibold">Total</span>
-                  <span className="font-semibold text-green-600">{order.totalAmount.toLocaleString()} VNĐ</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Special instructions */}
-          {order.specialInstructions && (
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="font-semibold text-lg mb-3">Special Instructions</h3>
-              <p className="text-gray-700 bg-gray-50 p-3 rounded-md">{order.specialInstructions}</p>
-            </div>
-          )}
-        </div>
-        
-        {/* Order information sidebar */}
-        <div className="space-y-6">
-          {/* Delivery details */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="font-semibold text-lg mb-4">Delivery Information</h3>
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Delivery Address</p>
-                <p className="text-gray-800">{orderAddress}</p>
+
+                {order.deliveryAddress.phone && (
+                  <div className="flex items-center gap-2.5">
+                    <Phone className="w-4 h-4 text-slate-400 shrink-0" />
+                    <span className="font-bold text-slate-900">{order.deliveryAddress.phone}</span>
+                  </div>
+                )}
+
                 {order.deliveryAddress.additionalInfo && (
-                  <p className="text-gray-600 text-sm mt-1">
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] text-slate-600">
+                    <strong className="text-slate-900">Ghi chú giao hàng:</strong>{' '}
                     {order.deliveryAddress.additionalInfo}
-                  </p>
+                  </div>
                 )}
               </div>
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Payment Method</p>
-                <PaymentMethodBadge method={order.paymentMethod} />
+            </div>
+
+            {/* Payment Method Card */}
+            <div className="bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
+                <CreditCard className="w-4 h-4 text-emerald-700" />
+                <h3 className="text-sm font-black text-slate-950">Hình Thức Thanh Toán</h3>
+              </div>
+
+              <div className="text-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 font-medium">Phương thức:</span>
+                  <span className="font-bold text-slate-900">
+                    {paymentMethodLabels[order.paymentMethod] || order.paymentMethod}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 font-medium">Trạng thái:</span>
+                  <span
+                    className={`inline-flex px-2 py-0.5 rounded text-[10px] font-black ${
+                      paymentBadgeStyles[normPayment] || 'bg-slate-100 text-slate-700'
+                    }`}
+                  >
+                    {normPayment === 'PAID'
+                      ? 'ĐÃ THANH TOÁN'
+                      : normPayment === 'PENDING'
+                      ? 'CHỜ THANH TOÁN'
+                      : 'THẤT BẠI'}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-          
-          {/* Order Actions */}
-          <div className="bg-white rounded-lg shadow-md p-6 border-2 border-gray-200">
-            <h3 className="font-semibold text-lg mb-4 text-center">Order Actions</h3>
-            
-            <div className="space-y-4">
-              {/* Cancel button - only show when order is in pending status */}
-              {canCancel && (
+
+            {/* Context-Aware Action Card */}
+            <div className="bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-6 shadow-xs space-y-3">
+              <h3 className="text-sm font-black text-slate-950">Thao Tác Đơn Hàng</h3>
+
+              {isPending && (
                 <button
-                  onClick={() => setShowCancelConfirm(true)}
-                  disabled={cancelLoading || order.status === 'cancelled' || order.status === 'delivered'}
-                  className="w-full px-4 py-3 text-base font-medium rounded-md bg-red-600 hover:bg-red-700 text-white transition-colors disabled:opacity-70"
+                  type="button"
+                  onClick={handleCancelOrder}
+                  disabled={actionLoading}
+                  className="w-full py-2.5 px-4 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold transition flex items-center justify-center gap-2 disabled:opacity-50"
                 >
-                   Order Cancel
+                  {actionLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <XCircle className="w-4 h-4" />
+                  )}
+                  <span>Hủy Đơn Hàng Này</span>
                 </button>
               )}
-              
-              {/* Mark as received button - only show for appropriate statuses */}
-              {canMarkReceived && (
+
+              {isDelivering && (
                 <button
-                  onClick={() => setShowReceivedConfirm(true)}
-                  className="w-full px-4 py-3 text-base font-medium rounded-md bg-red-600 hover:bg-red-700 text-white transition-colors disabled:opacity-70"
+                  type="button"
+                  onClick={handleMarkReceived}
+                  disabled={actionLoading}
+                  className="w-full py-3 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition flex items-center justify-center gap-2 shadow-xs disabled:opacity-50"
                 >
-                
-                   
-                   Order Delivered
+                  {actionLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="w-4 h-4" />
+                  )}
+                  <span>Đã Nhận Được Món Ăn</span>
                 </button>
+              )}
+
+              {isDelivered && (
+                <div className="space-y-2">
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-center text-xs text-emerald-800 font-medium">
+                    Đơn hàng đã được giao thành công. Chúc bạn ngon miệng!
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleReorder}
+                    className="w-full py-2.5 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition flex items-center justify-center gap-2 shadow-xs"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    <span>Đặt Lại Đơn Này</span>
+                  </button>
+                </div>
+              )}
+
+              {normStatus === 'CANCELLED' && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-center text-xs text-red-700 font-medium">
+                  Đơn hàng đã hủy
+                </div>
               )}
             </div>
-            
-            <p className="text-gray-500 text-sm mt-3 text-center">
-              Current order status: <span className="font-medium">{order.status}</span>
-            </p>
-          </div>
-          
-          {/* Help & Support */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="font-semibold text-lg mb-4">Need Help?</h3>
-            <p className="text-gray-600 mb-4">
-              If you have any questions about your order, our customer support team is here to help.
-            </p>
-            <button
-              onClick={() => window.location.href = 'mailto:support@chayfood.com'}
-              className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md transition-colors"
-            >
-              Contact Support
-            </button>
+
+            {/* Customer Support Card */}
+            <div className="bg-slate-50 rounded-3xl border border-slate-200/80 p-5 text-xs text-slate-500 space-y-2">
+              <div className="flex items-center gap-2 text-slate-900 font-bold">
+                <Headphones className="w-4 h-4 text-emerald-700" />
+                <span>Cần Hỗ Trợ Đơn Hàng?</span>
+              </div>
+              <p className="text-[11px] leading-relaxed">
+                Đội ngũ chăm sóc khách hàng ChayFood sẵn sàng hỗ trợ bạn qua Hotline <strong>1900 6868</strong> hoặc kênh Zalo Official.
+              </p>
+            </div>
           </div>
         </div>
       </div>
-      
-      {/* Cancel confirmation modal */}
-      {showCancelConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-lg shadow-xl max-w-md w-full mx-auto p-6"
-          >
-            <h3 className="text-xl font-bold mb-4">Cancel Order</h3>
-            <p className="text-gray-600 mb-4">
-              Are you sure you want to cancel this order? This action cannot be undone.
-            </p>
-            
-            <div className="mb-4">
-              <label htmlFor="cancelFeedback" className="block text-sm font-medium text-gray-700 mb-2">
-                Please tell us why you&#39;re cancelling (optional):
-              </label>
-              <textarea
-                id="cancelFeedback"
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                placeholder="Enter your reason for cancellation..."
-                value={cancelFeedback}
-                onChange={(e) => setCancelFeedback(e.target.value)}
-              />
-            </div>
-            
-            <div className="flex space-x-4">
-              <button
-                onClick={() => setShowCancelConfirm(false)}
-                className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-md transition-colors"
-              >
-                Keep Order
-              </button>
-              <button
-                onClick={handleCancelOrder}
-                disabled={cancelLoading}
-                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-md transition-colors disabled:opacity-50"
-              >
-                {cancelLoading ? 'Cancelling...' : 'Yes, Cancel'}
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
-      
-      {/* Received Confirmation Modal - added extra console.log for debugging */}
-      {showReceivedConfirm && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex min-h-screen items-center justify-center p-4 text-center">
-            <div className="fixed inset-0 bg-black opacity-30" onClick={() => setShowReceivedConfirm(false)}></div>
-            <div className="relative w-full max-w-md transform overflow-hidden rounded-lg bg-white p-6 text-left align-middle shadow-xl transition-all">
-              <div className="mt-2">
-                <h3 className="text-lg font-medium leading-6 text-gray-900">Confirm Order Received</h3>
-                <p className="mt-2 text-sm text-gray-500">
-                  Please confirm that you have received this order. This action cannot be undone.
-                </p>
-                <div className="mt-4">
-                  <label htmlFor="feedback" className="block text-sm font-medium text-gray-700">
-                    Feedback (Optional)
-                  </label>
-                  <textarea
-                    id="feedback"
-                    rows={3}
-                    className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2"
-                    placeholder="How was your experience? Any comments about the food or delivery?"
-                    value={receivedFeedback}
-                    onChange={(e) => setReceivedFeedback(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="mt-4 flex justify-end space-x-3">
-                <button
-                  type="button"
-                  className="inline-flex justify-center rounded-md border border-transparent bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 focus:outline-none"
-                  onClick={() => setShowReceivedConfirm(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="inline-flex justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none"
-                  onClick={handleReceivedOrder}
-                  disabled={receivedLoading}
-                >
-                  {receivedLoading ? 'Processing...' : 'Confirm'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Success Message */}
-      {receivedSuccess && (
-        <div className="fixed bottom-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium">Order successfully marked as received!</p>
-            </div>
-            <div className="ml-auto pl-3">
-              <div className="-mx-1.5 -my-1.5">
-                <button
-                  className="inline-flex rounded-md p-1.5 text-green-500 hover:bg-green-100 focus:outline-none"
-                  onClick={() => setReceivedSuccess(false)}
-                >
-                  <span className="sr-only">Dismiss</span>
-                  <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
-} 
+}

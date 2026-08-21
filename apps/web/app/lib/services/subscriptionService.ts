@@ -1,54 +1,87 @@
 import api from './apiClient';
-import type { CreateSubscriptionDto, Subscription } from './types';
+
+export interface Plan {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  duration: number; // số ngày
+  mealsPerDay: number;
+  isActive: boolean;
+  features?: string[];
+  tag?: string;
+  recommended?: boolean;
+}
+
+export interface UserSubscription {
+  id: string;
+  userId: string;
+  planId: string;
+  startDate: string;
+  endDate: string;
+  deliveryAddress: {
+    street: string;
+    city: string;
+    phone?: string;
+    additionalInfo?: string;
+  };
+  paymentMethod: string;
+  paymentStatus: string;
+  totalAmount: number;
+  isActive: boolean;
+  specialInstructions?: string | null;
+  plan: Plan;
+  createdAt: string;
+}
+
+export interface CreateSubscriptionPayload {
+  planId: string;
+  startDate: string;
+  deliveryAddress: {
+    street: string;
+    city: string;
+    phone?: string;
+    additionalInfo?: string;
+  };
+  paymentMethod: string;
+  specialInstructions?: string;
+  selectedMenuItems?: Array<{
+    day: number;
+    mealTime: string;
+    menuItemId: string;
+  }>;
+}
 
 export const planService = {
-  // Get all plans
-  getAll: async () => {
-    const response = await api.get('/plan');
-    return response.data;
+  // Lấy tất cả gói ăn
+  getAll: async (): Promise<Plan[]> => {
+    const response = await api.get('/plans');
+    return response.data.data || response.data || [];
   },
-  
-  // Get plan by ID
-  getById: async (id: string) => {
-    const response = await api.get(`/plan/${id}`);
-    return response.data;
-  }
+
+  // Lấy chi tiết gói ăn
+  getById: async (id: string): Promise<Plan | null> => {
+    const response = await api.get(`/plans/${id}`);
+    return response.data.data || response.data;
+  },
 };
 
 export const subscriptionService = {
-  // Get available subscription plans
-  getAvailablePlans: async () => {
-    const response = await api.get('/subscription/plans');
-    return response.data;
+  // Lấy các gói đăng ký của người dùng
+  getMySubscriptions: async (): Promise<UserSubscription[]> => {
+    const response = await api.get('/subscriptions/my-subscriptions');
+    return response.data.data || response.data || [];
   },
-  
-  // Create a new subscription
-  create: async (subscription: CreateSubscriptionDto) => {
-    const response = await api.post('/subscription', subscription);
-    return response.data;
+
+  // Đăng ký gói ăn mới
+  create: async (payload: CreateSubscriptionPayload): Promise<UserSubscription> => {
+    const response = await api.post('/subscriptions', payload);
+    return response.data.data || response.data;
   },
-  
-  // Get user's subscriptions
-  getMySubscriptions: async () => {
-    const response = await api.get('/subscription/my-subscriptions');
-    return response.data;
+
+  // Tạm dừng / Kích hoạt lại gói ăn
+  toggle: async (id: string): Promise<UserSubscription> => {
+    const response = await api.post(`/subscriptions/${id}/toggle`);
+    return response.data.data || response.data;
   },
-  
-  // Get subscription by ID
-  getById: async (id: string) => {
-    const response = await api.get(`/subscription/${id}`);
-    return response.data;
-  },
-  
-  // Update subscription menu selections
-  updateMenu: async (id: string, selectedMenuItems: Subscription['selectedMenuItems']) => {
-    const response = await api.patch(`/subscription/${id}/menu`, { selectedMenuItems });
-    return response.data;
-  },
-  
-  // Cancel subscription
-  cancel: async (id: string) => {
-    const response = await api.patch(`/subscription/${id}/cancel`);
-    return response.data;
-  }
-}; 
+};

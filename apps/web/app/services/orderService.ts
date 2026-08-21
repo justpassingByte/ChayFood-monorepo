@@ -1,53 +1,81 @@
 import api from '../lib/services/apiClient';
+import type { OrderStatus, PaymentStatus, PaymentMethod } from '@chayfood/shared-types';
+
+export interface OrderItem {
+  id?: string;
+  menuItemId?: string;
+  quantity: number;
+  price: number;
+  specialInstructions?: string | null;
+  menuItem?: {
+    id?: string;
+    _id?: string;
+    name: string;
+    price: number;
+    image?: string;
+  };
+}
+
+export interface PaymentTransactionInfo {
+  id: string;
+  provider: string;
+  providerTxId?: string | null;
+  amount: number;
+  status: string;
+  expiresAt?: string | null;
+  createdAt: string;
+}
 
 export interface Order {
-  _id: string;
-  id?: string;
-  orderNumber?: string;
-  user: string | {
-    _id: string;
+  id: string;
+  _id?: string;
+  orderNumber: string;
+  sequenceNumber?: number;
+  userId?: string;
+  user?: {
+    id?: string;
+    _id?: string;
     name: string;
     email: string;
+    phone?: string | null;
   };
-  items: Array<{
-    menuItem: string | {
-      _id: string;
-      id?: string;
-      name: string;
-      price: number;
-      image?: string;
-    };
-    quantity: number;
-    price: number;
-    specialInstructions?: string;
-  }>;
+  items: OrderItem[];
   totalAmount: number;
-  status: 'pending' | 'confirmed' | 'preparing' | 'delivering' | 'ready' | 'delivered' | 'cancelled';
+  status: OrderStatus;
   deliveryAddress: {
     street: string;
     city: string;
-    state: string;
-    postalCode: string;
+    phone?: string;
+    state?: string;
+    postalCode?: string;
     additionalInfo?: string;
   };
-  paymentStatus: 'pending' | 'paid' | 'failed';
-  paymentMethod: 'COD' | 'CARD' | 'BANKING' | 'cod' | 'card' | 'banking' | 'stripe';
-  deliveryTime?: string;
-  specialInstructions?: string;
+  paymentStatus: PaymentStatus;
+  paymentMethod: PaymentMethod;
+  deliveryTime?: string | null;
+  specialInstructions?: string | null;
+  paymentTransactions?: PaymentTransactionInfo[];
   createdAt: string;
   updatedAt: string;
 }
 
-export interface OrderCreateData {
-  user?: string;
+export interface AdminOrderFilters {
+  status?: OrderStatus | string;
+  paymentStatus?: PaymentStatus | string;
+  paymentMethod?: PaymentMethod | string;
+  search?: string;
+  startDate?: string;
+  endDate?: string;
+  sortBy?: 'createdAt' | 'totalAmount';
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface CreateOrderPayload {
   items: Array<{
-    menuItemId?: string;
-    menuItem?: string;
+    menuItemId: string;
     quantity: number;
-    price?: number;
     specialInstructions?: string;
   }>;
-  totalAmount?: number;
   deliveryAddress: {
     street: string;
     city: string;
@@ -55,7 +83,7 @@ export interface OrderCreateData {
     postalCode?: string;
     additionalInfo?: string;
   };
-  paymentMethod: 'COD' | 'CARD' | 'BANKING' | 'cod' | 'card' | 'banking' | 'stripe';
+  paymentMethod: PaymentMethod;
   specialInstructions?: string;
 }
 
@@ -65,23 +93,11 @@ export interface OrderResponse {
   message?: string;
 }
 
-export interface ApiError {
-  status?: string;
-  message?: string;
-  response?: {
-    data?: {
-      message?: string | string[];
-      status?: string;
-      error?: string;
-    };
-  };
-}
-
 export const orderService = {
-  // Lấy tất cả đơn hàng (admin)
-  getAll: async (): Promise<Order[]> => {
+  // Lấy tất cả đơn hàng kèm bộ lọc (Admin)
+  getAll: async (filters?: AdminOrderFilters): Promise<Order[]> => {
     try {
-      const response = await api.get('/orders');
+      const response = await api.get('/orders', { params: filters });
       return response.data.data || response.data.items || response.data || [];
     } catch (error) {
       console.error('Error fetching all orders:', error);
@@ -111,110 +127,49 @@ export const orderService = {
     }
   },
 
-  // Cập nhật trạng thái đơn hàng (admin)
-  updateStatus: async (id: string, status: Order['status']): Promise<Order | null> => {
+  // Cập nhật trạng thái đơn hàng theo State Machine (Admin)
+  updateStatus: async (id: string, status: OrderStatus): Promise<Order | null> => {
     try {
       const response = await api.patch(`/orders/${id}/status`, { status });
       return response.data.data || response.data;
     } catch (error) {
       console.error(`Error updating order status ${id}:`, error);
-      return null;
+      throw error;
     }
   },
 
-  // Hủy đơn hàng (admin hoặc user)
-  cancelOrder: async (id: string): Promise<boolean> => {
+  // Hủy đơn hàng (User khi PENDING hoặc Admin)
+  cancel: async (id: string, _feedback?: string): Promise<boolean> => {
     try {
-      const response = await api.patch(`/orders/${id}/status`, { status: 'cancelled' });
+      const response = await api.patch(`/orders/${id}/cancel`);
       return response.status === 200;
     } catch (error) {
       console.error(`Error cancelling order ${id}:`, error);
-      return false;
+      throw error;
     }
   },
 
-  // Lọc đơn hàng theo trạng thái
-  filterByStatus: async (status: Order['status']): Promise<Order[]> => {
+  // Xác nhận nhận hàng (User khi DELIVERING)
+  markAsReceived: async (id: string, _feedback?: string): Promise<boolean> => {
     try {
-      const response = await api.get('/orders', { params: { status } });
-      return response.data.data || response.data.items || response.data || [];
+      const response = await api.patch(`/orders/${id}/received`);
+      return response.status === 200;
     } catch (error) {
-      console.error(`Error filtering orders by status ${status}:`, error);
-      return [];
+      console.error(`Error confirming order delivery ${id}:`, error);
+      throw error;
     }
   },
 
-  // Tìm kiếm đơn hàng
-  search: async (query: string): Promise<Order[]> => {
+  // Tạo đơn hàng mới
+  create: async (payload: CreateOrderPayload): Promise<OrderResponse> => {
     try {
-      const response = await api.get('/orders', { params: { query } });
-      return response.data.data || response.data.items || response.data || [];
-    } catch (error) {
-      console.error(`Error searching orders with query ${query}:`, error);
-      return [];
-    }
-  },
-
-  // Tạo đơn hàng mới với tự động chuẩn hóa DTO
-  create: async (orderData: OrderCreateData): Promise<OrderResponse> => {
-    try {
-      const rawPayment = String(orderData.paymentMethod || '').toUpperCase();
-      const normalizedPayment =
-        rawPayment === 'BANKING' ? 'BANKING' : rawPayment === 'STRIPE' || rawPayment === 'CARD' ? 'CARD' : 'COD';
-
-      const normalizedPayload = {
-        items: orderData.items.map((it) => ({
-          menuItemId: it.menuItemId || it.menuItem || '',
-          quantity: Number(it.quantity || 1),
-          specialInstructions: it.specialInstructions || undefined,
-        })),
-        deliveryAddress: {
-          street: orderData.deliveryAddress.street,
-          city: orderData.deliveryAddress.city,
-          state: orderData.deliveryAddress.state || 'Việt Nam',
-          postalCode: orderData.deliveryAddress.postalCode || '70000',
-          additionalInfo: orderData.deliveryAddress.additionalInfo || undefined,
-        },
-        paymentMethod: normalizedPayment,
-        specialInstructions: orderData.specialInstructions || undefined,
-      };
-
-      const response = await api.post('/orders', normalizedPayload);
+      const response = await api.post('/orders', payload);
       return { status: 'success', data: response.data.data || response.data };
     } catch (error: unknown) {
-      const apiError = error as ApiError;
-      if (apiError.response && apiError.response.data) {
-        const dataObj = apiError.response.data as {
-          message?: string | string[];
-          issues?: Array<{ field?: string; message: string }>;
-          error?: string;
-        };
-
-        if (dataObj.issues && Array.isArray(dataObj.issues) && dataObj.issues.length > 0) {
-          return {
-            status: 'error',
-            message: dataObj.issues.map((i) => i.message).join('. '),
-          };
-        }
-
-        const msg = dataObj.message || dataObj.error;
-        return {
-          status: 'error',
-          message: Array.isArray(msg) ? msg.join(', ') : typeof msg === 'string' ? msg : 'Lỗi khi khởi tạo đơn hàng',
-        };
+      if (error instanceof Error) {
+        return { status: 'error', message: error.message };
       }
-      return { status: 'error', message: apiError.message || 'Lỗi khi khởi tạo đơn hàng' };
-    }
-  },
-
-  // Lấy đơn hàng theo Stripe sessionId
-  getBySessionId: async (sessionId: string): Promise<Order | null> => {
-    try {
-      const response = await api.get(`/orders/by-session/${sessionId}`);
-      return response.data.data || response.data;
-    } catch (error) {
-      console.error(`Error fetching order by sessionId ${sessionId}:`, error);
-      return null;
+      return { status: 'error', message: 'Lỗi khi tạo đơn hàng' };
     }
   },
 };

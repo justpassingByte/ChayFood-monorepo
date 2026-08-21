@@ -45,7 +45,7 @@ export default function MobileNav({
   const totalCartItems = propsCartItemCount !== undefined ? propsCartItemCount : totalItems;
   const logout = propsOnLogout || authLogout;
   
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role?.toUpperCase() === 'ADMIN';
 
   const regularMenuItems = [
     { href: '/', label: 'Trang chủ' },

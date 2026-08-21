@@ -46,6 +46,22 @@ export class SubscriptionsService {
     });
   }
 
+  async toggleSubscription(id: string, userId: string) {
+    const sub = await this.prisma.subscription.findUnique({
+      where: { id },
+    });
+
+    if (!sub || sub.userId !== userId) {
+      throw new NotFoundException('Không tìm thấy thông tin gói ăn');
+    }
+
+    return this.prisma.subscription.update({
+      where: { id },
+      data: { isActive: !sub.isActive },
+      include: { plan: true },
+    });
+  }
+
   async findAll() {
     return this.prisma.subscription.findMany({
       include: {

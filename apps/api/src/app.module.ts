@@ -10,6 +10,8 @@ import { RecommendationsModule } from './recommendations/recommendations.module'
 import { InventoryModule } from './inventory/inventory.module';
 import { RecipesModule } from './recipes/recipes.module';
 import { FamilyModule } from './family/family.module';
+import { PaymentModule } from './payment/payment.module';
+import { UserModule } from './user/user.module';
 import { HttpLoggerMiddleware } from './common/logger/http-logger.middleware';
 
 @Module({
@@ -20,6 +22,7 @@ import { HttpLoggerMiddleware } from './common/logger/http-logger.middleware';
     }),
     PrismaModule,
     AuthModule,
+    UserModule,
     MenuModule,
     OrdersModule,
     PlansModule,
@@ -28,6 +31,7 @@ import { HttpLoggerMiddleware } from './common/logger/http-logger.middleware';
     InventoryModule,
     RecipesModule,
     FamilyModule,
+    PaymentModule,
   ],
 })
 export class AppModule implements NestModule {

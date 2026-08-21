@@ -1,402 +1,650 @@
-"use client";
-import { useEffect, useState, ChangeEvent, FormEvent } from "react";
-import { userService } from "../../lib/services/userService";
-import { UserIcon, MapPinIcon, GiftIcon, CreditCardIcon, PlusIcon, PencilIcon } from "@heroicons/react/24/solid";
-import { TrashIcon } from "@heroicons/react/24/outline";
-import Image from "next/image";
+'use client';
+
+import React, { useEffect, useState, FormEvent, useCallback, useMemo } from 'react';
+import Link from 'next/link';
+import {
+  User as UserIcon,
+  MapPin,
+  Heart,
+  Plus,
+  Save,
+  Loader2,
+  Sparkles,
+  Flame,
+  Dumbbell,
+  Activity,
+  Check,
+  ArrowRight,
+  Stethoscope,
+  Info,
+} from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import { userService } from '../../lib/services/userService';
+import { nutritionEngine } from '../../nutrition-planner/nutritionEngine';
+import { HealthProfileForm, BiomarkerResult, ActivityLevel } from '../../nutrition-planner/types';
 
 interface UserProfile {
   name: string;
   email: string;
+  phone?: string;
+  address?: string;
   role?: string;
   picture?: string | null;
+  preference?: {
+    maxCalories?: number | null;
+    minProtein?: number | null;
+    dislikedIngredients?: string[];
+    favoriteCategories?: string[];
+    dietaryRestrictions?: string[];
+  } | null;
 }
 
 interface Address {
-  _id: string;
+  _id?: string;
+  id?: string;
   name: string;
   street: string;
   city: string;
-  state: string;
-  postalCode: string;
+  state?: string;
+  postalCode?: string;
   phone: string;
   additionalInfo?: string;
   isDefault?: boolean;
 }
 
-interface AddAddressModalProps {
-  show: boolean;
-  onClose: () => void;
-  onSuccess: (msg: string) => void;
-  address?: Address | null;
-}
+const COMMON_ALLERGENS = [
+  'Hành tỏi (Ngũ vị tân)',
+  'Đậu phộng (Lạc)',
+  'Đậu nành',
+  'Gluten / Bột mì',
+  'Ớt cay',
+  'Nấm hương',
+  'Hạt điều',
+];
 
-function AddAddressModal({ show, onClose, onSuccess, address }: AddAddressModalProps) {
-  const [form, setForm] = useState({
-    name: address?.name || "",
-    street: address?.street || "",
-    city: address?.city || "",
-    state: address?.state || "",
-    postalCode: address?.postalCode || "",
-    phone: address?.phone || "",
-    additionalInfo: address?.additionalInfo || "",
+const DEFAULT_HEALTH_FORM: HealthProfileForm = {
+  age: 28,
+  gender: 'female',
+  heightCm: 162,
+  weightKg: 54,
+  activityLevel: 'MODERATELY_ACTIVE',
+  primaryGoal: 'fat_loss',
+  medicalConditions: [],
+  dietaryRestrictions: [],
+  mealsPerDay: 3,
+  dailyWaterLitres: 2,
+};
+
+export default function ProfilePage() {
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [savingProfile, setSavingProfile] = useState<boolean>(false);
+  const [savingHealth, setSavingHealth] = useState<boolean>(false);
+
+  // Form states
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [addressStr, setAddressStr] = useState('');
+
+  // Personalization / Health Survey states
+  const [healthForm, setHealthForm] = useState<HealthProfileForm>(DEFAULT_HEALTH_FORM);
+  const [disliked, setDisliked] = useState<string[]>([]);
+
+  // Address Modal states
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  const [modalForm, setModalForm] = useState({
+    name: 'Nhà riêng',
+    street: '',
+    city: 'TP. Hồ Chí Minh',
+    phone: '',
+    additionalInfo: '',
   });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const isEdit = !!address;
 
-  useEffect(() => {
-    if (address) {
-      setForm({
-        name: address.name || "",
-        street: address.street || "",
-        city: address.city || "",
-        state: address.state || "",
-        postalCode: address.postalCode || "",
-        phone: address.phone || "",
-        additionalInfo: address.additionalInfo || "",
-      });
-    } else {
-      setForm({
-        name: "",
-        street: "",
-        city: "",
-        state: "",
-        postalCode: "",
-        phone: "",
-        additionalInfo: "",
-      });
-    }
-    setError(null);
-  }, [address, show]);
+  // Calculate real-time biomarkers
+  const biomarkers: BiomarkerResult = useMemo(() => {
+    return nutritionEngine.calculateBiomarkers(healthForm);
+  }, [healthForm]);
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setForm(f => ({ ...f, [e.target.name]: e.target.value }));
-  };
-
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+  const fetchData = useCallback(async () => {
     try {
-      if (isEdit && address?._id) {
-        await userService.updateAddress(address._id, form);
-        onSuccess("Cập nhật địa chỉ thành công!");
-      } else {
-        await userService.addAddress(form);
-        onSuccess("Thêm địa chỉ thành công!");
+      setLoading(true);
+      const res = await userService.getProfile();
+      const userData = res.data || res;
+      setProfile(userData);
+      setName(userData.name || '');
+      setPhone(userData.phone || '');
+      setAddressStr(userData.address || '');
+
+      // Load saved health survey from localStorage if available
+      const savedHealth = localStorage.getItem('chayfood_health_profile');
+      if (savedHealth) {
+        try {
+          const parsed = JSON.parse(savedHealth) as HealthProfileForm;
+          setHealthForm(parsed);
+          if (parsed.dietaryRestrictions) {
+            setDisliked(parsed.dietaryRestrictions);
+          }
+        } catch {
+          // ignore
+        }
+      } else if (userData.preference) {
+        if (userData.preference.dislikedIngredients) {
+          setDisliked(userData.preference.dislikedIngredients);
+        }
       }
-      onClose();
-    } catch  {
-      setError("Lưu địa chỉ thất bại");
+
+      const addrRes = await userService.getAddresses();
+      setAddresses(addrRes.data || addrRes || []);
+    } catch {
+      toast.error('Không thể tải thông tin hồ sơ');
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Lưu thông tin cá nhân cơ bản
+  const handleSaveProfile = async (e: FormEvent) => {
+    e.preventDefault();
+    try {
+      setSavingProfile(true);
+      await userService.updateProfile({
+        name,
+        phone,
+        address: addressStr,
+      });
+      toast.success('Cập nhật thông tin thành công');
+      await fetchData();
+    } catch {
+      toast.error('Cập nhật thông tin thất bại');
+    } finally {
+      setSavingProfile(false);
+    }
   };
 
-  if (!show) return null;
+  // Lưu phác đồ cá nhân hóa dinh dưỡng
+  const handleSaveHealthProfile = async () => {
+    try {
+      setSavingHealth(true);
+      const payloadForm: HealthProfileForm = {
+        ...healthForm,
+        dietaryRestrictions: disliked,
+      };
+
+      // 1. Lưu vào localStorage để đồng bộ với /nutrition-planner
+      localStorage.setItem('chayfood_health_profile', JSON.stringify(payloadForm));
+
+      // 2. Đồng bộ các chỉ số Macro đã tính toán vào Database Backend
+      await userService.updatePreference({
+        maxCalories: biomarkers.targetCalories,
+        minProtein: biomarkers.targetProteinGrams,
+        dislikedIngredients: disliked,
+        dietaryRestrictions: [healthForm.primaryGoal, healthForm.gender, String(healthForm.activityLevel)],
+      });
+
+      toast.success('Đã lưu phác đồ cá nhân hóa dinh dưỡng');
+    } catch {
+      toast.error('Lưu phác đồ dinh dưỡng thất bại');
+    } finally {
+      setSavingHealth(false);
+    }
+  };
+
+  const toggleAllergen = (item: string) => {
+    setDisliked((prev) =>
+      prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item],
+    );
+  };
+
+  // Thêm địa chỉ mới
+  const handleAddAddress = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!modalForm.street.trim()) {
+      toast.error('Vui lòng nhập địa chỉ cụ thể');
+      return;
+    }
+
+    try {
+      await userService.addAddress({
+        name: modalForm.name,
+        street: modalForm.street,
+        city: modalForm.city,
+        phone: modalForm.phone || phone,
+        additionalInfo: modalForm.additionalInfo,
+      });
+      toast.success('Đã lưu địa chỉ giao hàng');
+      setShowAddressModal(false);
+      await fetchData();
+    } catch {
+      toast.error('Không thể lưu địa chỉ');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-3xl border border-slate-200/90 p-12 flex flex-col items-center justify-center space-y-3">
+        <Loader2 className="w-6 h-6 animate-spin text-emerald-600" />
+        <span className="text-xs text-slate-500 font-medium">Đang tải hồ sơ của bạn...</span>
+      </div>
+    );
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 animate-fadeIn">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-2 relative">
-        <button
-          className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-2xl font-bold"
-          onClick={onClose}
-          aria-label="Đóng"
-        >
-          ×
-        </button>
-        <h3 className="text-xl font-semibold mb-4 text-center flex items-center gap-2">
-          <MapPinIcon className="w-6 h-6 text-blue-500" />
-          {isEdit ? "Chỉnh sửa địa chỉ" : "Thêm địa chỉ mới"}
-        </h3>
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <input
-            type="text"
-            name="name"
-            className="border rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-400"
-            placeholder="Tên người nhận"
-            value={form.name}
-            onChange={handleChange}
-            required
-          />
-          <input
-            type="text"
-            name="street"
-            className="border rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-400"
-            placeholder="Địa chỉ (street)"
-            value={form.street}
-            onChange={handleChange}
-            required
-          />
-          <input
-            type="text"
-            name="city"
-            className="border rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-400"
-            placeholder="Thành phố (city)"
-            value={form.city}
-            onChange={handleChange}
-            required
-          />
-          <input
-            type="text"
-            name="state"
-            className="border rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-400"
-            placeholder="Tỉnh/Bang (state)"
-            value={form.state}
-            onChange={handleChange}
-            required
-          />
-          <input
-            type="text"
-            name="postalCode"
-            className="border rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-400"
-            placeholder="Mã bưu điện (postal code)"
-            value={form.postalCode}
-            onChange={handleChange}
-            required
-          />
-          <input
-            type="text"
-            name="phone"
-            className="border rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-400"
-            placeholder="Số điện thoại"
-            value={form.phone}
-            onChange={handleChange}
-            required
-          />
-          <input
-            type="text"
-            name="additionalInfo"
-            className="border rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-400"
-            placeholder="Thông tin bổ sung (không bắt buộc)"
-            value={form.additionalInfo}
-            onChange={handleChange}
-          />
-          {error && <div className="text-red-600 text-center text-sm">{error}</div>}
-          <div className="flex gap-2 mt-2">
-            <button
-              type="button"
-              className="flex-1 border border-gray-300 rounded-lg px-4 py-2 hover:bg-gray-100"
-              onClick={onClose}
-            >
-              Đóng
-            </button>
+    <div className="space-y-6">
+      {/* 1. Personal Information Form */}
+      <div className="bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-7 shadow-xs space-y-5">
+        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+              <UserIcon className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-base font-black text-slate-950 tracking-tight">
+                Thông Tin Cá Nhân
+              </h2>
+              <p className="text-[11px] text-slate-500">
+                Thông tin dùng để liên hệ và xuất hóa đơn giao nhận
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <form onSubmit={handleSaveProfile} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700">Họ và tên</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Nhập họ và tên"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:outline-emerald-600"
+                required
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700">Số điện thoại</label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Ví dụ: 0901234567"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:outline-emerald-600"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-700">Địa chỉ Email</label>
+            <input
+              type="email"
+              value={profile?.email || ''}
+              disabled
+              className="w-full px-3.5 py-2.5 bg-slate-100/80 border border-slate-200 rounded-xl text-xs font-medium text-slate-500 cursor-not-allowed"
+            />
+          </div>
+
+          <div className="flex justify-end pt-2">
             <button
               type="submit"
-              className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 shadow-md"
-              disabled={loading}
+              disabled={savingProfile}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition shadow-xs disabled:opacity-50"
             >
-              {loading ? "Đang lưu..." : isEdit ? "Lưu thay đổi" : "Lưu địa chỉ"}
+              {savingProfile ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Save className="w-3.5 h-3.5" />
+              )}
+              <span>Lưu Thông Tin Cá Nhân</span>
             </button>
           </div>
         </form>
       </div>
+
+      {/* 2. Personalized Health & Clinical Nutrition Profile (CÁ NHÂN HÓA DINH DƯỠNG) */}
+      <div className="bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-7 shadow-xs space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+              <Stethoscope className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-black text-slate-950 tracking-tight">
+                  Cá Nhân Hóa Thể Trạng & Dinh Dưỡng
+                </h2>
+                <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                  Chuẩn WHO Châu Á
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500">
+                Thuật toán lâm sàng tự động tính toán chỉ số BMI, TDEE và đề xuất khẩu phần dinh dưỡng tương thích
+              </p>
+            </div>
+          </div>
+
+          <Link
+            href="/nutrition-planner"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-900 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200/80 transition"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Tạo Thực Đơn Chi Tiết</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        {/* Physical Survey Form */}
+        <div className="space-y-4">
+          {/* Gender */}
+          <div>
+            <label className="text-xs font-bold text-slate-800 block mb-1.5">Giới tính sinh học</label>
+            <div className="grid grid-cols-2 gap-3 max-w-sm">
+              <button
+                type="button"
+                onClick={() => setHealthForm({ ...healthForm, gender: 'female' })}
+                className={`py-2 px-4 rounded-xl border text-center text-xs font-bold transition-all ${
+                  healthForm.gender === 'female'
+                    ? 'border-emerald-700 bg-emerald-50 text-emerald-950 shadow-xs'
+                    : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                Nữ giới
+              </button>
+              <button
+                type="button"
+                onClick={() => setHealthForm({ ...healthForm, gender: 'male' })}
+                className={`py-2 px-4 rounded-xl border text-center text-xs font-bold transition-all ${
+                  healthForm.gender === 'male'
+                    ? 'border-emerald-700 bg-emerald-50 text-emerald-950 shadow-xs'
+                    : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                Nam giới
+              </button>
+            </div>
+          </div>
+
+          {/* Age, Height, Weight */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-700">Tuổi</label>
+              <input
+                type="number"
+                value={healthForm.age}
+                onChange={(e) => setHealthForm({ ...healthForm, age: Number(e.target.value) })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white"
+                min={10}
+                max={100}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-700">Chiều cao (cm)</label>
+              <input
+                type="number"
+                value={healthForm.heightCm}
+                onChange={(e) => setHealthForm({ ...healthForm, heightCm: Number(e.target.value) })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white"
+                min={100}
+                max={220}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-700">Cân nặng (kg)</label>
+              <input
+                type="number"
+                value={healthForm.weightKg}
+                onChange={(e) => setHealthForm({ ...healthForm, weightKg: Number(e.target.value) })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white"
+                min={30}
+                max={200}
+              />
+            </div>
+          </div>
+
+          {/* Activity Level & Goal */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-700">Mức độ vận động</label>
+              <select
+                value={healthForm.activityLevel}
+                onChange={(e) => setHealthForm({ ...healthForm, activityLevel: e.target.value as ActivityLevel })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white"
+              >
+                <option value="SEDENTARY">Ít vận động (Ngồi văn phòng nhiều)</option>
+                <option value="LIGHTLY_ACTIVE">Vận động nhẹ (Tập 1 - 3 ngày/tuần)</option>
+                <option value="MODERATELY_ACTIVE">Vận động vừa (Tập 3 - 5 ngày/tuần)</option>
+                <option value="VERY_ACTIVE">Vận động nặng (Tập 6 - 7 ngày/tuần)</option>
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-700">Mục tiêu thể trạng</label>
+              <select
+                value={healthForm.primaryGoal}
+                onChange={(e) => setHealthForm({ ...healthForm, primaryGoal: e.target.value as HealthProfileForm['primaryGoal'] })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white"
+              >
+                <option value="fat_loss">Thanh lọc giảm mỡ (Thâm hụt calo lành mạnh)</option>
+                <option value="muscle_gain">Tăng cơ thể thao (Tăng cường đạm thực vật)</option>
+                <option value="maintenance">Duy trì vóc dáng & Cân bằng chuyển hóa</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Real-time Biomarker Summary Card */}
+        <div className="bg-slate-900 text-white rounded-2xl p-4 sm:p-5 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div className="flex items-center gap-2">
+              <Activity className="w-4 h-4 text-emerald-400" />
+              <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
+                Kết Quả Tính Toán Tự Động
+              </span>
+            </div>
+            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-950 border border-emerald-700 text-emerald-300">
+              BMI: {biomarkers.bmi} ({biomarkers.bmiCategory})
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+            <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700/80">
+              <div className="text-[10px] text-slate-400 font-bold uppercase">Chuyển hóa cơ bản (BMR)</div>
+              <div className="text-base font-black text-white mt-0.5">{biomarkers.bmr} <span className="text-[10px] font-normal text-slate-400">kcal</span></div>
+            </div>
+
+            <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700/80">
+              <div className="text-[10px] text-slate-400 font-bold uppercase">Tổng tiêu hao (TDEE)</div>
+              <div className="text-base font-black text-white mt-0.5">{biomarkers.tdee} <span className="text-[10px] font-normal text-slate-400">kcal</span></div>
+            </div>
+
+            <div className="bg-emerald-950/80 p-3 rounded-xl border border-emerald-700">
+              <div className="text-[10px] text-emerald-300 font-bold uppercase">Calo Mục Tiêu / Ngày</div>
+              <div className="text-base font-black text-emerald-400 mt-0.5">{biomarkers.targetCalories} <span className="text-[10px] font-normal text-emerald-300">kcal</span></div>
+            </div>
+
+            <div className="bg-emerald-950/80 p-3 rounded-xl border border-emerald-700">
+              <div className="text-[10px] text-emerald-300 font-bold uppercase">Đạm Thực Vật / Ngày</div>
+              <div className="text-base font-black text-emerald-400 mt-0.5">{biomarkers.targetProteinGrams} <span className="text-[10px] font-normal text-emerald-300">g</span></div>
+            </div>
+          </div>
+
+          {/* Macro breakdown */}
+          <div className="flex items-center justify-between text-[11px] text-slate-400 px-1 pt-1 border-t border-slate-800">
+            <span>Tỉ lệ dưỡng chất:</span>
+            <span className="text-slate-200 font-bold">
+              Đạm (Protein): {biomarkers.targetProteinGrams}g | Tinh bột (Carbs): {biomarkers.targetCarbsGrams}g | Chất béo tốt (Fat): {biomarkers.targetFatGrams}g
+            </span>
+          </div>
+        </div>
+
+        {/* Allergens / Disliked ingredients */}
+        <div className="space-y-2.5 pt-2">
+          <label className="text-xs font-bold text-slate-900 block">
+            Nguyên liệu kiêng / Dị ứng (Hệ thống tự động lọc món ăn và cảnh báo)
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {COMMON_ALLERGENS.map((item) => {
+              const isChecked = disliked.includes(item);
+              return (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => toggleAllergen(item)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border ${
+                    isChecked
+                      ? 'bg-red-50 text-red-800 border-red-200 shadow-xs'
+                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  {isChecked && <Check className="w-3 h-3 text-red-600" />}
+                  <span>{item}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+          <div className="text-[11px] text-slate-400 flex items-center gap-1.5 font-medium">
+            <Info className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Chỉ số được đồng bộ xuyên suốt toàn bộ ứng dụng ChayFood</span>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleSaveHealthProfile}
+            disabled={savingHealth}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition shadow-xs disabled:opacity-50"
+          >
+            {savingHealth ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Save className="w-3.5 h-3.5" />
+            )}
+            <span>Lưu Phác Đồ Cá Nhân Hóa</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 3. Address Book */}
+      <div className="bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-7 shadow-xs space-y-4">
+        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+              <MapPin className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-base font-black text-slate-950 tracking-tight">
+                Sổ Địa Chỉ Giao Hàng
+              </h2>
+              <p className="text-[11px] text-slate-500">
+                Lưu sẵn các địa chỉ nhà riêng hoặc văn phòng để đặt món nhanh chóng
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowAddressModal(true)}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Thêm địa chỉ</span>
+          </button>
+        </div>
+
+        {addresses.length === 0 ? (
+          <div className="text-center py-6 text-slate-400 text-xs space-y-1 font-medium">
+            <p>Chưa có địa chỉ nào được lưu</p>
+            <p className="text-[11px]">Bấm &quot;Thêm địa chỉ&quot; để thiết lập địa chỉ nhận hàng</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {addresses.map((addr, idx) => (
+              <div
+                key={idx}
+                className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition space-y-2 relative"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-900">
+                    {addr.name || 'Địa chỉ'}
+                  </span>
+                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
+                    Mặc định
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed font-medium">{addr.street}</p>
+                {addr.phone && <p className="text-[11px] text-slate-400">SĐT: {addr.phone}</p>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Address Modal */}
+      {showAddressModal && (
+        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full border shadow-lg space-y-4">
+            <h3 className="text-base font-black text-slate-950">Thêm Địa Chỉ Giao Hàng</h3>
+            <form onSubmit={handleAddAddress} className="space-y-3">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700">Tên gợi nhớ</label>
+                <input
+                  type="text"
+                  value={modalForm.name}
+                  onChange={(e) => setModalForm({ ...modalForm, name: e.target.value })}
+                  placeholder="Ví dụ: Nhà riêng, Công ty"
+                  className="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs font-medium"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700">Địa chỉ cụ thể</label>
+                <input
+                  type="text"
+                  value={modalForm.street}
+                  onChange={(e) => setModalForm({ ...modalForm, street: e.target.value })}
+                  placeholder="Số nhà, tên đường, phường/xã, quận/huyện"
+                  className="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs font-medium"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700">Ghi chú giao hàng</label>
+                <input
+                  type="text"
+                  value={modalForm.additionalInfo}
+                  onChange={(e) => setModalForm({ ...modalForm, additionalInfo: e.target.value })}
+                  placeholder="Ví dụ: Giao cổng sau, gọi trước khi đến"
+                  className="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs font-medium"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setShowAddressModal(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+                >
+                  Đóng
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow-xs"
+                >
+                  Lưu Địa Chỉ
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
-export default function ProfilePage() {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [addresses, setAddresses] = useState<Address[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-
-  // Modal state
-  const [showAddressModal, setShowAddressModal] = useState(false);
-  const [editAddress, setEditAddress] = useState<Address | null>(null);
-
-  // Avatar upload
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [avatarLoading, setAvatarLoading] = useState(false);
-
-  const fetchData = async () => {
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-    try {
-      const userRes = await userService.getProfile();
-      setUser(userRes.data || userRes);
-      const addrRes = await userService.getAddresses();
-      setAddresses(addrRes.data || addrRes);
-    } catch  {
-      setError("Không thể tải thông tin người dùng hoặc địa chỉ");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  // Handle avatar file select
-  const handleAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setAvatarFile(e.target.files[0]);
-    }
-  };
-
-  // Handle avatar upload
-  const handleAvatarUpload = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!avatarFile) return;
-    setAvatarLoading(true);
-    setError(null);
-    setSuccess(null);
-    try {
-      const formData = new FormData();
-      formData.append("picture", avatarFile);
-      await userService.updateProfile(formData); // updateProfile phải hỗ trợ FormData
-      setSuccess("Cập nhật ảnh đại diện thành công!");
-      setAvatarFile(null);
-      fetchData();
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError("Cập nhật ảnh đại diện thất bại");
-      } else {
-        setError("Cập nhật ảnh đại diện thất bại");
-      }
-    } finally {
-      setAvatarLoading(false);
-    }
-  };
-
-  return (
-    <div className="max-w-5xl mx-auto mt-10 px-2 sm:px-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* Avatar + Info */}
-        <div className="md:col-span-1 flex flex-col items-center bg-white rounded-3xl shadow-xl p-8 relative">
-          <div className="relative group">
-            <Image
-              src={user?.picture || "/default-avatar.png"}
-              alt="avatar"
-              width={128}
-              height={128}
-              className="w-32 h-32 rounded-full border-4 border-blue-500 shadow-lg object-cover transition-transform group-hover:scale-105"
-            />
-            <form onSubmit={handleAvatarUpload} className="absolute bottom-0 right-0">
-              <label className="bg-blue-600 text-white rounded-full p-2 cursor-pointer hover:bg-blue-700 transition flex items-center">
-                <PencilIcon className="w-5 h-5" />
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAvatarChange}
-                  className="hidden"
-                />
-              </label>
-              {avatarFile && (
-                <button
-                  type="submit"
-                  className="mt-2 w-full bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700 text-sm"
-                  disabled={avatarLoading}
-                >
-                  {avatarLoading ? "Đang tải..." : "Tải lên ảnh"}
-                </button>
-              )}
-            </form>
-          </div>
-          <h2 className="mt-4 text-2xl font-bold text-gray-900">{user?.name}</h2>
-          <p className="text-gray-500 text-base">{user?.email}</p>
-          {user?.role && <span className="mt-2 text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full">{user.role}</span>}
-        </div>
-        {/* Info Cards */}
-        <div className="md:col-span-2 flex flex-col gap-8">
-          {/* Địa chỉ giao hàng */}
-          <div className="bg-white rounded-3xl shadow-xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <MapPinIcon className="w-6 h-6 text-blue-500" /> Địa chỉ giao hàng
-              </h3>
-              <button
-                className="bg-green-600 text-white px-4 py-2 rounded-full hover:bg-green-700 flex items-center gap-1 text-sm shadow-md"
-                onClick={() => { setEditAddress(null); setShowAddressModal(true); }}
-              >
-                <PlusIcon className="w-5 h-5" /> Thêm địa chỉ
-              </button>
-            </div>
-            {addresses.length === 0 ? (
-              <div className="text-gray-400 text-center py-8">Chưa có địa chỉ nào.</div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {addresses.map(addr => (
-                  <div key={addr._id} className="border rounded-2xl p-4 bg-gray-50 flex flex-col gap-1 relative shadow-sm hover:shadow-lg transition-shadow">
-                    <div className="font-medium text-gray-900 flex items-center gap-2">
-                      <UserIcon className="w-5 h-5 text-blue-400" /> {addr.name}
-                      <button
-                        className="ml-auto p-1 text-gray-400 hover:text-blue-600"
-                        title="Chỉnh sửa địa chỉ"
-                        onClick={() => { setEditAddress(addr); setShowAddressModal(true); }}
-                      >
-                        <PencilIcon className="w-4 h-4" />
-                      </button>
-                      <button
-                        className={`p-1 ml-1 ${addr.isDefault ? 'opacity-40 cursor-not-allowed' : 'hover:text-red-600 text-gray-400'}`}
-                        title={addr.isDefault ? "Không thể xóa địa chỉ mặc định" : "Xóa địa chỉ"}
-                        disabled={addr.isDefault}
-                        onClick={async () => {
-                          if (addr.isDefault) return;
-                          if (window.confirm("Bạn có chắc muốn xóa địa chỉ này?")) {
-                            try {
-                              await userService.deleteAddress(addr._id);
-                              setSuccess("Đã xóa địa chỉ thành công!");
-                              fetchData();
-                            } catch {
-                              setError("Xóa địa chỉ thất bại");
-                            }
-                          }
-                        }}
-                      >
-                        <TrashIcon className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <div className="text-gray-700 text-sm flex items-center gap-1">
-                      <MapPinIcon className="w-4 h-4 text-gray-400" /> {addr.street}, {addr.city}, {addr.state}, {addr.postalCode}
-                    </div>
-                    {addr.phone && <div className="text-sm text-gray-500 flex items-center gap-1"><span className="font-medium">SĐT:</span> {addr.phone}</div>}
-                    {addr.additionalInfo && <div className="text-xs text-gray-400 italic">{addr.additionalInfo}</div>}
-                    {addr.isDefault && <span className="absolute top-2 right-2 text-green-600 text-xs font-semibold">Mặc định</span>}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          {/* Subscription section */}
-          <div className="bg-white rounded-3xl shadow-xl p-6 flex items-center gap-4">
-            <CreditCardIcon className="w-8 h-8 text-purple-500" />
-            <div>
-              <h3 className="text-lg font-semibold">Gói đăng ký (Subscription)</h3>
-              <p className="text-gray-500">(Thông tin gói đăng ký sẽ hiển thị ở đây)</p>
-            </div>
-          </div>
-          {/* Promotion section */}
-          <div className="bg-white rounded-3xl shadow-xl p-6 flex items-center gap-4">
-            <GiftIcon className="w-8 h-8 text-pink-500" />
-            <div>
-              <h3 className="text-lg font-semibold">Ưu đãi & Khuyến mãi</h3>
-              <p className="text-gray-500">(Các mã giảm giá, ưu đãi sẽ hiển thị ở đây)</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* Modal thêm/sửa địa chỉ */}
-      <AddAddressModal
-        show={showAddressModal}
-        onClose={() => { setShowAddressModal(false); setEditAddress(null); }}
-        onSuccess={(msg) => {
-          setSuccess(msg);
-          setEditAddress(null);
-          setShowAddressModal(false);
-          fetchData();
-        }}
-        address={editAddress}
-      />
-      {/* Thông báo */}
-      <div className="fixed left-1/2 -translate-x-1/2 top-4 z-50">
-        {loading && <div className="bg-white px-6 py-3 rounded-xl shadow text-gray-600">Đang tải thông tin...</div>}
-        {error && <div className="bg-red-100 text-red-700 px-6 py-3 rounded-xl shadow mb-2">{error}</div>}
-        {success && <div className="bg-green-100 text-green-700 px-6 py-3 rounded-xl shadow mb-2">{success}</div>}
-      </div>
-    </div>
-  );
-} 

@@ -9,6 +9,7 @@ import {
   useElements,
 } from '@stripe/react-stripe-js';
 import { getStripe } from '../../lib/stripe';
+import { paymentService } from '../../services/paymentService';
 import { Button } from '../ui/button';
 import { toast } from 'react-hot-toast';
 
@@ -38,21 +39,23 @@ const CardForm = ({ orderId, amount, onSuccess, onCancel }: StripePaymentFormPro
     setErrorMessage(null);
 
     try {
-      // Create a payment intent on the server
-      const response = await fetch(`/api/payment/create-intent/${orderId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const intentData = await paymentService.createPaymentIntent(orderId);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Something went wrong with the payment');
+      if (intentData.redirectUrl) {
+        window.location.href = intentData.redirectUrl;
+        return;
       }
 
-      const { data } = await response.json();
-      const clientSecret = data.clientSecret;
+      // If clientSecret was returned for Elements flow
+      const clientSecret = intentData.clientSecret;
+      if (!clientSecret) {
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          router.push(`/order/success?orderId=${orderId}`);
+        }
+        return;
+      }
 
       // Confirm the payment with Stripe.js
       const result = await stripe.confirmCardPayment(clientSecret, {

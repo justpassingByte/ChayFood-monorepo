@@ -152,7 +152,7 @@ export default function NutritionPlannerPage() {
     setMealPlan(plan)
     setIsEditing(false)
 
-    // If authenticated, sync with backend preferences API
+    // If authenticated, sync with backend preferences API & User Profile
     if (isAuthenticated) {
       try {
         await api.put('/recommendations/preferences', {
@@ -160,11 +160,17 @@ export default function NutritionPlannerPage() {
           maxCalories: bio.targetCalories,
           dietaryRestrictions: completedData.dietaryRestrictions,
           medicalConditions: completedData.medicalConditions,
-        })
+        });
+        await api.put('/user/preference', {
+          minProtein: bio.targetProteinGrams,
+          maxCalories: bio.targetCalories,
+          dislikedIngredients: completedData.dietaryRestrictions,
+          dietaryRestrictions: [completedData.primaryGoal, completedData.gender, String(completedData.activityLevel)],
+        });
       } catch {}
     }
 
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   const handleUpdateSlot = (slotId: MealSlot['slotId'], newItem: MenuItem) => {

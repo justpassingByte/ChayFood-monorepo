@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ShieldCheck } from 'lucide-react';
@@ -44,13 +44,14 @@ export default function CheckoutPage() {
   const [deliveryTimeType, setDeliveryTimeType] = useState<'asap' | 'lunch' | 'dinner'>('asap');
   const [kitchenNotes, setKitchenNotes] = useState<string>(store.deliveryNotes || '');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const isNavigatingRef = useRef<boolean>(false);
 
-  // 1. Redirect to /cart if cart is empty
+  // 1. Redirect to /cart if cart is empty (chỉ khi không trong quá trình đặt hàng)
   useEffect(() => {
-    if (store.items.length === 0) {
+    if (store.items.length === 0 && !isSubmitting && !isNavigatingRef.current) {
       router.push('/cart');
     }
-  }, [store.items.length, router]);
+  }, [store.items.length, isSubmitting, router]);
 
   // 2. Fetch saved addresses if user is authenticated
   useEffect(() => {
@@ -231,35 +232,24 @@ export default function CheckoutPage() {
     setIsSubmitting(true);
 
     try {
-      // Branch 1: Stripe Payment Strategy
-      if (paymentMethod === 'stripe') {
-        const res = await paymentService.createCheckoutSessionWithCart({
-          items: orderItems,
-          deliveryAddress,
-          paymentMethod: 'stripe',
-          specialInstructions: finalNotes,
-          user: user ? { _id: user._id, email: user.email, name: user.name } : undefined,
-        });
-
-        if (res.status === 'success' && res.url) {
-          store.clearCart();
-          window.location.href = res.url;
-          return;
-        } else {
-          toast.error(res.message || 'Không thể khởi tạo cổng thanh toán Stripe');
-          setIsSubmitting(false);
-          return;
-        }
-      }
-
-      // Branch 2 & 3: VietQR Banking & COD
+      // 1. Tạo đơn hàng qua orderService
       const orderRes = await orderService.create(orderPayload);
 
       if (orderRes.status === 'success' && orderRes.data) {
         const createdOrder = orderRes.data;
-        const orderId = createdOrder._id || createdOrder.id || 'ORDER_' + Date.now();
+        const orderId = createdOrder.id || createdOrder._id || '';
 
+        // 2. Tạo Payment Intent qua Backend Payment Factory
+        const intentRes = await paymentService.createPaymentIntent(orderId);
+
+        isNavigatingRef.current = true;
         store.clearCart();
+
+        // 3. Điều hướng theo kết quả Strategy
+        if (intentRes.redirectUrl) {
+          window.location.href = intentRes.redirectUrl;
+          return;
+        }
 
         if (paymentMethod === 'banking') {
           toast.success('Đã tạo đơn hàng! Vui lòng quét mã VietQR để hoàn tất');

@@ -28,9 +28,21 @@ export const userService = {
     const res = await apiClient.delete(`/user/addresses/${addressId}`);
     return res.data;
   },
-  async setDefaultAddress(addressId: string) {
-    const res = await apiClient.patch(`/user/addresses/${addressId}/default`);
+  // Dietary Preferences & Macros
+  async updatePreference(data: {
+    maxCalories?: number;
+    minProtein?: number;
+    dislikedIngredients?: string[];
+    favoriteCategories?: string[];
+    dietaryRestrictions?: string[];
+  }) {
+    const res = await apiClient.put("/user/preference", data);
     return res.data;
   },
 
+  // Security
+  async changePassword(data: { currentPassword: string; newPassword: string }) {
+    const res = await apiClient.put("/user/password", data);
+    return res.data;
+  },
 }; 

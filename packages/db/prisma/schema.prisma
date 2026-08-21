@@ -175,6 +175,7 @@ model Subscription {
 
 model Order {
   id                  String        @id @default(uuid())
+  sequenceNumber      Int           @default(autoincrement())
   orderNumber         String        @unique
   userId              String
   user                User          @relation(fields: [userId], references: [id], onDelete: Restrict)
@@ -188,7 +189,8 @@ model Order {
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
 
-  items OrderItem[]
+  items                OrderItem[]
+  paymentTransactions  PaymentTransaction[]
 
   @@map("orders")
 }
@@ -344,3 +346,28 @@ model FamilyMember {
   @@map("family_members")
 }
 
+enum PaymentTransactionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  EXPIRED
+}
+
+model PaymentTransaction {
+  id            String                   @id @default(cuid())
+  orderId       String
+  order         Order                    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider      String                   // 'SEPAY', 'STRIPE', 'COD', 'MOCK'
+  providerTxId  String?                  @unique
+  amount        Decimal                  @db.Decimal(12, 2)
+  currency      String                   @default("VND")
+  status        PaymentTransactionStatus @default(PENDING)
+  metadata      Json?
+  expiresAt     DateTime?
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+
+  @@index([orderId])
+  @@map("payment_transactions")
+}

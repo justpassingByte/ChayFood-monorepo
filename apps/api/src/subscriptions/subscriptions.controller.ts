@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Patch, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { SubscriptionsService } from './subscriptions.service';
 import { CreateSubscriptionDto } from './dto/subscription.dto';
@@ -22,6 +22,15 @@ export class SubscriptionsController {
   @ApiOperation({ summary: 'Lấy danh sách gói ăn đã đăng ký của khách hàng' })
   getMySubscriptions(@CurrentUser() user: AuthenticatedUser) {
     return this.subscriptionsService.findUserSubscriptions(user.id);
+  }
+
+  @Post(':id/toggle')
+  @ApiOperation({ summary: 'Tạm dừng hoặc kích hoạt lại gói ăn định kỳ' })
+  toggle(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.subscriptionsService.toggleSubscription(id, user.id);
   }
 
   @Get()

@@ -30,11 +30,7 @@ function OrderSuccessContent() {
 
       try {
         let data = null;
-        if (sessionId) {
-          console.log('Fetching order by session ID:', sessionId);
-          data = await orderService.getBySessionId(sessionId);
-        } else if (orderId) {
-          console.log('Fetching order by order ID:', orderId);
+        if (orderId) {
           data = await orderService.getById(orderId);
         }
         if (data) {
@@ -59,23 +55,9 @@ function OrderSuccessContent() {
 
   if (isLoading) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-green-600 mb-4" />
-        <p className="text-gray-600">Đang tải thông tin đơn hàng...</p>
-      </div>
-    );
-  }
-
-  if (!orderId && !sessionId) {
-    return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center">
-        <div className="max-w-md mx-auto text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Không tìm thấy đơn hàng</h1>
-          <p className="text-gray-600 mb-6">Không tìm thấy mã đơn hàng hoặc mã phiên thanh toán. Vui lòng kiểm tra lại.</p>
-          <Button onClick={() => router.push('/')} className="bg-green-600 hover:bg-green-700">
-            Quay lại trang chủ
-          </Button>
-        </div>
+      <div className="min-h-[70vh] flex flex-col items-center justify-center space-y-3">
+        <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+        <p className="text-sm font-medium text-slate-600">Đang kiểm tra kết quả thanh toán...</p>
       </div>
     );
   }
@@ -94,77 +76,91 @@ function OrderSuccessContent() {
     );
   }
 
-  if (!order) {
-    return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center">
-        <div className="max-w-md mx-auto text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Không tìm thấy thông tin đơn hàng</h1>
-          <p className="text-gray-600 mb-6">Không thể tìm thấy thông tin đơn hàng. Đơn hàng có thể đang được xử lý.</p>
-          <Button onClick={() => router.push('/')} className="bg-green-600 hover:bg-green-700">
-            Quay lại trang chủ
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // Store the order ID for links
-  const displayOrderId = order._id;
-
   return (
-    <div className="container max-w-4xl mx-auto py-10 px-4">
-      <div className="bg-white rounded-lg shadow-md p-6 text-center">
-        <div className="mb-6">
-          <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Đặt hàng thành công!</h1>
-          <p className="text-gray-600">
-            Cảm ơn bạn đã đặt hàng tại ChayFood. Đơn hàng của bạn đã được xác nhận.
-          </p>
+    <div className="container max-w-2xl mx-auto py-12 px-4">
+      <div className="bg-white rounded-3xl shadow-sm p-6 sm:p-8 border border-slate-200 text-center">
+        <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-200">
+          <CheckCircle className="h-8 w-8 text-emerald-600" />
         </div>
-        
+
+        <h1 className="text-2xl font-black text-slate-950 mb-2 tracking-tight">
+          Đặt Hàng Thành Công
+        </h1>
+        <p className="text-xs text-slate-500 mb-6">
+          Cảm ơn bạn đã lựa chọn món chay thanh lành tại ChayFood
+        </p>
+
         {order && (
-          <div className="mb-8">
-            <div className="bg-gray-50 p-4 rounded-md mb-4">
-              <h2 className="text-lg font-semibold mb-2">Chi tiết đơn hàng</h2>
-              <p className="text-gray-600 mb-1">Mã đơn hàng: <span className="font-medium">{order._id}</span></p>
-              <p className="text-gray-600 mb-1">Trạng thái: <span className="font-medium text-green-600">{order.status === 'confirmed' ? 'Đã xác nhận' : 'Đang xử lý'}</span></p>
-              <p className="text-gray-600 mb-1">Thanh toán: <span className="font-medium text-green-600">{order.paymentStatus === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}</span></p>
-              <p className="text-gray-600">Tổng tiền: <span className="font-medium">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.totalAmount)}</span></p>
+          <div className="mb-6 text-left">
+            <div className="bg-slate-50 p-4 rounded-2xl border mb-4 space-y-1.5 text-xs">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Mã đơn hàng:</span>
+                <span className="font-mono font-bold text-slate-900">#{order.orderNumber}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Trạng thái đơn:</span>
+                <span className="font-bold text-emerald-700">
+                  {order.status === 'CONFIRMED' ? 'Đã xác nhận' : 'Đang xử lý'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Thanh toán:</span>
+                <span className="font-bold text-emerald-700">
+                  {order.paymentStatus === 'PAID' ? 'Đã thanh toán' : 'Chờ thanh toán'}
+                </span>
+              </div>
+              <div className="flex justify-between pt-1 border-t">
+                <span className="text-slate-500 font-bold">Tổng tiền:</span>
+                <span className="font-black text-slate-950 text-sm">
+                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
+                    Number(order.totalAmount),
+                  )}
+                </span>
+              </div>
             </div>
-            
-            <div className="border-t border-b py-4 space-y-2 mb-4">
-              <h3 className="text-md font-semibold mb-2">Món ăn đã đặt</h3>
+
+            <div className="border-t border-b py-3 space-y-2 mb-4 text-xs">
+              <h3 className="font-bold text-slate-900 mb-2">Món ăn đã đặt</h3>
               {order.items.map((item, index) => (
                 <div key={index} className="flex justify-between">
-                  <span>{item.quantity}x {typeof item.menuItem === 'object' ? item.menuItem.name : 'Sản phẩm'}</span>
-                  <span>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price * item.quantity)}</span>
+                  <span>
+                    {item.quantity}x {item.menuItem?.name || 'Món chay'}
+                  </span>
+                  <span className="font-bold">
+                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
+                      Number(item.price) * item.quantity,
+                    )}
+                  </span>
                 </div>
               ))}
             </div>
-            
-            <div className="bg-gray-50 p-4 rounded-md">
-              <h3 className="text-md font-semibold mb-2">Địa chỉ giao hàng</h3>
-              <p className="text-gray-600">
-                {`${order.deliveryAddress.street}, ${order.deliveryAddress.city}, ${order.deliveryAddress.state}, ${order.deliveryAddress.postalCode}`}
+
+            <div className="bg-slate-50 p-4 rounded-2xl border text-xs">
+              <h3 className="font-bold text-slate-900 mb-1">Địa chỉ giao hàng</h3>
+              <p className="text-slate-600">
+                {order.deliveryAddress.street}, {order.deliveryAddress.city}
                 {order.deliveryAddress.additionalInfo && ` (${order.deliveryAddress.additionalInfo})`}
               </p>
             </div>
           </div>
         )}
-        
-        <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
-          <Link href={`/order/${displayOrderId}`} passHref>
-            <Button variant="outline" className="flex items-center gap-2">
-              <ShoppingBag className="h-4 w-4" />
-              Chi tiết đơn hàng
-            </Button>
-          </Link>
-          <Link href="/menu" passHref>
-            <Button className="flex items-center gap-2 bg-green-600 hover:bg-green-700">
-              <Home className="h-4 w-4" />
-              Tiếp tục mua sắm
-              <ArrowRight className="h-4 w-4 ml-1" />
-            </Button>
+
+        <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+          {order && (
+            <Link
+              href={`/order/${order.id}`}
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition shadow-xs"
+            >
+              <span>Xem Tiến Trình Đơn Hàng</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          )}
+          <Link
+            href="/menu"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition"
+          >
+            <ShoppingBag className="h-3.5 w-3.5" />
+            <span>Tiếp Tục Chọn Món</span>
           </Link>
         </div>
       </div>

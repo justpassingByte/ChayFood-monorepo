@@ -25,6 +25,7 @@ export {
   StockTransactionType,
   FamilyRelation,
   ActivityLevel,
+  PaymentTransactionStatus,
 } from '@prisma/client';
 export type {
   User,
@@ -39,4 +40,5 @@ export type {
   StockTransaction,
   FamilyGroup,
   FamilyMember,
+  PaymentTransaction,
 } from '@prisma/client';

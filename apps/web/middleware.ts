@@ -17,7 +17,7 @@ export function middleware(request: NextRequest) {
     if (currentUserCookie) {
       try {
         const userData = JSON.parse(currentUserCookie);
-        isAdmin = userData.role === 'admin';
+        isAdmin = userData.role?.toUpperCase() === 'ADMIN';
       } catch (error) {
         console.error('Error parsing currentUser cookie:', error);
       }

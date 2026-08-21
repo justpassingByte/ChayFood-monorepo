@@ -6,11 +6,12 @@ import Cookies from 'js-cookie';
 
 interface User {
   _id: string;
+  id?: string;
   email: string;
   name: string;
   phone?: string;
   address?: string;
-  role: 'user' | 'admin';
+  role: 'user' | 'admin' | 'USER' | 'ADMIN' | string;
 }
 
 interface AuthContextType {
@@ -274,7 +275,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = {
     user,
     isAuthenticated: !!user,
-    isAdmin: user?.role === 'admin',
+    isAdmin: user?.role?.toUpperCase() === 'ADMIN',
     isLoading,
     login,
     logout,
