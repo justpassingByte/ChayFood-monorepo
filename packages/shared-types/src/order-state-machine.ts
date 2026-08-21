@@ -7,8 +7,8 @@ export const ORDER_TRANSITIONS: Record<OrderStatus, readonly OrderStatus[]> = {
   PENDING:    ['CONFIRMED', 'CANCELLED'],
   CONFIRMED:  ['PREPARING', 'CANCELLED'],
   PREPARING:  ['READY'],
-  READY:      ['DELIVERING'],
-  DELIVERING: ['DELIVERED'],
+  READY:      ['DELIVERING', 'CANCELLED'],
+  DELIVERING: ['DELIVERED', 'CANCELLED'],
   DELIVERED:  [],
   CANCELLED:  [],
 } as const;

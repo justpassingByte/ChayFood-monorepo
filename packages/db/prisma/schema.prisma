@@ -283,7 +283,7 @@ model RecipeItem {
 model StockTransaction {
   id            String               @id @default(uuid())
   ingredientId  String
-  ingredient    Ingredient           @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  ingredient    Ingredient           @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
   type          StockTransactionType
   quantity      Decimal              @db.Decimal(12, 2)
   previousStock Decimal              @db.Decimal(12, 2)
@@ -357,7 +357,7 @@ enum PaymentTransactionStatus {
 model PaymentTransaction {
   id            String                   @id @default(cuid())
   orderId       String
-  order         Order                    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order         Order                    @relation(fields: [orderId], references: [id], onDelete: Restrict)
   provider      String                   // 'SEPAY', 'STRIPE', 'COD', 'MOCK'
   providerTxId  String?                  @unique
   amount        Decimal                  @db.Decimal(12, 2)
