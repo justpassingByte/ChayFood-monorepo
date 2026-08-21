@@ -29,6 +29,7 @@ import { useAuth } from "@/context/AuthContext"
 import { toast } from "react-hot-toast"
 import { FamilyMemberSelector, FamilyMemberOption } from "../components/FamilyMemberSelector"
 import { DishBenefitsCard } from "../components/DishBenefitsCard"
+import { DishRecipeSection } from "../components/DishRecipeSection"
 import { DishStickyBar } from "../components/DishStickyBar"
 import { getReviewsByMenuItem, Review, createReview } from "@/services/reviewService"
 
@@ -509,6 +510,13 @@ export default function MenuItemDetailPage() {
             fat={effectiveFat}
             ingredients={item.ingredients || ["Đậu nành hữu cơ", "Nấm đông cô", "Rau sạch Đà Lạt", "Gia vị thảo mộc"]}
             tags={item.tags}
+          />
+
+          {/* 7b. Cooking Instructions & Recipe Section */}
+          <DishRecipeSection
+            menuItemId={item._id || item.id || id}
+            dishName={item.name}
+            ingredients={item.ingredients}
           />
         </div>
 
