@@ -16,34 +16,34 @@ interface MetricCardProps {
 
 const colorMap = {
   emerald: {
-    badge: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
-    iconBg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    stroke: '#10B981',
-    fill: 'rgba(16, 185, 129, 0.1)',
+    badge: 'text-emerald-700 bg-emerald-50 border-emerald-200',
+    iconBg: 'bg-emerald-50 text-emerald-600 border-emerald-200',
+    stroke: '#059669',
+    fill: 'rgba(5, 150, 105, 0.1)',
   },
   amber: {
-    badge: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
-    iconBg: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    stroke: '#F59E0B',
-    fill: 'rgba(245, 158, 11, 0.1)',
+    badge: 'text-amber-700 bg-amber-50 border-amber-200',
+    iconBg: 'bg-amber-50 text-amber-600 border-amber-200',
+    stroke: '#D97706',
+    fill: 'rgba(217, 119, 6, 0.1)',
   },
   sky: {
-    badge: 'text-sky-400 bg-sky-500/10 border-sky-500/20',
-    iconBg: 'bg-sky-500/10 text-sky-400 border-sky-500/20',
-    stroke: '#0EA5E9',
-    fill: 'rgba(14, 165, 233, 0.1)',
+    badge: 'text-sky-700 bg-sky-50 border-sky-200',
+    iconBg: 'bg-sky-50 text-sky-600 border-sky-200',
+    stroke: '#0284C7',
+    fill: 'rgba(2, 132, 199, 0.1)',
   },
   indigo: {
-    badge: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20',
-    iconBg: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
-    stroke: '#6366F1',
-    fill: 'rgba(99, 102, 241, 0.1)',
+    badge: 'text-indigo-700 bg-indigo-50 border-indigo-200',
+    iconBg: 'bg-indigo-50 text-indigo-600 border-indigo-200',
+    stroke: '#4F46E5',
+    fill: 'rgba(79, 70, 229, 0.1)',
   },
   rose: {
-    badge: 'text-rose-400 bg-rose-500/10 border-rose-500/20',
-    iconBg: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
-    stroke: '#F43F5E',
-    fill: 'rgba(244, 63, 94, 0.1)',
+    badge: 'text-rose-700 bg-rose-50 border-rose-200',
+    iconBg: 'bg-rose-50 text-rose-600 border-rose-200',
+    stroke: '#E11D48',
+    fill: 'rgba(225, 29, 72, 0.1)',
   },
 };
 
@@ -77,16 +77,13 @@ export default function MetricCard({
   const areaPath = `M 0,${height} L ${points.join(' L ')} L ${width},${height} Z`;
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-slate-800/80 p-4 hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-950/20 transition-all duration-200 group flex flex-col justify-between">
-      {/* Subtle background glow */}
-      <div className="absolute -top-10 -right-10 w-24 h-24 bg-emerald-500/5 rounded-full blur-xl group-hover:bg-emerald-500/10 transition-all duration-300 pointer-events-none" />
-
+    <div className="relative overflow-hidden rounded-2xl bg-white border border-slate-200/80 p-4 hover:shadow-md hover:border-emerald-500/40 transition-all duration-200 group flex flex-col justify-between shadow-xs">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider truncate block whitespace-nowrap">
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate block whitespace-nowrap">
             {title}
           </span>
-          <p className="text-xl font-bold font-mono tracking-tight text-white mt-1 truncate whitespace-nowrap">
+          <p className="text-xl font-bold font-mono tracking-tight text-slate-900 mt-1 truncate whitespace-nowrap">
             {value}
           </p>
         </div>
@@ -96,7 +93,7 @@ export default function MetricCard({
         </div>
       </div>
 
-      <div className="mt-3 pt-2.5 border-t border-slate-800/60 flex items-center justify-between gap-2">
+      <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between gap-2">
         <div className="flex items-center space-x-1.5 min-w-0">
           <span
             className={`inline-flex items-center space-x-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold border whitespace-nowrap ${colors.badge}`}
@@ -105,7 +102,7 @@ export default function MetricCard({
             {trend === 'down' && <ArrowTrendingDownIcon className="w-2.5 h-2.5 stroke-[2.5]" />}
             <span>{change}</span>
           </span>
-          <span className="text-[10px] text-slate-500 truncate whitespace-nowrap">{subtitle}</span>
+          <span className="text-[10px] text-slate-400 truncate whitespace-nowrap">{subtitle}</span>
         </div>
 
         {/* Mini SVG Sparkline */}
@@ -113,7 +110,7 @@ export default function MetricCard({
           <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible">
             <defs>
               <linearGradient id={`grad-${title.replace(/\s+/g, '')}`} x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor={colors.stroke} stopOpacity="0.3" />
+                <stop offset="0%" stopColor={colors.stroke} stopOpacity="0.2" />
                 <stop offset="100%" stopColor={colors.stroke} stopOpacity="0.0" />
               </linearGradient>
             </defs>

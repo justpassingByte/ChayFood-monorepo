@@ -7,19 +7,19 @@ import { orderService, Order } from '@/services/orderService';
 import { ORDER_STATUS_LABELS, OrderStatus } from '@chayfood/shared-types';
 
 const statusBadgeStyles: Record<string, string> = {
-  PENDING: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  CONFIRMED: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  PREPARING: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-  READY: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
-  DELIVERING: 'bg-sky-500/10 text-sky-400 border-sky-500/20',
-  DELIVERED: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-  CANCELLED: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+  PENDING: 'bg-amber-50 text-amber-700 border-amber-200',
+  CONFIRMED: 'bg-blue-50 text-blue-700 border-blue-200',
+  PREPARING: 'bg-purple-50 text-purple-700 border-purple-200',
+  READY: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+  DELIVERING: 'bg-sky-50 text-sky-700 border-sky-200',
+  DELIVERED: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  CANCELLED: 'bg-rose-50 text-rose-700 border-rose-200',
 };
 
 const paymentBadgeStyles: Record<string, string> = {
-  PENDING: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  PAID: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-  FAILED: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+  PENDING: 'bg-amber-50 text-amber-700 border-amber-200',
+  PAID: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  FAILED: 'bg-rose-50 text-rose-700 border-rose-200',
 };
 
 export default function OrdersTable() {
@@ -50,15 +50,15 @@ export default function OrdersTable() {
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center h-52 space-y-3">
-        <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
-        <span className="text-xs text-slate-400 font-mono">Đang đồng bộ đơn hàng gần nhất...</span>
+        <Loader2 className="w-6 h-6 animate-spin text-emerald-600" />
+        <span className="text-xs text-slate-500 font-mono">Đang đồng bộ đơn hàng gần nhất...</span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-xs text-rose-400 font-medium p-6 text-center bg-rose-950/20 rounded-xl border border-rose-500/20">
+      <div className="text-xs text-rose-600 font-bold p-6 text-center bg-rose-50 rounded-xl border border-rose-200">
         {error}
       </div>
     );
@@ -93,8 +93,8 @@ export default function OrdersTable() {
   return (
     <div className="overflow-hidden">
       <div className="overflow-x-auto custom-scrollbar">
-        <table className="min-w-full text-left text-xs divide-y divide-slate-800">
-          <thead className="bg-slate-950/60 text-slate-400 font-semibold uppercase tracking-wider">
+        <table className="min-w-full text-left text-xs divide-y divide-slate-200">
+          <thead className="bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider">
             <tr>
               <th className="px-5 py-3.5">Mã Đơn Hàng</th>
               <th className="px-5 py-3.5">Khách Hàng</th>
@@ -105,7 +105,7 @@ export default function OrdersTable() {
               <th className="px-5 py-3.5 text-right">Thao Tác</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/60">
+          <tbody className="divide-y divide-slate-100">
             {orders.map((order) => {
               const normStatus = order.status.toUpperCase();
               const normPayment = order.paymentStatus.toUpperCase();
@@ -113,24 +113,24 @@ export default function OrdersTable() {
               return (
                 <tr
                   key={order.id}
-                  className="hover:bg-slate-800/40 transition-colors duration-150 group"
+                  className="hover:bg-slate-50/80 transition-colors duration-150 group"
                 >
-                  <td className="px-5 py-3.5 font-mono font-bold text-slate-100">
+                  <td className="px-5 py-3.5 font-mono font-bold text-slate-900">
                     #{order.orderNumber}
                   </td>
-                  <td className="px-5 py-3.5 font-medium text-slate-200">
+                  <td className="px-5 py-3.5 font-semibold text-slate-800">
                     {order.user?.name || 'Khách vãng lai'}
                   </td>
-                  <td className="px-5 py-3.5 text-slate-400 whitespace-nowrap font-mono text-[11px]">
+                  <td className="px-5 py-3.5 text-slate-500 whitespace-nowrap font-mono text-[11px]">
                     {formatDate(order.createdAt)}
                   </td>
-                  <td className="px-5 py-3.5 font-mono font-bold text-emerald-400">
+                  <td className="px-5 py-3.5 font-mono font-bold text-emerald-700">
                     {formatCurrency(Number(order.totalAmount))}
                   </td>
                   <td className="px-5 py-3.5">
                     <span
-                      className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-semibold border ${
-                        statusBadgeStyles[normStatus] || 'bg-slate-800 text-slate-300 border-slate-700'
+                      className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold border ${
+                        statusBadgeStyles[normStatus] || 'bg-slate-100 text-slate-700 border-slate-200'
                       }`}
                     >
                       {ORDER_STATUS_LABELS[normStatus as OrderStatus] || normStatus}
@@ -139,7 +139,7 @@ export default function OrdersTable() {
                   <td className="px-5 py-3.5">
                     <span
                       className={`inline-flex px-2.5 py-0.5 rounded-md text-[10px] font-bold border font-mono ${
-                        paymentBadgeStyles[normPayment] || 'bg-slate-800 text-slate-300 border-slate-700'
+                        paymentBadgeStyles[normPayment] || 'bg-slate-100 text-slate-700 border-slate-200'
                       }`}
                     >
                       {normPayment === 'PAID'
@@ -152,7 +152,7 @@ export default function OrdersTable() {
                   <td className="px-5 py-3.5 text-right">
                     <Link
                       href={`/admin/orders/${order.id}`}
-                      className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-lg bg-slate-800 hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-300 border border-slate-700 hover:border-emerald-500/30 font-medium text-[11px] transition-all"
+                      className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-lg bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-200 hover:border-emerald-300 font-bold text-[11px] transition-all"
                     >
                       <Eye className="w-3.5 h-3.5" />
                       <span>Chi tiết</span>
@@ -166,13 +166,13 @@ export default function OrdersTable() {
       </div>
 
       {/* Table Footer Link */}
-      <div className="flex justify-between items-center px-5 py-3.5 bg-slate-950/40 border-t border-slate-800/80 text-xs">
-        <span className="text-slate-400">
-          Hiển thị <span className="font-mono text-slate-200">{orders.length}</span> đơn hàng mới nhất
+      <div className="flex justify-between items-center px-5 py-3.5 bg-slate-50 border-t border-slate-200 text-xs">
+        <span className="text-slate-500">
+          Hiển thị <span className="font-mono text-slate-800 font-bold">{orders.length}</span> đơn hàng mới nhất
         </span>
         <Link
           href="/admin/orders"
-          className="inline-flex items-center space-x-1 font-semibold text-emerald-400 hover:text-emerald-300 transition-colors"
+          className="inline-flex items-center space-x-1 font-bold text-emerald-700 hover:text-emerald-800 transition-colors"
         >
           <span>Xem danh sách đầy đủ</span>
           <ArrowRight className="w-3.5 h-3.5" />

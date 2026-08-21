@@ -48,45 +48,45 @@ const mockRecentReviews: ReviewItem[] = [
 
 export default function AiReviewSentimentAnalytics() {
   return (
-    <div className="rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-slate-800/80 p-6 flex flex-col h-full hover:border-slate-700/80 transition-all duration-200">
+    <div className="rounded-2xl bg-white border border-slate-200/80 p-6 flex flex-col h-full hover:shadow-md transition-all duration-200 shadow-xs">
       {/* Title with AI Sparkle badge */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center space-x-2.5">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white shadow-md shadow-emerald-950/40">
-            <SparklesIcon className="w-4 h-4 text-emerald-100" />
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-xs">
+            <SparklesIcon className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-white tracking-wide">
+            <h2 className="text-base font-bold text-slate-900 tracking-wide">
               AI Phân Tích Cảm Xúc & Đánh Giá Khách Hàng
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Hệ thống tự động phân loại cảm nhận thực khách và gợi ý tối ưu thực đơn
             </p>
           </div>
         </div>
 
-        <span className="text-xs font-mono font-semibold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+        <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
           NLP Live Feed
         </span>
       </div>
 
       {/* AI Sentiment Distribution Bar */}
-      <div className="p-4 rounded-xl bg-slate-950/50 border border-slate-800/80 mb-5">
+      <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 mb-5">
         <div className="flex items-center justify-between text-xs mb-2">
-          <span className="font-medium text-slate-300">Chỉ số Cảm xúc Thực khách</span>
-          <span className="font-mono text-emerald-400 font-bold">88% Tích cực</span>
+          <span className="font-bold text-slate-700">Chỉ số Cảm xúc Thực khách</span>
+          <span className="font-mono text-emerald-700 font-bold">88% Tích cực</span>
         </div>
 
         {/* Multi-segmented Sentiment Bar */}
-        <div className="w-full h-2.5 rounded-full bg-slate-800 flex overflow-hidden">
-          <div className="bg-emerald-500 h-full" style={{ width: '88%' }} title="Hài lòng (88%)" />
+        <div className="w-full h-2.5 rounded-full bg-slate-200 flex overflow-hidden">
+          <div className="bg-emerald-600 h-full" style={{ width: '88%' }} title="Hài lòng (88%)" />
           <div className="bg-amber-400 h-full" style={{ width: '9%' }} title="Góp ý (9%)" />
           <div className="bg-rose-500 h-full" style={{ width: '3%' }} title="Cần cải thiện (3%)" />
         </div>
 
-        <div className="flex items-center justify-between text-[11px] text-slate-400 mt-2">
+        <div className="flex items-center justify-between text-[11px] text-slate-600 mt-2 font-medium">
           <div className="flex items-center space-x-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span className="w-2 h-2 rounded-full bg-emerald-600" />
             <span>Hài lòng (88%)</span>
           </div>
           <div className="flex items-center space-x-1.5">
@@ -105,34 +105,34 @@ export default function AiReviewSentimentAnalytics() {
         {mockRecentReviews.map((rev) => (
           <div
             key={rev.id}
-            className="p-3.5 rounded-xl bg-slate-950/40 border border-slate-800/70 hover:border-slate-700 transition-all text-xs"
+            className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-emerald-300 transition-all text-xs"
           >
             <div className="flex items-center justify-between mb-1.5">
               <div className="flex items-center space-x-2">
-                <span className="font-semibold text-slate-200">{rev.customerName}</span>
-                <span className="text-slate-500">•</span>
-                <span className="text-slate-400 font-medium">{rev.dishName}</span>
+                <span className="font-bold text-slate-900">{rev.customerName}</span>
+                <span className="text-slate-400">•</span>
+                <span className="text-slate-600 font-medium">{rev.dishName}</span>
               </div>
-              <span className="text-[10px] text-slate-500 font-mono">{rev.time}</span>
+              <span className="text-[10px] text-slate-400 font-mono">{rev.time}</span>
             </div>
 
-            <p className="text-slate-300 leading-relaxed mb-2.5 text-[11px]">
+            <p className="text-slate-600 leading-relaxed mb-2.5 text-[11px]">
               &ldquo;{rev.comment}&rdquo;
             </p>
 
-            <div className="flex items-center justify-between pt-2 border-t border-slate-800/60">
+            <div className="flex items-center justify-between pt-2 border-t border-slate-200">
               <span
-                className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-medium border ${
+                className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-bold border ${
                   rev.sentiment === 'positive'
-                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                    : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : 'bg-amber-50 text-amber-700 border-amber-200'
                 }`}
               >
                 <ChatBubbleLeftRightIcon className="w-3 h-3" />
                 <span>{rev.aiTag}</span>
               </span>
 
-              <div className="flex text-amber-400 text-xs">
+              <div className="flex text-amber-500 text-xs">
                 {'★'.repeat(rev.rating)}
                 {'☆'.repeat(5 - rev.rating)}
               </div>
@@ -142,11 +142,11 @@ export default function AiReviewSentimentAnalytics() {
       </div>
 
       {/* AI Recipe Optimization Insights Box */}
-      <div className="mt-4 p-3 rounded-xl bg-gradient-to-r from-emerald-950/40 to-teal-950/40 border border-emerald-500/30 flex items-start space-x-2.5">
-        <LightBulbIcon className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+      <div className="mt-4 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-start space-x-2.5">
+        <LightBulbIcon className="w-4 h-4 text-emerald-700 flex-shrink-0 mt-0.5" />
         <div className="text-[11px] leading-relaxed">
-          <span className="font-semibold text-emerald-300">Gợi ý từ AI Đầu Bếp: </span>
-          <span className="text-slate-300">
+          <span className="font-bold text-emerald-900">Gợi ý từ AI Đầu Bếp: </span>
+          <span className="text-slate-700">
             Nên bổ sung tùy chọn <em>&ldquo;Không cay cho trẻ em&rdquo;</em> đối với món Bún Riêu
             Chay để tăng 15% tỷ lệ đặt lại từ nhóm khách hàng gia đình.
           </span>

@@ -62,15 +62,15 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
       }).format(val);
 
     return (
-      <div className="rounded-xl bg-slate-900/95 backdrop-blur-xl border border-emerald-500/30 p-3 shadow-xl shadow-slate-950/60 text-xs">
-        <p className="font-semibold text-slate-200 mb-1.5 pb-1 border-b border-slate-800">{label}</p>
+      <div className="rounded-xl bg-white border border-slate-200 p-3 shadow-lg text-xs">
+        <p className="font-bold text-slate-800 mb-1.5 pb-1 border-b border-slate-100">{label}</p>
         <div className="space-y-1">
-          <p className="text-emerald-400 font-mono font-bold flex items-center justify-between space-x-3">
-            <span className="text-slate-400 font-normal">Doanh thu:</span>
+          <p className="text-emerald-700 font-mono font-bold flex items-center justify-between space-x-3">
+            <span className="text-slate-500 font-normal">Doanh thu:</span>
             <span>{formatCurrency(data.revenue)}</span>
           </p>
-          <p className="text-slate-300 font-mono flex items-center justify-between space-x-3">
-            <span className="text-slate-400 font-normal">Số đơn hàng:</span>
+          <p className="text-slate-700 font-mono flex items-center justify-between space-x-3">
+            <span className="text-slate-500 font-normal">Số đơn hàng:</span>
             <span>{data.orders} đơn</span>
           </p>
         </div>
@@ -113,53 +113,53 @@ export default function RevenueChart() {
   };
 
   return (
-    <div className="rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-slate-800/80 p-6 flex flex-col h-full hover:border-slate-700/80 transition-all duration-200">
+    <div className="rounded-2xl bg-white border border-slate-200/80 p-6 flex flex-col h-full hover:shadow-md transition-all duration-200 shadow-xs">
       {/* Header with Title and Range Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <div className="flex items-center space-x-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <h2 className="text-base font-semibold text-white tracking-wide">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <h2 className="text-base font-bold text-slate-900 tracking-wide">
               Biểu Đồ Doanh Thu & Xu Hướng Tăng Trưởng
             </h2>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Tổng cộng{' '}
-            <span className="font-mono font-semibold text-emerald-400">
+            <span className="font-mono font-bold text-emerald-700">
               {formatVND(totalRevenue)}
             </span>{' '}
-            từ <span className="font-mono text-slate-200">{totalOrders} đơn</span> trong kỳ này
+            từ <span className="font-mono text-slate-800 font-semibold">{totalOrders} đơn</span> trong kỳ này
           </p>
         </div>
 
         {/* Time range switcher buttons */}
-        <div className="inline-flex rounded-xl bg-slate-800/70 p-1 border border-slate-700/60 self-start sm:self-auto text-xs">
+        <div className="inline-flex rounded-xl bg-slate-50 p-1 border border-slate-200 self-start sm:self-auto text-xs">
           <button
             onClick={() => setTimeRange('7d')}
-            className={`px-3 py-1 rounded-lg font-medium transition-all ${
+            className={`px-3 py-1 rounded-lg font-semibold transition-all ${
               timeRange === '7d'
-                ? 'bg-emerald-500 text-slate-950 font-semibold shadow-sm'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             7 Ngày
           </button>
           <button
             onClick={() => setTimeRange('30d')}
-            className={`px-3 py-1 rounded-lg font-medium transition-all ${
+            className={`px-3 py-1 rounded-lg font-semibold transition-all ${
               timeRange === '30d'
-                ? 'bg-emerald-500 text-slate-950 font-semibold shadow-sm'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             30 Ngày
           </button>
           <button
             onClick={() => setTimeRange('year')}
-            className={`px-3 py-1 rounded-lg font-medium transition-all ${
+            className={`px-3 py-1 rounded-lg font-semibold transition-all ${
               timeRange === 'year'
-                ? 'bg-emerald-500 text-slate-950 font-semibold shadow-sm'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Năm 2026
@@ -174,20 +174,20 @@ export default function RevenueChart() {
             <AreaChart data={data} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10B981" stopOpacity={0.4} />
-                  <stop offset="95%" stopColor="#10B981" stopOpacity={0.0} />
+                  <stop offset="5%" stopColor="#059669" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="#059669" stopOpacity={0.0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
               <XAxis
                 dataKey="date"
-                stroke="#64748B"
+                stroke="#94A3B8"
                 fontSize={11}
                 tickLine={false}
-                axisLine={{ stroke: '#334155' }}
+                axisLine={{ stroke: '#E2E8F0' }}
               />
               <YAxis
-                stroke="#64748B"
+                stroke="#94A3B8"
                 fontSize={11}
                 tickLine={false}
                 axisLine={false}
@@ -197,17 +197,17 @@ export default function RevenueChart() {
               <Area
                 type="monotone"
                 dataKey="revenue"
-                stroke="#10B981"
+                stroke="#059669"
                 strokeWidth={2.5}
                 fillOpacity={1}
                 fill="url(#colorRevenue)"
-                activeDot={{ r: 6, fill: '#10B981', stroke: '#081C15', strokeWidth: 3 }}
+                activeDot={{ r: 6, fill: '#059669', stroke: '#FFFFFF', strokeWidth: 3 }}
               />
             </AreaChart>
           </ResponsiveContainer>
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-slate-950/40 rounded-xl animate-pulse">
-            <span className="text-xs text-slate-500 font-mono">Đang khởi tạo biểu đồ...</span>
+          <div className="w-full h-full flex items-center justify-center bg-slate-50 rounded-xl animate-pulse">
+            <span className="text-xs text-slate-400 font-mono">Đang khởi tạo biểu đồ...</span>
           </div>
         )}
       </div>

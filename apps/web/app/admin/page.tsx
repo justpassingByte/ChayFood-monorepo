@@ -21,29 +21,29 @@ export const metadata = {
 
 export default function AdminDashboard() {
   return (
-    <div className="space-y-5 max-w-[1600px] mx-auto pb-10">
+    <div className="space-y-6 max-w-[1600px] mx-auto pb-12">
       {/* Top Banner / Executive Overview */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-2 border-b border-slate-800/80">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-3 border-b border-slate-200/80">
         <div>
-          <h1 className="text-lg sm:text-xl font-bold tracking-tight text-white flex items-center space-x-2">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 flex items-center space-x-2">
             <span>Bảng Điều Hành Tổng Quan</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-500 mt-0.5">
             Theo dõi hiệu suất vận hành ẩm thực, doanh thu thực nhận và tín hiệu từ thực khách
           </p>
         </div>
 
         <div className="flex items-center space-x-2 text-xs font-mono self-start sm:self-auto">
-          <span className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[11px]">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold shadow-xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span>Hệ Thống Trực Tuyến</span>
           </span>
         </div>
       </div>
 
       {/* Row 1: 5 Macro KPI Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3.5">
-        <Suspense fallback={<div className="h-28 bg-slate-900/60 rounded-2xl animate-pulse" />}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        <Suspense fallback={<div className="h-28 bg-white rounded-2xl animate-pulse" />}>
           <MetricCard
             title="Doanh Thu Hôm Nay"
             value="₫8,294,500"
@@ -56,7 +56,7 @@ export default function AdminDashboard() {
           />
         </Suspense>
 
-        <Suspense fallback={<div className="h-28 bg-slate-900/60 rounded-2xl animate-pulse" />}>
+        <Suspense fallback={<div className="h-28 bg-white rounded-2xl animate-pulse" />}>
           <MetricCard
             title="Đơn Trong Ngày"
             value="28"
@@ -69,7 +69,7 @@ export default function AdminDashboard() {
           />
         </Suspense>
 
-        <Suspense fallback={<div className="h-28 bg-slate-900/60 rounded-2xl animate-pulse" />}>
+        <Suspense fallback={<div className="h-28 bg-white rounded-2xl animate-pulse" />}>
           <MetricCard
             title="Khách Hàng Mới"
             value="12"
@@ -82,7 +82,7 @@ export default function AdminDashboard() {
           />
         </Suspense>
 
-        <Suspense fallback={<div className="h-28 bg-slate-900/60 rounded-2xl animate-pulse" />}>
+        <Suspense fallback={<div className="h-28 bg-white rounded-2xl animate-pulse" />}>
           <MetricCard
             title="Giá Trị Đơn (AOV)"
             value="₫296,000"
@@ -95,7 +95,7 @@ export default function AdminDashboard() {
           />
         </Suspense>
 
-        <Suspense fallback={<div className="h-28 bg-slate-900/60 rounded-2xl animate-pulse" />}>
+        <Suspense fallback={<div className="h-28 bg-white rounded-2xl animate-pulse" />}>
           <MetricCard
             title="Thời Gian Giao"
             value="24 phút"
@@ -112,13 +112,13 @@ export default function AdminDashboard() {
       {/* Row 2: Revenue Trend Area Chart + Order Status Donut Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         <div className="lg:col-span-7 min-w-0">
-          <Suspense fallback={<div className="h-96 bg-slate-900/60 rounded-2xl animate-pulse" />}>
+          <Suspense fallback={<div className="h-96 bg-white rounded-2xl animate-pulse" />}>
             <RevenueChart />
           </Suspense>
         </div>
 
         <div className="lg:col-span-5 min-w-0">
-          <Suspense fallback={<div className="h-96 bg-slate-900/60 rounded-2xl animate-pulse" />}>
+          <Suspense fallback={<div className="h-96 bg-white rounded-2xl animate-pulse" />}>
             <OrderStatusDonutChart />
           </Suspense>
         </div>
@@ -127,13 +127,13 @@ export default function AdminDashboard() {
       {/* Row 3: Peak Hours Bar Chart + Best Selling Items Ranking */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         <div className="lg:col-span-6 min-w-0">
-          <Suspense fallback={<div className="h-96 bg-slate-900/60 rounded-2xl animate-pulse" />}>
+          <Suspense fallback={<div className="h-96 bg-white rounded-2xl animate-pulse" />}>
             <PeakHoursBarChart />
           </Suspense>
         </div>
 
         <div className="lg:col-span-6 min-w-0">
-          <Suspense fallback={<div className="h-96 bg-slate-900/60 rounded-2xl animate-pulse" />}>
+          <Suspense fallback={<div className="h-96 bg-white rounded-2xl animate-pulse" />}>
             <BestSellingItems />
           </Suspense>
         </div>
@@ -142,28 +142,28 @@ export default function AdminDashboard() {
       {/* Row 4: AI Customer Sentiment & Menu Insights + Recent Orders Table */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         <div className="lg:col-span-5 min-w-0">
-          <Suspense fallback={<div className="h-96 bg-slate-900/60 rounded-2xl animate-pulse" />}>
+          <Suspense fallback={<div className="h-96 bg-white rounded-2xl animate-pulse" />}>
             <AiReviewSentimentAnalytics />
           </Suspense>
         </div>
 
         <div className="lg:col-span-7 min-w-0">
-          <div className="rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-slate-800/80 p-5 flex flex-col h-full hover:border-slate-700/80 transition-all duration-200">
+          <div className="rounded-2xl bg-white border border-slate-200/80 p-5 flex flex-col h-full hover:shadow-md transition-all duration-200 shadow-xs">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-base font-semibold text-white tracking-wide">
+                <h2 className="text-base font-bold text-slate-900 tracking-wide">
                   Đơn Hàng Gần Đây
                 </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5">
                   Cập nhật các giao dịch đặt món và thanh toán mới nhất
                 </p>
               </div>
-              <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+              <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
                 Thời gian thực
               </span>
             </div>
 
-            <Suspense fallback={<div className="h-72 bg-slate-950/40 rounded-xl animate-pulse" />}>
+            <Suspense fallback={<div className="h-72 bg-slate-50 rounded-xl animate-pulse" />}>
               <OrdersTable />
             </Suspense>
           </div>
