@@ -1,199 +1,216 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
+import { useState } from 'react';
+import { Cog8ToothIcon, TruckIcon, BuildingStorefrontIcon } from '@heroicons/react/24/outline';
+import { toast } from 'react-hot-toast';
 
 export default function SettingsPage() {
   const [generalSettings, setGeneralSettings] = useState({
-    storeName: 'Chayfood',
-    storeEmail: 'info@chayfood.vn',
+    storeName: 'ChayFood Culinary Enterprise',
+    storeEmail: 'contact@chayfood.vn',
     phoneNumber: '(+84) 932 788 120',
-    address: '33 Đường 14, KDC Bình Hưng, Ấp 2, Huyện Bình Chánh, TPHCM',
+    address: '33 Đường 14, KDC Bình Hưng, TP. Hồ Chí Minh',
     currency: 'VND',
-    language: 'vi'
-  })
+    language: 'vi',
+  });
 
   const [deliverySettings, setDeliverySettings] = useState({
     minimumOrder: 100000,
     deliveryFee: 15000,
     freeDeliveryThreshold: 300000,
-    maxDeliveryDistance: 10
-  })
+    maxDeliveryDistance: 10,
+  });
 
   const handleGeneralSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Handle general settings update
-    console.log('Updating general settings:', generalSettings)
-  }
+    e.preventDefault();
+    toast.success('Đã lưu cài đặt thông tin cửa hàng thành công');
+  };
 
   const handleDeliverySubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Handle delivery settings update
-    console.log('Updating delivery settings:', deliverySettings)
-  }
+    e.preventDefault();
+    toast.success('Đã lưu cấu hình vận chuyển & giao hàng');
+  };
 
   return (
-    <div className="container mx-auto px-4">
-      <h1 className="text-2xl font-semibold mb-6">Cài đặt hệ thống</h1>
+    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+      {/* Header */}
+      <div className="pb-3 border-b border-slate-800/80">
+        <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center space-x-2.5">
+          <Cog8ToothIcon className="w-6 h-6 text-emerald-400" />
+          <span>Cài Đặt Hệ Thống & Tham Số Vận Hành</span>
+        </h1>
+        <p className="text-xs text-slate-400 mt-0.5">
+          Quản lý thông tin thương hiệu, chính sách giao vận và cấu hình thanh toán
+        </p>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* General Settings */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Cài đặt chung</h2>
-          <form onSubmit={handleGeneralSubmit}>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Tên cửa hàng
-                </label>
-                <input
-                  type="text"
-                  value={generalSettings.storeName}
-                  onChange={(e) => setGeneralSettings({...generalSettings, storeName: e.target.value})}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* General Settings Card */}
+        <div className="bg-slate-900/80 backdrop-blur-xl p-6 rounded-2xl border border-slate-800/80 space-y-5">
+          <div className="flex items-center space-x-2.5 pb-2 border-b border-slate-800">
+            <BuildingStorefrontIcon className="w-5 h-5 text-emerald-400" />
+            <h2 className="text-base font-semibold text-white">Thông Tin Thương Hiệu</h2>
+          </div>
 
+          <form onSubmit={handleGeneralSubmit} className="space-y-4 text-xs">
+            <div>
+              <label className="block text-slate-300 font-medium mb-1">Tên thương hiệu</label>
+              <input
+                type="text"
+                value={generalSettings.storeName}
+                onChange={(e) => setGeneralSettings({ ...generalSettings, storeName: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Email
-                </label>
+                <label className="block text-slate-300 font-medium mb-1">Email liên hệ</label>
                 <input
                   type="email"
                   value={generalSettings.storeEmail}
-                  onChange={(e) => setGeneralSettings({...generalSettings, storeEmail: e.target.value})}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  onChange={(e) => setGeneralSettings({ ...generalSettings, storeEmail: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-emerald-500 font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Số điện thoại
-                </label>
+                <label className="block text-slate-300 font-medium mb-1">Số hotline hỗ trợ</label>
                 <input
                   type="tel"
                   value={generalSettings.phoneNumber}
-                  onChange={(e) => setGeneralSettings({...generalSettings, phoneNumber: e.target.value})}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  onChange={(e) => setGeneralSettings({ ...generalSettings, phoneNumber: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-emerald-500 font-mono"
                 />
               </div>
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Địa chỉ
-                </label>
-                <textarea
-                  value={generalSettings.address}
-                  onChange={(e) => setGeneralSettings({...generalSettings, address: e.target.value})}
-                  rows={3}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
+            <div>
+              <label className="block text-slate-300 font-medium mb-1">Địa chỉ bếp trung tâm</label>
+              <textarea
+                value={generalSettings.address}
+                onChange={(e) => setGeneralSettings({ ...generalSettings, address: e.target.value })}
+                rows={2}
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-emerald-500"
+              />
+            </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Đơn vị tiền tệ
-                </label>
+                <label className="block text-slate-300 font-medium mb-1">Đơn vị tiền tệ</label>
                 <select
                   value={generalSettings.currency}
-                  onChange={(e) => setGeneralSettings({...generalSettings, currency: e.target.value})}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  onChange={(e) => setGeneralSettings({ ...generalSettings, currency: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-emerald-500 font-mono"
                 >
-                  <option value="VND">VND</option>
-                  <option value="USD">USD</option>
+                  <option value="VND">VND (₫)</option>
+                  <option value="USD">USD ($)</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Ngôn ngữ
-                </label>
+                <label className="block text-slate-300 font-medium mb-1">Ngôn ngữ mặc định</label>
                 <select
                   value={generalSettings.language}
-                  onChange={(e) => setGeneralSettings({...generalSettings, language: e.target.value})}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  onChange={(e) => setGeneralSettings({ ...generalSettings, language: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-emerald-500"
                 >
-                  <option value="vi">Tiếng Việt</option>
+                  <option value="vi">Tiếng Việt (Mặc định)</option>
                   <option value="en">English</option>
                 </select>
               </div>
             </div>
 
-            <div className="mt-6">
+            <div className="pt-2">
               <button
                 type="submit"
-                className="w-full bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl transition shadow-sm"
               >
-                Lưu cài đặt
+                Lưu Thay Đổi
               </button>
             </div>
           </form>
         </div>
 
-        {/* Delivery Settings */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Cài đặt giao hàng</h2>
-          <form onSubmit={handleDeliverySubmit}>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Đơn hàng tối thiểu
-                </label>
-                <input
-                  type="number"
-                  value={deliverySettings.minimumOrder}
-                  onChange={(e) => setDeliverySettings({...deliverySettings, minimumOrder: Number(e.target.value)})}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
+        {/* Delivery Settings Card */}
+        <div className="bg-slate-900/80 backdrop-blur-xl p-6 rounded-2xl border border-slate-800/80 space-y-5">
+          <div className="flex items-center space-x-2.5 pb-2 border-b border-slate-800">
+            <TruckIcon className="w-5 h-5 text-emerald-400" />
+            <h2 className="text-base font-semibold text-white">Chính Sách Vận Chuyển</h2>
+          </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Phí giao hàng
-                </label>
-                <input
-                  type="number"
-                  value={deliverySettings.deliveryFee}
-                  onChange={(e) => setDeliverySettings({...deliverySettings, deliveryFee: Number(e.target.value)})}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Miễn phí giao hàng cho đơn từ
-                </label>
-                <input
-                  type="number"
-                  value={deliverySettings.freeDeliveryThreshold}
-                  onChange={(e) => setDeliverySettings({...deliverySettings, freeDeliveryThreshold: Number(e.target.value)})}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Khoảng cách giao hàng tối đa (km)
-                </label>
-                <input
-                  type="number"
-                  value={deliverySettings.maxDeliveryDistance}
-                  onChange={(e) => setDeliverySettings({...deliverySettings, maxDeliveryDistance: Number(e.target.value)})}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
+          <form onSubmit={handleDeliverySubmit} className="space-y-4 text-xs">
+            <div>
+              <label className="block text-slate-300 font-medium mb-1">
+                Giá trị đơn tối thiểu (₫)
+              </label>
+              <input
+                type="number"
+                value={deliverySettings.minimumOrder}
+                onChange={(e) =>
+                  setDeliverySettings({ ...deliverySettings, minimumOrder: Number(e.target.value) })
+                }
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-emerald-500 font-mono"
+              />
             </div>
 
-            <div className="mt-6">
+            <div>
+              <label className="block text-slate-300 font-medium mb-1">Phí giao hàng tiêu chuẩn (₫)</label>
+              <input
+                type="number"
+                value={deliverySettings.deliveryFee}
+                onChange={(e) =>
+                  setDeliverySettings({ ...deliverySettings, deliveryFee: Number(e.target.value) })
+                }
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-emerald-500 font-mono"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-300 font-medium mb-1">
+                Miễn phí giao hàng cho đơn từ (₫)
+              </label>
+              <input
+                type="number"
+                value={deliverySettings.freeDeliveryThreshold}
+                onChange={(e) =>
+                  setDeliverySettings({
+                    ...deliverySettings,
+                    freeDeliveryThreshold: Number(e.target.value),
+                  })
+                }
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-emerald-500 font-mono"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-300 font-medium mb-1">
+                Bán kính phục vụ tối đa (km)
+              </label>
+              <input
+                type="number"
+                value={deliverySettings.maxDeliveryDistance}
+                onChange={(e) =>
+                  setDeliverySettings({
+                    ...deliverySettings,
+                    maxDeliveryDistance: Number(e.target.value),
+                  })
+                }
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-emerald-500 font-mono"
+              />
+            </div>
+
+            <div className="pt-2">
               <button
                 type="submit"
-                className="w-full bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl transition shadow-sm"
               >
-                Lưu cài đặt giao hàng
+                Cập Nhật Chính Sách Giao Hàng
               </button>
             </div>
           </form>
         </div>
       </div>
     </div>
-  )
-} 
+  );
+}

@@ -7,9 +7,11 @@ import {
   ArrowTopRightOnSquareIcon,
   BellIcon,
   ChevronRightIcon,
+  Bars3BottomLeftIcon,
 } from '@heroicons/react/24/outline';
 import AdminSidebar from '../components/admin/AdminSidebar';
 import { useAuth } from '../context/AuthContext';
+import { AdminLayoutProvider, useAdminLayout } from '../context/AdminLayoutContext';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -28,8 +30,9 @@ const routeNameMap: Record<string, string> = {
   edit: 'Chỉnh sửa',
 };
 
-export default function AdminLayout({ children }: AdminLayoutProps) {
+function AdminShellInternal({ children }: AdminLayoutProps) {
   const { isAuthenticated, isAdmin, isLoading, user } = useAuth();
+  const { toggleSidebar, isSidebarCollapsed } = useAdminLayout();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -88,45 +91,58 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       {/* Main View Area with Dedicated Topbar */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Dedicated Admin Topbar */}
-        <header className="h-16 px-6 bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 flex items-center justify-between z-10 select-none">
-          {/* Breadcrumb Navigation */}
-          <nav className="flex items-center space-x-2 text-xs font-medium text-slate-400" aria-label="Breadcrumb">
-            <Link
-              href="/admin"
-              className="text-slate-300 hover:text-emerald-400 transition-colors flex items-center"
+        <header className="h-16 px-4 sm:px-6 bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 flex items-center justify-between z-10 select-none flex-shrink-0">
+          {/* Left: Sidebar Toggle Button + Breadcrumb Navigation */}
+          <div className="flex items-center space-x-3 min-w-0">
+            {/* Quick Collapse / Expand Button */}
+            <button
+              onClick={toggleSidebar}
+              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors border border-slate-700/60"
+              title={isSidebarCollapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar thành icon'}
             >
-              Cổng Quản Trị
-            </Link>
-            {breadcrumbs.slice(1).map((crumb) => (
-              <div key={crumb.href} className="flex items-center space-x-2">
-                <ChevronRightIcon className="w-3.5 h-3.5 text-slate-600" />
-                {crumb.isLast ? (
-                  <span className="text-emerald-400 font-semibold truncate max-w-[200px]">
-                    {crumb.title}
-                  </span>
-                ) : (
-                  <Link
-                    href={crumb.href}
-                    className="text-slate-400 hover:text-slate-200 transition-colors truncate max-w-[150px]"
-                  >
-                    {crumb.title}
-                  </Link>
-                )}
-              </div>
-            ))}
-          </nav>
+              <Bars3BottomLeftIcon className="w-4 h-4" />
+            </button>
 
-          {/* Quick Action Utilities */}
-          <div className="flex items-center space-x-4">
+            {/* Breadcrumb Navigation */}
+            <nav className="flex items-center space-x-1.5 text-xs font-medium text-slate-400 truncate" aria-label="Breadcrumb">
+              <Link
+                href="/admin"
+                className="text-slate-300 hover:text-emerald-400 transition-colors whitespace-nowrap"
+              >
+                Quản Trị
+              </Link>
+              {breadcrumbs.slice(1).map((crumb) => (
+                <div key={crumb.href} className="flex items-center space-x-1.5 truncate">
+                  <ChevronRightIcon className="w-3.5 h-3.5 text-slate-600 flex-shrink-0" />
+                  {crumb.isLast ? (
+                    <span className="text-emerald-400 font-semibold truncate whitespace-nowrap">
+                      {crumb.title}
+                    </span>
+                  ) : (
+                    <Link
+                      href={crumb.href}
+                      className="text-slate-400 hover:text-slate-200 transition-colors truncate whitespace-nowrap"
+                    >
+                      {crumb.title}
+                    </Link>
+                  )}
+                </div>
+              ))}
+            </nav>
+          </div>
+
+          {/* Right: Quick Action Utilities */}
+          <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0 pl-2">
             {/* Storefront Quick Switcher */}
             <Link
               href="/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-xl text-xs font-medium bg-slate-800/70 hover:bg-emerald-500/10 text-slate-300 hover:text-emerald-300 border border-slate-700/60 hover:border-emerald-500/30 transition-all duration-150 shadow-sm"
+              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800/70 hover:bg-emerald-500/10 text-slate-300 hover:text-emerald-300 border border-slate-700/60 hover:border-emerald-500/30 transition-all duration-150 shadow-sm whitespace-nowrap"
               title="Mở giao diện khách hàng ở tab mới"
             >
-              <span>Xem Cửa Hàng</span>
+              <span className="hidden sm:inline">Xem Cửa Hàng</span>
+              <span className="sm:hidden">Web</span>
               <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
             </Link>
 
@@ -140,12 +156,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             </button>
 
             {/* Admin User Chip */}
-            <div className="flex items-center space-x-2.5 pl-3 border-l border-slate-800">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold text-xs shadow-md shadow-emerald-950/50">
+            <div className="flex items-center space-x-2 pl-2 sm:pl-3 border-l border-slate-800">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold text-xs shadow-md shadow-emerald-950/50 flex-shrink-0">
                 {user?.name?.charAt(0)?.toUpperCase() || 'A'}
               </div>
-              <div className="hidden sm:flex flex-col text-left">
-                <span className="text-xs font-medium text-slate-200 leading-tight">
+              <div className="hidden md:flex flex-col text-left truncate">
+                <span className="text-xs font-medium text-slate-200 leading-tight truncate whitespace-nowrap">
                   {user?.name || 'Quản Trị Viên'}
                 </span>
                 <span className="text-[10px] text-emerald-400 font-mono tracking-tight">
@@ -157,10 +173,18 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </header>
 
         {/* Scrollable Main Admin Content Area */}
-        <main className="flex-1 overflow-y-auto p-6 bg-slate-950 custom-scrollbar">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-950 custom-scrollbar">
           {children}
         </main>
       </div>
     </div>
+  );
+}
+
+export default function AdminLayout({ children }: AdminLayoutProps) {
+  return (
+    <AdminLayoutProvider>
+      <AdminShellInternal>{children}</AdminShellInternal>
+    </AdminLayoutProvider>
   );
 }
