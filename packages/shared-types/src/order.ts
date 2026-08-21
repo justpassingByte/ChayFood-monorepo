@@ -1,44 +1,49 @@
 import { FoodItem } from './food';
-import type { OrderStatus, PaymentMethod, PaymentStatus } from './schemas/order.schema';
+import type {
+  OrderStatus,
+  PaymentMethod,
+  PaymentStatus,
+  CreateOrderInput,
+  CreateOrderItemInput,
+  DeliveryAddressInput,
+} from './schemas/order.schema';
+
+export type { CreateOrderInput, CreateOrderItemInput, DeliveryAddressInput };
 
 export interface OrderItem {
   id: string;
   orderId: string;
-  foodId: string;
+  menuItemId: string;
+  foodId?: string;
   food?: FoodItem;
   quantity: number;
   price: number;
+  specialInstructions?: string | null;
   note?: string | null;
 }
 
 export interface Order {
   id: string;
+  sequenceNumber?: number;
+  orderNumber?: string;
   userId: string;
   totalAmount: number;
-  shippingFee: number;
-  discountAmount: number;
-  finalAmount: number;
+  shippingFee?: number;
+  discountAmount?: number;
+  finalAmount?: number;
   status: OrderStatus;
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod;
-  shippingAddress: string;
-  phoneNumber: string;
-  recipientName: string;
+  deliveryAddress: DeliveryAddressInput | string;
+  shippingAddress?: string;
+  phoneNumber?: string;
+  recipientName?: string;
+  specialInstructions?: string | null;
   note?: string | null;
   items: OrderItem[];
   createdAt: string | Date;
   updatedAt: string | Date;
 }
 
-export interface CreateOrderDto {
-  items: Array<{
-    foodId: string;
-    quantity: number;
-    note?: string;
-  }>;
-  paymentMethod: PaymentMethod;
-  shippingAddress: string;
-  phoneNumber: string;
-  recipientName: string;
-  note?: string;
-}
+/** Alias chuẩn hóa từ Zod CreateOrderInput để đảm bảo SSOT */
+export type CreateOrderDto = CreateOrderInput;

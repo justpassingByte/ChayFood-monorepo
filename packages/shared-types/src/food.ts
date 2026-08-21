@@ -1,3 +1,12 @@
+import type {
+  CreateMenuItemInput,
+  UpdateMenuItemInput,
+  MenuCategory,
+  NutritionInfo,
+} from './schemas/menu.schema';
+
+export type { CreateMenuItemInput, UpdateMenuItemInput, MenuCategory, NutritionInfo };
+
 export interface Category {
   id: string;
   name: string;
@@ -9,35 +18,28 @@ export interface Category {
 export interface FoodItem {
   id: string;
   name: string;
-  slug: string;
+  slug?: string;
   description: string;
   price: number;
   originalPrice?: number | null;
-  images: string[];
-  categoryId: string;
-  category?: Category;
+  image?: string;
+  images?: string[];
+  category?: MenuCategory | string;
+  categoryId?: string;
   isAvailable: boolean;
-  isFeatured: boolean;
+  isFeatured?: boolean;
   calories?: number | null;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
+  preparationTime?: number;
   ingredients?: string[];
-  rating: number;
-  ratingCount: number;
+  allergens?: string[];
+  rating?: number;
+  ratingCount?: number;
   createdAt: string | Date;
   updatedAt: string | Date;
 }
 
-export interface CreateFoodDto {
-  name: string;
-  slug: string;
-  description: string;
-  price: number;
-  originalPrice?: number;
-  images: string[];
-  categoryId: string;
-  isAvailable?: boolean;
-  isFeatured?: boolean;
-  calories?: number;
-  ingredients?: string[];
-}
-
-export interface UpdateFoodDto extends Partial<CreateFoodDto> {}
+export type CreateFoodDto = CreateMenuItemInput;
+export type UpdateFoodDto = UpdateMenuItemInput;

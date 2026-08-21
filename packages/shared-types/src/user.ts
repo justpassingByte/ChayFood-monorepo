@@ -1,11 +1,20 @@
-import type { Role } from './schemas/auth.schema';
+import type {
+  Role,
+  LoginInput,
+  RegisterInput,
+  UpdateProfileInput,
+} from './schemas/auth.schema';
+
+export type { Role, LoginInput, RegisterInput, UpdateProfileInput };
 
 export interface UserProfile {
   id: string;
   email: string;
   fullName: string;
+  name?: string;
   phone?: string | null;
   avatarUrl?: string | null;
+  picture?: string | null;
   address?: string | null;
   role: Role;
   createdAt: string | Date;
@@ -18,15 +27,6 @@ export interface AuthResponse {
   refreshToken?: string;
 }
 
-export interface LoginDto {
-  email: string;
-  password: string;
-}
-
-export interface RegisterDto {
-  email: string;
-  password: string;
-  fullName: string;
-  phone?: string;
-  address?: string;
-}
+export type LoginDto = LoginInput;
+export type RegisterDto = RegisterInput;
+export type UpdateProfileDto = UpdateProfileInput;
