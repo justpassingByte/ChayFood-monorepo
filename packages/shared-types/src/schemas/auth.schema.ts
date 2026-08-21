@@ -29,6 +29,10 @@ export const RegisterSchema = z.object({
 });
 export type RegisterInput = z.infer<typeof RegisterSchema>;
 
+/**
+ * Schema cập nhật hồ sơ người dùng thông thường.
+ * Tuyệt đối không bao gồm trường role để ngăn chặn lỗ hổng Privilege Escalation qua Mass Assignment.
+ */
 export const UpdateProfileSchema = z.object({
   name: z.string().min(2, { message: 'Họ và tên phải có tối thiểu 2 ký tự' }).max(100, { message: 'Họ và tên tối đa 100 ký tự' }).optional(),
   phone: z.string().regex(/^(0|\+84)[3|5|7|8|9][0-9]{8}$/, {

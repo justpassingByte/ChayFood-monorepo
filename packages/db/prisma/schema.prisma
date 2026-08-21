@@ -67,7 +67,7 @@ enum StockTransactionType {
 model User {
   id           String    @id @default(uuid())
   email        String    @unique
-  passwordHash String?
+  passwordHash String?   // Nullable để hỗ trợ tài khoản đăng nhập qua OAuth (Google / Facebook) không có mật khẩu cục bộ
   name         String
   phone        String?
   address      String?
@@ -161,8 +161,8 @@ model Subscription {
   startDate           DateTime
   endDate             DateTime
   isActive            Boolean       @default(true)
-  deliveryAddress     Json // { street, city, state, postalCode, additionalInfo }
-  selectedMenuItems   Json? // [{ menuItemId, quantity, dayOfWeek, mealType }]
+  deliveryAddress     Json // Trade-off: Lưu JSON phẳng tránh tạo bảng trung gian, bắt buộc validate qua DeliveryAddressSchema
+  selectedMenuItems   Json? // Trade-off: Lưu lịch ăn tuần linh hoạt không cần bảng quan hệ phức tạp, nhưng không có Foreign Key ở DB nên bắt buộc validate menuItemId ở Application Layer
   paymentStatus       PaymentStatus @default(PENDING)
   paymentMethod       PaymentMethod @default(CARD)
   totalAmount         Decimal       @db.Decimal(12, 2)
@@ -202,7 +202,7 @@ model OrderItem {
   menuItemId          String
   menuItem            MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Restrict)
   quantity            Int      @default(1)
-  price               Decimal  @db.Decimal(12, 2)
+  price               Decimal  @db.Decimal(12, 2) // Snapshot: Lưu giá tại thời điểm đặt hàng để bảo toàn lịch sử khi MenuItem đổi giá
   specialInstructions String?
   createdAt           DateTime @default(now())
 
@@ -283,7 +283,7 @@ model RecipeItem {
 model StockTransaction {
   id            String               @id @default(uuid())
   ingredientId  String
-  ingredient    Ingredient           @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
+  ingredient    Ingredient           @relation(fields: [ingredientId], references: [id], onDelete: Restrict) // Chặn xóa nguyên liệu để bảo toàn lịch sử giao dịch kho
   type          StockTransactionType
   quantity      Decimal              @db.Decimal(12, 2)
   previousStock Decimal              @db.Decimal(12, 2)
@@ -357,7 +357,7 @@ enum PaymentTransactionStatus {
 model PaymentTransaction {
   id            String                   @id @default(cuid())
   orderId       String
-  order         Order                    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  order         Order                    @relation(fields: [orderId], references: [id], onDelete: Restrict) // Chặn xóa đơn hàng khi đã có phát sinh giao dịch tài chính
   provider      String                   // 'SEPAY', 'STRIPE', 'COD', 'MOCK'
   providerTxId  String?                  @unique
   amount        Decimal                  @db.Decimal(12, 2)

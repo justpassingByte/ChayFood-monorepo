@@ -1,17 +1,22 @@
 import { PrismaClient } from '@prisma/client';
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
-};
+declare global {
+  // eslint-disable-next-line no-var
+  var prismaClientGlobal: PrismaClient | undefined;
+}
 
+/**
+ * Singleton Prisma Client: Tái sử dụng một connection pool duy nhất trong môi trường development (Next.js HMR)
+ * để ngăn chặn tình trạng cạn kiệt kết nối PostgreSQL khi reload module liên tục.
+ */
 export const prisma =
-  globalForPrisma.prisma ??
+  globalThis.prismaClientGlobal ??
   new PrismaClient({
     log: process.env.DEBUG_PRISMA === 'true' ? ['query', 'error', 'warn'] : ['error', 'warn'],
   });
 
 if (process.env.NODE_ENV !== 'production') {
-  globalForPrisma.prisma = prisma;
+  globalThis.prismaClientGlobal = prisma;
 }
 
 export * from '@prisma/client';
