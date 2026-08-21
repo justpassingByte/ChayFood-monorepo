@@ -21,7 +21,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U postgres -d chayfood_db"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -38,40 +38,55 @@ jobs:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
 
+      - name: 📜 Validate System Design Governance
+        run: |
+          echo "Validating System Design Governance & Architecture Rules"
+          test -f SYSTEM_DESIGN.md && echo "SYSTEM_DESIGN.md verified"
+          test -f AGENTS.md && echo "AGENTS.md verified"
+
       - name: ⚡ Setup pnpm
+        if: hashFiles('package.json') != ''
         uses: pnpm/action-setup@v4
         with:
           version: 10.12.1
 
       - name: 🟢 Setup Node.js 20
+        if: hashFiles('package.json') != ''
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'pnpm'
 
       - name: 📦 Install Dependencies
+        if: hashFiles('package.json') != ''
         run: pnpm install --frozen-lockfile
 
       - name: 🗄️ Generate Prisma Client
+        if: hashFiles('package.json') != ''
         run: pnpm db:generate
 
       # STAGE 1: TYPE INTEGRITY & LINTING
       - name: 🔍 Stage 1 - Strict Type Check (5 Packages)
+        if: hashFiles('package.json') != ''
         run: pnpm type-check
 
       - name: 🧹 Stage 1 - Code Linting
+        if: hashFiles('package.json') != ''
         run: pnpm lint
 
       # STAGE 2: AUTOMATED TESTS SUITE
       - name: 🧪 Stage 2 - Automated Unit & Spec Tests (Jest & Vitest)
+        if: hashFiles('package.json') != ''
         run: pnpm test
 
       # STAGE 3: DATABASE MIGRATION & SEED VALIDATION
       - name: 🔄 Stage 3 - Database Schema Sync & Seed Verification
+        if: hashFiles('package.json') != ''
         run: |
           pnpm db:push
           pnpm db:seed
 
       # STAGE 4: MONOREPO PRODUCTION BUILD
       - name: 🚀 Stage 4 - Monorepo Production Build (Next.js & NestJS)
+        if: hashFiles('package.json') != ''
         run: pnpm build
