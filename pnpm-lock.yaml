@@ -129,6 +129,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@chayfood/shared-types':
+        specifier: workspace:*
+        version: link:../../packages/shared-types
       '@heroicons/react':
         specifier: ^2.2.0
         version: 2.2.0(react@19.2.8)
@@ -294,7 +297,7 @@ importers:
   packages/shared-types:
     dependencies:
       zod:
-        specifier: ^3.25.76
+        specifier: ^3.25.28
         version: 3.25.76
     devDependencies:
       '@chayfood/tsconfig':
