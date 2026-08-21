@@ -6,6 +6,7 @@ import {
   Post,
   Param,
   Delete,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
@@ -95,5 +96,31 @@ export class UserController {
     @Body() dto: ChangePasswordDto,
   ) {
     return this.userService.changePassword(user.id, dto);
+  }
+
+  @Get('admin/all')
+  @ApiOperation({ summary: 'Lấy danh sách tất cả khách hàng (Admin)' })
+  getCustomers(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.userService.getCustomers(
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 10,
+      search || '',
+    );
+  }
+
+  @Get('admin/:id')
+  @ApiOperation({ summary: 'Lấy thông tin chi tiết một khách hàng (Admin)' })
+  getCustomerById(@Param('id') id: string) {
+    return this.userService.getCustomerById(id);
+  }
+
+  @Delete('admin/:id')
+  @ApiOperation({ summary: 'Xóa khách hàng (Admin)' })
+  deleteCustomer(@Param('id') id: string) {
+    return this.userService.deleteCustomer(id);
   }
 }
