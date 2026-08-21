@@ -1,104 +1,174 @@
 import { Suspense } from 'react';
 import RevenueChart from '../components/admin/dashboard/RevenueChart';
+import OrderStatusDonutChart from '../components/admin/dashboard/OrderStatusDonutChart';
+import PeakHoursBarChart from '../components/admin/dashboard/PeakHoursBarChart';
+import BestSellingItems from '../components/admin/dashboard/BestSellingItems';
+import AiReviewSentimentAnalytics from '../components/admin/dashboard/AiReviewSentimentAnalytics';
 import OrdersTable from '../components/admin/dashboard/OrdersTable';
 import MetricCard from '../components/admin/dashboard/MetricCard';
-import BestSellingItems from '../components/admin/dashboard/BestSellingItems';
-import { 
-  ArrowTrendingUpIcon, 
-  ShoppingCartIcon, 
-  UsersIcon, 
-  ClockIcon 
+import {
+  BanknotesIcon,
+  ShoppingCartIcon,
+  UsersIcon,
+  ClockIcon,
+  ReceiptPercentIcon,
 } from '@heroicons/react/24/outline';
 
 export const metadata = {
-  title: 'Admin Dashboard | ChayFood',
+  title: 'Bảng Điều Hành Quản Trị | ChayFood Admin Portal',
+  description: 'Tổng quan chỉ số kinh doanh, biểu đồ tăng trưởng và phản hồi khách hàng AI',
 };
 
 export default function AdminDashboard() {
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-      
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <Suspense fallback={<div className="h-24 bg-gray-200 rounded-lg animate-pulse"></div>}>
-          <MetricCard 
-            title="Total Revenue" 
-            value="₫8,294,500" 
-            change="+12.5%" 
+    <div className="space-y-6 max-w-7xl mx-auto pb-10">
+      {/* Top Banner / Executive Overview */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2 border-b border-slate-800/80">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center space-x-2.5">
+            <span>Bảng Điều Hành Tổng Quan</span>
+          </h1>
+          <p className="text-xs text-slate-400 mt-1">
+            Theo dõi hiệu suất vận hành ẩm thực, doanh thu thực nhận và tín hiệu từ thực khách
+          </p>
+        </div>
+
+        <div className="flex items-center space-x-2 text-xs font-mono">
+          <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>Hệ Thống Trực Tuyến</span>
+          </span>
+        </div>
+      </div>
+
+      {/* Row 1: 5 Macro KPI Metric Cards */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <Suspense fallback={<div className="h-32 bg-slate-900/60 rounded-2xl animate-pulse" />}>
+          <MetricCard
+            title="Doanh Thu Hôm Nay"
+            value="₫8,294,500"
+            change="+14.2%"
             trend="up"
-            icon={<ArrowTrendingUpIcon className="h-6 w-6" />}
-            color="bg-green-100"
-            textColor="text-green-800"
-            iconColor="text-green-500"
+            subtitle="so với hôm qua"
+            icon={<BanknotesIcon className="w-5 h-5" />}
+            sparklineData={[32, 45, 40, 58, 62, 75, 88]}
+            accentColor="emerald"
           />
         </Suspense>
-        
-        <Suspense fallback={<div className="h-24 bg-gray-200 rounded-lg animate-pulse"></div>}>
-          <MetricCard 
-            title="Orders Today" 
-            value="24" 
-            change="+4.3%" 
+
+        <Suspense fallback={<div className="h-32 bg-slate-900/60 rounded-2xl animate-pulse" />}>
+          <MetricCard
+            title="Đơn Hàng Trong Ngày"
+            value="28"
+            change="+8.5%"
             trend="up"
-            icon={<ShoppingCartIcon className="h-6 w-6" />}
-            color="bg-blue-100"
-            textColor="text-blue-800"
-            iconColor="text-blue-500"
+            subtitle="26 đơn hoàn tất"
+            icon={<ShoppingCartIcon className="w-5 h-5" />}
+            sparklineData={[12, 18, 15, 22, 25, 24, 28]}
+            accentColor="sky"
           />
         </Suspense>
-        
-        <Suspense fallback={<div className="h-24 bg-gray-200 rounded-lg animate-pulse"></div>}>
-          <MetricCard 
-            title="New Customers" 
-            value="8" 
-            change="+22.5%" 
+
+        <Suspense fallback={<div className="h-32 bg-slate-900/60 rounded-2xl animate-pulse" />}>
+          <MetricCard
+            title="Khách Hàng Mới"
+            value="12"
+            change="+24.0%"
             trend="up"
-            icon={<UsersIcon className="h-6 w-6" />}
-            color="bg-purple-100"
-            textColor="text-purple-800"
-            iconColor="text-purple-500"
+            subtitle="8 khách đặt gói tuần"
+            icon={<UsersIcon className="w-5 h-5" />}
+            sparklineData={[4, 6, 5, 8, 9, 10, 12]}
+            accentColor="indigo"
           />
         </Suspense>
-        
-        <Suspense fallback={<div className="h-24 bg-gray-200 rounded-lg animate-pulse"></div>}>
-          <MetricCard 
-            title="Avg. Delivery Time" 
-            value="28 min" 
-            change="-3.2%" 
-            trend="down"
-            icon={<ClockIcon className="h-6 w-6" />}
-            color="bg-amber-100"
-            textColor="text-amber-800"
-            iconColor="text-amber-500"
+
+        <Suspense fallback={<div className="h-32 bg-slate-900/60 rounded-2xl animate-pulse" />}>
+          <MetricCard
+            title="Giá Trị Đơn (AOV)"
+            value="₫296,000"
+            change="+5.2%"
+            trend="up"
+            subtitle="trung bình mỗi đơn"
+            icon={<ReceiptPercentIcon className="w-5 h-5" />}
+            sparklineData={[260, 275, 270, 285, 290, 292, 296]}
+            accentColor="amber"
+          />
+        </Suspense>
+
+        <Suspense fallback={<div className="h-32 bg-slate-900/60 rounded-2xl animate-pulse" />}>
+          <MetricCard
+            title="Thời Gian Giao"
+            value="24 phút"
+            change="-6.5%"
+            trend="up"
+            subtitle="nhanh hơn chuẩn 30p"
+            icon={<ClockIcon className="w-5 h-5" />}
+            sparklineData={[30, 28, 29, 26, 25, 24, 24]}
+            accentColor="emerald"
           />
         </Suspense>
       </div>
-      
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-lg font-medium mb-4">Revenue (Last 7 Days)</h2>
-          <div className="h-80">
-            <Suspense fallback={<div className="h-full bg-gray-200 rounded-lg animate-pulse"></div>}>
-              <RevenueChart />
-            </Suspense>
-          </div>
+
+      {/* Row 2: Revenue Trend Area Chart + Order Status Donut Chart */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="lg:col-span-7">
+          <Suspense fallback={<div className="h-96 bg-slate-900/60 rounded-2xl animate-pulse" />}>
+            <RevenueChart />
+          </Suspense>
         </div>
-        
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-lg font-medium mb-4">Best Selling Items</h2>
-          <div className="h-80">
-            <Suspense fallback={<div className="h-full bg-gray-200 rounded-lg animate-pulse"></div>}>
-              <BestSellingItems />
-            </Suspense>
-          </div>
+
+        <div className="lg:col-span-5">
+          <Suspense fallback={<div className="h-96 bg-slate-900/60 rounded-2xl animate-pulse" />}>
+            <OrderStatusDonutChart />
+          </Suspense>
         </div>
       </div>
-      
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-lg font-medium mb-4">Recent Orders</h2>
-        <Suspense fallback={<div className="h-96 bg-gray-200 rounded-lg animate-pulse"></div>}>
-          <OrdersTable />
-        </Suspense>
+
+      {/* Row 3: Peak Hours Bar Chart + Best Selling Items Ranking */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="lg:col-span-6">
+          <Suspense fallback={<div className="h-96 bg-slate-900/60 rounded-2xl animate-pulse" />}>
+            <PeakHoursBarChart />
+          </Suspense>
+        </div>
+
+        <div className="lg:col-span-6">
+          <Suspense fallback={<div className="h-96 bg-slate-900/60 rounded-2xl animate-pulse" />}>
+            <BestSellingItems />
+          </Suspense>
+        </div>
+      </div>
+
+      {/* Row 4: AI Customer Sentiment & Menu Insights + Recent Orders Table */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="lg:col-span-5">
+          <Suspense fallback={<div className="h-96 bg-slate-900/60 rounded-2xl animate-pulse" />}>
+            <AiReviewSentimentAnalytics />
+          </Suspense>
+        </div>
+
+        <div className="lg:col-span-7">
+          <div className="rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-slate-800/80 p-6 flex flex-col h-full hover:border-slate-700/80 transition-all duration-200">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-base font-semibold text-white tracking-wide">
+                  Đơn Hàng Gần Đây
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  Cập nhật các giao dịch đặt món và thanh toán mới nhất
+                </p>
+              </div>
+              <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+                Thời gian thực
+              </span>
+            </div>
+
+            <Suspense fallback={<div className="h-72 bg-slate-950/40 rounded-xl animate-pulse" />}>
+              <OrdersTable />
+            </Suspense>
+          </div>
+        </div>
       </div>
     </div>
   );
-} 
+}
