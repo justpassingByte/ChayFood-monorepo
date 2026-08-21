@@ -2,16 +2,16 @@ import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
-import { UserModule } from './user/user.module';
 import { MenuModule } from './menu/menu.module';
-import { InventoryModule } from './inventory/inventory.module';
-import { RecipesModule } from './recipes/recipes.module';
-import { FamilyModule } from './family/family.module';
 import { OrdersModule } from './orders/orders.module';
-import { PaymentModule } from './payment/payment.module';
 import { PlansModule } from './plans/plans.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { RecommendationsModule } from './recommendations/recommendations.module';
+import { InventoryModule } from './inventory/inventory.module';
+import { RecipesModule } from './recipes/recipes.module';
+import { FamilyModule } from './family/family.module';
+import { PaymentModule } from './payment/payment.module';
+import { UserModule } from './user/user.module';
 import { HttpLoggerMiddleware } from './common/logger/http-logger.middleware';
 
 @Module({
@@ -24,14 +24,14 @@ import { HttpLoggerMiddleware } from './common/logger/http-logger.middleware';
     AuthModule,
     UserModule,
     MenuModule,
-    InventoryModule,
-    RecipesModule,
-    FamilyModule,
     OrdersModule,
-    PaymentModule,
     PlansModule,
     SubscriptionsModule,
     RecommendationsModule,
+    InventoryModule,
+    RecipesModule,
+    FamilyModule,
+    PaymentModule,
   ],
 })
 export class AppModule implements NestModule {
@@ -39,3 +39,4 @@ export class AppModule implements NestModule {
     consumer.apply(HttpLoggerMiddleware).forRoutes('{*path}');
   }
 }
+

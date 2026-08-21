@@ -1,106 +1,216 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import api from '@/lib/services/apiClient';
+import { useState, useEffect } from 'react';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
 
-type DataPoint = {
+interface DataPoint {
   date: string;
   revenue: number;
-};
+  orders: number;
+}
+
+const mockData7Days: DataPoint[] = [
+  { date: 'Thứ 2', revenue: 3200000, orders: 18 },
+  { date: 'Thứ 3', revenue: 4150000, orders: 24 },
+  { date: 'Thứ 4', revenue: 3800000, orders: 21 },
+  { date: 'Thứ 5', revenue: 5200000, orders: 31 },
+  { date: 'Thứ 6', revenue: 6450000, orders: 38 },
+  { date: 'Thứ 7', revenue: 7800000, orders: 46 },
+  { date: 'CN', revenue: 8950000, orders: 54 },
+];
+
+const mockData30Days: DataPoint[] = [
+  { date: 'Tuần 1', revenue: 24500000, orders: 142 },
+  { date: 'Tuần 2', revenue: 28900000, orders: 168 },
+  { date: 'Tuần 3', revenue: 32400000, orders: 195 },
+  { date: 'Tuần 4', revenue: 39550000, orders: 230 },
+];
+
+const mockDataYear: DataPoint[] = [
+  { date: 'T1', revenue: 85000000, orders: 510 },
+  { date: 'T2', revenue: 92000000, orders: 560 },
+  { date: 'T3', revenue: 104000000, orders: 630 },
+  { date: 'T4', revenue: 118000000, orders: 710 },
+  { date: 'T5', revenue: 135000000, orders: 820 },
+  { date: 'T6', revenue: 152000000, orders: 910 },
+  { date: 'T7', revenue: 168000000, orders: 1020 },
+  { date: 'T8', revenue: 189000000, orders: 1140 },
+];
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{ value: number; payload: DataPoint }>;
+  label?: string;
+}
+
+function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    const formatCurrency = (val: number) =>
+      new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+        maximumFractionDigits: 0,
+      }).format(val);
+
+    return (
+      <div className="rounded-xl bg-white border border-slate-200 p-3 shadow-lg text-xs">
+        <p className="font-bold text-slate-800 mb-1.5 pb-1 border-b border-slate-100">{label}</p>
+        <div className="space-y-1">
+          <p className="text-emerald-700 font-mono font-bold flex items-center justify-between space-x-3">
+            <span className="text-slate-500 font-normal">Doanh thu:</span>
+            <span>{formatCurrency(data.revenue)}</span>
+          </p>
+          <p className="text-slate-700 font-mono flex items-center justify-between space-x-3">
+            <span className="text-slate-500 font-normal">Số đơn hàng:</span>
+            <span>{data.orders} đơn</span>
+          </p>
+        </div>
+      </div>
+    );
+  }
+  return null;
+}
 
 export default function RevenueChart() {
-  const [data, setData] = useState<DataPoint[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [timeRange, setTimeRange] = useState<'7d' | '30d' | 'year'>('7d');
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await api.get('/analytics/orders/trends', {
-          params: { timeRange: 'week' },
-        });
-
-        // Process API data
-        const apiData = (response.data.data || response.data || []) as DataPoint[];
-
-        const processedData = Array.isArray(apiData)
-          ? apiData.map((item: DataPoint) => ({
-              date: new Date(item.date).toLocaleDateString('vi-VN', { weekday: 'short' }),
-              revenue: item.revenue,
-            }))
-          : [];
-
-        setData(processedData);
-        setLoading(false);
-      } catch (err: unknown) {
-        console.error('Error fetching revenue data:', err);
-        setError('Không thể tải dữ liệu doanh thu');
-        setLoading(false);
-        
-        // Fallback to empty data 
-        setData([]);
-      }
-    };
-
-    fetchData();
+    setIsMounted(true);
   }, []);
 
-  if (loading) {
-    return <div className="flex justify-center items-center h-full">Loading...</div>;
-  }
+  const data =
+    timeRange === '7d'
+      ? mockData7Days
+      : timeRange === '30d'
+      ? mockData30Days
+      : mockDataYear;
 
-  if (error) {
-    return <div className="text-red-500">Error: {error}</div>;
-  }
-  
-  if (data.length === 0) {
-    return <div className="flex justify-center items-center h-full">No revenue data available</div>;
-  }
+  const totalRevenue = data.reduce((sum, item) => sum + item.revenue, 0);
+  const totalOrders = data.reduce((sum, item) => sum + item.orders, 0);
 
-  const maxRevenue = Math.max(...data.map(item => item.revenue));
-  
-  // Format number as VND currency
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('vi-VN', {
+  const formatVND = (val: number) =>
+    new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND',
-      minimumFractionDigits: 0,
-    }).format(value);
+      maximumFractionDigits: 0,
+    }).format(val);
+
+  const formatShortVND = (val: number) => {
+    if (val >= 1000000000) return `${(val / 1000000000).toFixed(1)} Tỷ`;
+    if (val >= 1000000) return `${(val / 1000000).toFixed(0)} Tr`;
+    if (val >= 1000) return `${(val / 1000).toFixed(0)}k`;
+    return val.toString();
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex justify-between items-center mb-4">
+    <div className="rounded-2xl bg-white border border-slate-200/80 p-6 flex flex-col h-full hover:shadow-md transition-all duration-200 shadow-xs">
+      {/* Header with Title and Range Tabs */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <div className="text-sm text-gray-500">Total Revenue</div>
-          <div className="text-xl font-semibold">
-            {formatCurrency(data.reduce((sum, item) => sum + item.revenue, 0))}
+          <div className="flex items-center space-x-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <h2 className="text-base font-bold text-slate-900 tracking-wide">
+              Biểu Đồ Doanh Thu & Xu Hướng Tăng Trưởng
+            </h2>
           </div>
+          <p className="text-xs text-slate-500 mt-1">
+            Tổng cộng{' '}
+            <span className="font-mono font-bold text-emerald-700">
+              {formatVND(totalRevenue)}
+            </span>{' '}
+            từ <span className="font-mono text-slate-800 font-semibold">{totalOrders} đơn</span> trong kỳ này
+          </p>
+        </div>
+
+        {/* Time range switcher buttons */}
+        <div className="inline-flex rounded-xl bg-slate-50 p-1 border border-slate-200 self-start sm:self-auto text-xs">
+          <button
+            onClick={() => setTimeRange('7d')}
+            className={`px-3 py-1 rounded-lg font-semibold transition-all ${
+              timeRange === '7d'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            7 Ngày
+          </button>
+          <button
+            onClick={() => setTimeRange('30d')}
+            className={`px-3 py-1 rounded-lg font-semibold transition-all ${
+              timeRange === '30d'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            30 Ngày
+          </button>
+          <button
+            onClick={() => setTimeRange('year')}
+            className={`px-3 py-1 rounded-lg font-semibold transition-all ${
+              timeRange === 'year'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Năm 2026
+          </button>
         </div>
       </div>
-      
-      <div className="flex-1 flex items-end">
-        {data.map((item, index) => (
-          <div 
-            key={index} 
-            className="flex-1 flex flex-col items-center justify-end h-full"
-          >
-            <div className="relative flex flex-col items-center group">
-              <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                {formatCurrency(item.revenue)}
-              </div>
-              <div 
-                className="w-12 bg-blue-500 rounded-t-md transition-all duration-300 hover:bg-blue-600"
-                style={{ 
-                  height: `${(item.revenue / maxRevenue) * 100}%`,
-                  minHeight: '20px'
-                }}
-              ></div>
-            </div>
-            <div className="text-xs text-gray-500 mt-2">{item.date}</div>
+
+      {/* Chart Canvas */}
+      <div className="flex-1 w-full min-h-[280px]">
+        {isMounted ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#059669" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="#059669" stopOpacity={0.0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+              <XAxis
+                dataKey="date"
+                stroke="#94A3B8"
+                fontSize={11}
+                tickLine={false}
+                axisLine={{ stroke: '#E2E8F0' }}
+              />
+              <YAxis
+                stroke="#94A3B8"
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={formatShortVND}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Area
+                type="monotone"
+                dataKey="revenue"
+                stroke="#059669"
+                strokeWidth={2.5}
+                fillOpacity={1}
+                fill="url(#colorRevenue)"
+                activeDot={{ r: 6, fill: '#059669', stroke: '#FFFFFF', strokeWidth: 3 }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-slate-50 rounded-xl animate-pulse">
+            <span className="text-xs text-slate-400 font-mono">Đang khởi tạo biểu đồ...</span>
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
-} 
+}
