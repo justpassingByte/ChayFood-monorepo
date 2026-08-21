@@ -1,14 +1,14 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateOrderDto, UpdateOrderStatusDto } from './dto/order.dto';
-import { OrderStatus, StockTransactionType } from '@chayfood/shared-types';
+import { UpdateOrderStatusDto } from './dto/order.dto';
+import { type CreateOrderInput, OrderStatus, StockTransactionType } from '@chayfood/shared-types';
 
 @Injectable()
 export class OrdersService {
   constructor(private prisma: PrismaService) {}
 
-  async create(userId: string, dto: CreateOrderDto) {
+  async create(userId: string, dto: CreateOrderInput) {
     if (!dto.items || dto.items.length === 0) {
       throw new BadRequestException('Giỏ hàng trống');
     }

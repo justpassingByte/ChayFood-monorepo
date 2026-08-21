@@ -1,9 +1,11 @@
 import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
-import { CreateOrderDto, UpdateOrderStatusDto } from './dto/order.dto';
+import { UpdateOrderStatusDto } from './dto/order.dto';
 import { JwtAuthGuard, RolesGuard, Roles, CurrentUser, AuthenticatedUser } from '../auth/jwt.strategy';
 import { Role } from '@chayfood/db';
+import { CreateOrderSchema, type CreateOrderInput } from '@chayfood/shared-types';
+import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 
 @ApiTags('Orders')
 @Controller('orders')
@@ -14,7 +16,10 @@ export class OrdersController {
 
   @Post()
   @ApiOperation({ summary: 'Tạo đơn hàng mới (Dành cho khách hàng đã đăng nhập)' })
-  create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateOrderDto) {
+  create(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(CreateOrderSchema)) dto: CreateOrderInput
+  ) {
     return this.ordersService.create(user.id, dto);
   }
 

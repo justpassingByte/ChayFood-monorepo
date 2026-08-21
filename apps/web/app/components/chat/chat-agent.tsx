@@ -7,14 +7,7 @@ import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { useCart } from '../../hooks/useCart'
 import Link from 'next/link'
-import axios from 'axios'
-
-const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
-  headers: {
-    'Content-Type': 'application/json'
-  }
-})
+import api from '@/lib/services/apiClient'
 
 interface Message {
   role: 'user' | 'assistant'

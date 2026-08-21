@@ -8,6 +8,8 @@ interface User {
   _id: string;
   email: string;
   name: string;
+  phone?: string;
+  address?: string;
   role: 'user' | 'admin';
 }
 

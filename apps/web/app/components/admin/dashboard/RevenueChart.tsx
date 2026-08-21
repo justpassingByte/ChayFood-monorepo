@@ -1,14 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '@/lib/services/apiClient';
 
 type DataPoint = {
   date: string;
   revenue: number;
 };
-
-const BASE_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export default function RevenueChart() {
   const [data, setData] = useState<DataPoint[]>([]);
@@ -18,32 +16,25 @@ export default function RevenueChart() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log('Fetching revenue data from API');
-        const response = await axios.get(`${BASE_API_URL}/api/analytics/orders/trends`, {
+        const response = await api.get('/analytics/orders/trends', {
           params: { timeRange: 'week' },
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('authToken')}`
-          }
         });
-        
+
         // Process API data
-        const apiData = (response.data.data || response.data) as DataPoint[];
-        console.log('API response:', apiData);
-        
-        const processedData = apiData.map((item: DataPoint) => ({
-          date: new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' }),
-          revenue: item.revenue
-        }));
-        
+        const apiData = (response.data.data || response.data || []) as DataPoint[];
+
+        const processedData = Array.isArray(apiData)
+          ? apiData.map((item: DataPoint) => ({
+              date: new Date(item.date).toLocaleDateString('vi-VN', { weekday: 'short' }),
+              revenue: item.revenue,
+            }))
+          : [];
+
         setData(processedData);
         setLoading(false);
       } catch (err: unknown) {
         console.error('Error fetching revenue data:', err);
-        if (err instanceof Error) {
-          setError(err.message || 'Failed to load revenue data');
-        } else {
-          setError('Failed to load revenue data');
-        }
+        setError('Không thể tải dữ liệu doanh thu');
         setLoading(false);
         
         // Fallback to empty data 

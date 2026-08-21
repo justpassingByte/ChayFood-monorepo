@@ -1,4 +1,4 @@
-export type Role = 'USER' | 'ADMIN' | 'RESTAURANT_OWNER' | 'SHIPPER';
+import type { Role } from './schemas/auth.schema';
 
 export interface UserProfile {
   id: string;

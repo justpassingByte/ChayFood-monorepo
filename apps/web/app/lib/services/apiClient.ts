@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create an axios instance with default config
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -14,7 +14,7 @@ api.interceptors.request.use(
     // Log rõ ràng khi gọi login
     if (config.url?.includes('/auth/login')) {
       console.log('DEBUG LOGIN REQUEST:', {
-        fullUrl: config.baseURL + config.url,
+        fullUrl: (config.baseURL || '') + (config.url || ''),
         method: config.method,
         data: config.data,
         headers: config.headers,
@@ -53,6 +53,7 @@ api.interceptors.request.use(
     // Log request details
     console.log('API Request:', {
       url: config.url,
+      baseURL: config.baseURL,
       method: config.method,
       params: config.params,
       data: config.data,
@@ -83,6 +84,8 @@ api.interceptors.response.use(
     // Log error details
     console.error('API Error:', {
       url: error.config?.url,
+      baseURL: error.config?.baseURL,
+      method: error.config?.method,
       status: error.response?.status,
       message: error.response?.data?.message || error.message,
       params: error.config?.params,

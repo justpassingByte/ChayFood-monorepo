@@ -5,3 +5,6 @@ export * from './api';
 export * from './inventory';
 export * from './recipe';
 export * from './family';
+export * from './schemas/order.schema';
+export * from './schemas/auth.schema';
+export * from './schemas/menu.schema';

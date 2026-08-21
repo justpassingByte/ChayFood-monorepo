@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '@/lib/services/apiClient';
 import Link from 'next/link';
 
 type Order = {
@@ -23,8 +23,6 @@ const statusColors = {
   cancelled: 'bg-red-100 text-red-800',
 };
 
-const BASE_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-
 export default function OrdersTable() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,25 +31,13 @@ export default function OrdersTable() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log('Fetching recent orders from API');
-        const response = await axios.get(`${BASE_API_URL}/api/admin/recent-orders`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('authToken')}`
-          }
-        });
-        
-        const apiData = response.data.data || response.data;
-        console.log('API response:', apiData);
-        
+        const response = await api.get('/admin/recent-orders');
+        const apiData = response.data.data || response.data.items || response.data || [];
         setOrders(apiData as Order[]);
         setLoading(false);
       } catch (err: unknown) {
         console.error('Error fetching recent orders:', err);
-        if (err instanceof Error) {
-          setError(err.message || 'Failed to load recent orders');
-        } else {
-          setError('Failed to load recent orders');
-        }
+        setError('Không thể tải danh sách đơn hàng gần đây');
         setLoading(false);
         setOrders([]);
       }

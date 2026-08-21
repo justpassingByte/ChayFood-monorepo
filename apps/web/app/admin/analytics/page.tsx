@@ -9,6 +9,7 @@ import OrderTrendsChart from '@/components/admin/analytics/OrderTrendsChart';
 import RegionalOrdersMap from '@/components/admin/analytics/RegionalOrdersMap';
 import { AnalyticsProvider, useAnalytics } from '@/context/AnalyticsContext';
 import { analyticsService } from '@/services/analyticsService';
+import api from '@/lib/services/apiClient';
 
 // Immediate debug logs at module-level
 console.log('DEBUG: Analytics page is being imported');
@@ -60,9 +61,9 @@ function AnalyticsHeader() {
     
     try {
       console.log('DEBUG: Testing API connection...');
-      const response = await fetch(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000');
+      const response = await api.get('/analytics/orders/stats');
       
-      if (response.ok) {
+      if (response.status === 200) {
         console.log('DEBUG: API connection successful');
       } else {
         console.error('DEBUG: API connection failed with status:', response.status);

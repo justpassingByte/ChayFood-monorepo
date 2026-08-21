@@ -1,7 +1,9 @@
-import axios from 'axios';
+import api from '../lib/services/apiClient';
 
 export interface Order {
   _id: string;
+  id?: string;
+  orderNumber?: string;
   user: string | {
     _id: string;
     name: string;
@@ -10,6 +12,7 @@ export interface Order {
   items: Array<{
     menuItem: string | {
       _id: string;
+      id?: string;
       name: string;
       price: number;
       image?: string;
@@ -28,67 +31,71 @@ export interface Order {
     additionalInfo?: string;
   };
   paymentStatus: 'pending' | 'paid' | 'failed';
-  paymentMethod: 'cod' | 'card' | 'banking' | 'stripe';
+  paymentMethod: 'COD' | 'CARD' | 'BANKING' | 'cod' | 'card' | 'banking' | 'stripe';
   deliveryTime?: string;
   specialInstructions?: string;
   createdAt: string;
   updatedAt: string;
 }
 
-// Định nghĩa interface cho dữ liệu đơn hàng được gửi lên
 export interface OrderCreateData {
   user?: string;
   items: Array<{
-    menuItem: string;
+    menuItemId?: string;
+    menuItem?: string;
     quantity: number;
     price?: number;
     specialInstructions?: string;
   }>;
-  totalAmount: number;
+  totalAmount?: number;
   deliveryAddress: {
     street: string;
     city: string;
-    state: string;
-    postalCode: string;
+    state?: string;
+    postalCode?: string;
     additionalInfo?: string;
   };
-  paymentMethod: 'cod' | 'card' | 'banking' | 'stripe';
+  paymentMethod: 'COD' | 'CARD' | 'BANKING' | 'cod' | 'card' | 'banking' | 'stripe';
   specialInstructions?: string;
 }
 
-// Định nghĩa interface cho lỗi API
+export interface OrderResponse {
+  status: 'success' | 'error';
+  data?: Order;
+  message?: string;
+}
+
 export interface ApiError {
   status?: string;
   message?: string;
   response?: {
     data?: {
-      message?: string;
+      message?: string | string[];
       status?: string;
+      error?: string;
     };
   };
 }
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-
-// Helper function to get auth token
-const getAuthHeader = () => {
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('authToken');
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  }
-  return {};
-};
 
 export const orderService = {
   // Lấy tất cả đơn hàng (admin)
   getAll: async (): Promise<Order[]> => {
     try {
-      const response = await axios.get(`${API_URL}/order/admin/all`, {
-        headers: getAuthHeader()
-      });
-      return response.data.data || response.data;
+      const response = await api.get('/orders');
+      return response.data.data || response.data.items || response.data || [];
     } catch (error) {
       console.error('Error fetching all orders:', error);
+      return [];
+    }
+  },
+
+  // Lấy lịch sử đơn hàng của user
+  getMyOrders: async (): Promise<Order[]> => {
+    try {
+      const response = await api.get('/orders/my-orders');
+      return response.data.data || response.data.items || response.data || [];
+    } catch (error) {
+      console.error('Error fetching my orders:', error);
       return [];
     }
   },
@@ -96,9 +103,7 @@ export const orderService = {
   // Lấy đơn hàng theo ID
   getById: async (id: string): Promise<Order | null> => {
     try {
-      const response = await axios.get(`${API_URL}/order/${id}`, {
-        headers: getAuthHeader()
-      });
+      const response = await api.get(`/orders/${id}`);
       return response.data.data || response.data;
     } catch (error) {
       console.error(`Error fetching order ${id}:`, error);
@@ -109,11 +114,7 @@ export const orderService = {
   // Cập nhật trạng thái đơn hàng (admin)
   updateStatus: async (id: string, status: Order['status']): Promise<Order | null> => {
     try {
-      const response = await axios.patch(
-        `${API_URL}/order/${id}/status`, 
-        { status },
-        { headers: getAuthHeader() }
-      );
+      const response = await api.patch(`/orders/${id}/status`, { status });
       return response.data.data || response.data;
     } catch (error) {
       console.error(`Error updating order status ${id}:`, error);
@@ -124,11 +125,7 @@ export const orderService = {
   // Hủy đơn hàng (admin hoặc user)
   cancelOrder: async (id: string): Promise<boolean> => {
     try {
-      const response = await axios.patch(
-        `${API_URL}/order/${id}/cancel`,
-        {},
-        { headers: getAuthHeader() }
-      );
+      const response = await api.patch(`/orders/${id}/status`, { status: 'cancelled' });
       return response.status === 200;
     } catch (error) {
       console.error(`Error cancelling order ${id}:`, error);
@@ -139,11 +136,8 @@ export const orderService = {
   // Lọc đơn hàng theo trạng thái
   filterByStatus: async (status: Order['status']): Promise<Order[]> => {
     try {
-      const response = await axios.get(`${API_URL}/order/admin/all`, {
-        params: { status },
-        headers: getAuthHeader()
-      });
-      return response.data.data || response.data;
+      const response = await api.get('/orders', { params: { status } });
+      return response.data.data || response.data.items || response.data || [];
     } catch (error) {
       console.error(`Error filtering orders by status ${status}:`, error);
       return [];
@@ -153,46 +147,74 @@ export const orderService = {
   // Tìm kiếm đơn hàng
   search: async (query: string): Promise<Order[]> => {
     try {
-      const response = await axios.get(`${API_URL}/order/admin/search`, {
-        params: { query },
-        headers: getAuthHeader()
-      });
-      return response.data.data || response.data;
+      const response = await api.get('/orders', { params: { query } });
+      return response.data.data || response.data.items || response.data || [];
     } catch (error) {
       console.error(`Error searching orders with query ${query}:`, error);
       return [];
     }
   },
 
-  // Tạo đơn hàng mới
-  create: async (orderData: OrderCreateData) => {
+  // Tạo đơn hàng mới với tự động chuẩn hóa DTO
+  create: async (orderData: OrderCreateData): Promise<OrderResponse> => {
     try {
-      const response = await axios.post(
-        `${API_URL}/order`,
-        orderData,
-        { headers: { ...getAuthHeader(), 'Content-Type': 'application/json' } }
-      );
-      return response.data;
+      const rawPayment = String(orderData.paymentMethod || '').toUpperCase();
+      const normalizedPayment =
+        rawPayment === 'BANKING' ? 'BANKING' : rawPayment === 'STRIPE' || rawPayment === 'CARD' ? 'CARD' : 'COD';
+
+      const normalizedPayload = {
+        items: orderData.items.map((it) => ({
+          menuItemId: it.menuItemId || it.menuItem || '',
+          quantity: Number(it.quantity || 1),
+          specialInstructions: it.specialInstructions || undefined,
+        })),
+        deliveryAddress: {
+          street: orderData.deliveryAddress.street,
+          city: orderData.deliveryAddress.city,
+          state: orderData.deliveryAddress.state || 'Việt Nam',
+          postalCode: orderData.deliveryAddress.postalCode || '70000',
+          additionalInfo: orderData.deliveryAddress.additionalInfo || undefined,
+        },
+        paymentMethod: normalizedPayment,
+        specialInstructions: orderData.specialInstructions || undefined,
+      };
+
+      const response = await api.post('/orders', normalizedPayload);
+      return { status: 'success', data: response.data.data || response.data };
     } catch (error: unknown) {
       const apiError = error as ApiError;
       if (apiError.response && apiError.response.data) {
-        return apiError.response.data;
+        const dataObj = apiError.response.data as {
+          message?: string | string[];
+          issues?: Array<{ field?: string; message: string }>;
+          error?: string;
+        };
+
+        if (dataObj.issues && Array.isArray(dataObj.issues) && dataObj.issues.length > 0) {
+          return {
+            status: 'error',
+            message: dataObj.issues.map((i) => i.message).join('. '),
+          };
+        }
+
+        const msg = dataObj.message || dataObj.error;
+        return {
+          status: 'error',
+          message: Array.isArray(msg) ? msg.join(', ') : typeof msg === 'string' ? msg : 'Lỗi khi khởi tạo đơn hàng',
+        };
       }
-      return { status: 'error', message: apiError.message || 'An unknown error occurred' };
+      return { status: 'error', message: apiError.message || 'Lỗi khi khởi tạo đơn hàng' };
     }
   },
 
   // Lấy đơn hàng theo Stripe sessionId
   getBySessionId: async (sessionId: string): Promise<Order | null> => {
     try {
-      const response = await axios.get(`${API_URL}/order/by-session/${sessionId}`, {
-        headers: getAuthHeader()
-      });
+      const response = await api.get(`/orders/by-session/${sessionId}`);
       return response.data.data || response.data;
     } catch (error) {
       console.error(`Error fetching order by sessionId ${sessionId}:`, error);
       return null;
     }
   },
-
-}; 
+};

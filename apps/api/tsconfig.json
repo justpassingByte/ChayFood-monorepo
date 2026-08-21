@@ -13,7 +13,11 @@
     "baseUrl": "./",
     "types": ["node", "jest"],
     "incremental": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "paths": {
+      "@chayfood/shared-types": ["../../packages/shared-types/src/index.ts", "../../packages/shared-types/dist/index.d.ts"],
+      "@chayfood/db": ["../../packages/db/src/index.ts"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

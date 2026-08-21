@@ -5,16 +5,13 @@ import { MenuItem } from '../services/types';
 
 export interface CartItem {
   _id?: string;
-  menuItem: MenuItem | {
-    _id: string;
-    name: string;
-    price: number;
-    image?: string;
-    description?: string;
-  };
+  id?: string;
+  menuItem: MenuItem;
   quantity: number;
   specialInstructions?: string;
   notes?: string;
+  portionName?: string;
+  assignedMemberName?: string;
 }
 
 export async function getCart() {
@@ -89,10 +86,12 @@ interface RawCartItem {
   _id?: string;
   menuItem?: {
     _id?: string;
+    id?: string;
     name?: string;
     price?: number;
     image?: string;
     description?: string;
+    category?: string;
   };
   name?: string;
   price?: number;
@@ -129,8 +128,10 @@ export async function normalizeCartItems(items: unknown[]): Promise<CartItem[]> 
       _id: rawItem._id || undefined,
       menuItem: {
         _id: menuItem._id || '',
-        name: name || 'Sản phẩm', // Use default name in Vietnamese if all else fails
+        id: menuItem.id || menuItem._id || '',
+        name: name || 'Sản phẩm',
         price: typeof menuItem.price === 'number' ? menuItem.price : (typeof rawItem.price === 'number' ? rawItem.price : 0),
+        category: menuItem.category || 'main',
         image: menuItem.image || (rawItem.image || ''),
         description: menuItem.description || (rawItem.description || '')
       },

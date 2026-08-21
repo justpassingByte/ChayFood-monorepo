@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import axios from 'axios';
+import api from '@/lib/services/apiClient';
 
 type MenuItem = {
   id: string;
@@ -13,8 +13,6 @@ type MenuItem = {
   category?: string;
 };
 
-const BASE_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-
 export default function BestSellingItems() {
   const [items, setItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,37 +21,25 @@ export default function BestSellingItems() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log('Fetching popular dishes data from API');
-        const response = await axios.get(`${BASE_API_URL}/api/analytics/dishes/popular`, {
+        const response = await api.get('/analytics/dishes/popular', {
           params: { timeRange: 'month' },
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('authToken')}`
-          }
         });
-        
-        // Process API data
-        const apiData = response.data.data || response.data;
-        console.log('API response:', apiData);
-        
-        // Process and enhance with image paths
-        const processedData = apiData.map((item: unknown) => {
-          const dish = item as MenuItem;
-          return {
-            ...dish,
-            image: `/menu/${dish.name.toLowerCase().replace(/\s+/g, '-')}.jpg`
-          };
-        });
-        
+
+        const apiData = (response.data.data || response.data || []) as MenuItem[];
+
+        const processedData = Array.isArray(apiData)
+          ? apiData.map((item: MenuItem) => ({
+              ...item,
+              image: item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200',
+            }))
+          : [];
+
         setItems(processedData);
         setLoading(false);
       } catch (err: unknown) {
-        const error = err as { message?: string };
-        console.error('Error fetching popular dishes:', error);
-        setError(error.message || 'Failed to load popular dishes');
+        console.error('Error fetching popular dishes data:', err);
+        setError('Không thể tải dữ liệu món bán chạy');
         setLoading(false);
-        
-        // Fallback to empty data instead of mock data
-        setItems([]);
       }
     };
 

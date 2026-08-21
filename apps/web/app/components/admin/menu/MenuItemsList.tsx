@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import axios from 'axios';
+import api from '@/lib/services/apiClient';
 import { PencilIcon, TrashIcon, EyeIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 
@@ -23,8 +23,6 @@ type MenuItem = {
   preparationTime: number;
 };
 
-const BASE_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-
 export default function MenuItemsList() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,27 +33,21 @@ export default function MenuItemsList() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log('Fetching menu items from API');
-        const response = await axios.get(`${BASE_API_URL}/api/admin/menu-items`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('authToken')}`
-          }
-        });
-        
-        const apiData = response.data.data || response.data;
-        console.log('API response:', apiData);
-        
-        setMenuItems(apiData as MenuItem[]);
-        setLoading(false);
+        const response = await api.get('/admin/menu-items');
+        if (response.data && Array.isArray(response.data)) {
+          setMenuItems(response.data);
+        } else if (response.data && Array.isArray(response.data.data)) {
+          setMenuItems(response.data.data);
+        } else if (response.data && Array.isArray(response.data.items)) {
+          setMenuItems(response.data.items);
+        } else {
+          setMenuItems([]);
+        }
       } catch (err: unknown) {
         console.error('Error fetching menu items:', err);
-        if (err instanceof Error) {
-          setError(err.message || 'Failed to load menu items');
-        } else {
-          setError('Failed to load menu items');
-        }
+        setError('Không thể tải danh sách món ăn');
+      } finally {
         setLoading(false);
-        setMenuItems([]);
       }
     };
 

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm, SubmitHandler } from 'react-hook-form';
-import axios from 'axios';
+import api from '@/lib/services/apiClient';
 import Image from 'next/image';
 
 type NutritionInfo = {
@@ -30,8 +30,6 @@ type MenuItemFormProps = {
   menuItemId?: string;
   mode: 'create' | 'edit';
 };
-
-const BASE_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export default function MenuItemForm({ menuItemId, mode }: MenuItemFormProps) {
   const router = useRouter();
@@ -71,15 +69,9 @@ export default function MenuItemForm({ menuItemId, mode }: MenuItemFormProps) {
       
       const fetchMenuItem = async () => {
         try {
-          console.log(`Fetching menu item with ID: ${menuItemId}`);
-          const response = await axios.get(`${BASE_API_URL}/api/admin/menu-items/${menuItemId}`, {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('authToken')}`
-            }
-          });
+          const response = await api.get(`/admin/menu-items/${menuItemId}`);
           
           const apiData = response.data.data || response.data;
-          console.log('API response:', apiData);
           
           type ApiMenuItem = FormValues & { _id?: string };
           Object.entries(apiData as ApiMenuItem).forEach(([key, value]) => {
@@ -111,20 +103,10 @@ export default function MenuItemForm({ menuItemId, mode }: MenuItemFormProps) {
       setIsSubmitting(true);
       setError(null);
       
-      console.log('Submitting form data:', data);
-      
       if (mode === 'create') {
-        await axios.post(`${BASE_API_URL}/api/admin/menu-items`, data, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('authToken')}`
-          }
-        });
+        await api.post('/admin/menu-items', data);
       } else {
-        await axios.put(`${BASE_API_URL}/api/admin/menu-items/${menuItemId}`, data, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('authToken')}`
-          }
-        });
+        await api.put(`/admin/menu-items/${menuItemId}`, data);
       }
       
       // Redirect after successful submission
