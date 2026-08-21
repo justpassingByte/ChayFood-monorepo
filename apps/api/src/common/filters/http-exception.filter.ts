@@ -17,8 +17,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
+    const isProd = process.env.NODE_ENV === 'production';
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message: string | string[] = 'Lỗi máy chủ nội bộ. Vui lòng thử lại sau';
+    let message: string | string[] = 'Lỗi máy chủ nội bộ, vui lòng thử lại sau';
     let error = 'Internal Server Error';
     let issues: Array<{ field: string; message: string }> | undefined = undefined;
 
@@ -41,8 +42,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
         }
       }
     } else if (exception instanceof Error) {
-      message = exception.message;
-      error = exception.name;
+      /**
+       * Phòng thủ Information Disclosure & SQL Leak:
+       * Ở môi trường Development: Trả về exception.message để lập trình viên dễ dàng debug.
+       * Ở môi trường Production: Tuyệt đối ẨN toàn bộ chi tiết Database / SQL query / file path,
+       * chỉ trả về thông điệp chung an toàn cho Client, đồng thời ghi đầy đủ Stack trace vào Log máy chủ.
+       */
+      message = isProd ? 'Đã xảy ra sự cố hệ thống, vui lòng thử lại sau' : exception.message;
+      error = isProd ? 'Internal Server Error' : exception.name;
     }
 
     const errorResponse: Record<string, unknown> = {

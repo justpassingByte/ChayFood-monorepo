@@ -10,6 +10,9 @@ async function bootstrap() {
   // Global prefix
   app.setGlobalPrefix('api');
 
+  // Graceful Shutdown: Lắng nghe tín hiệu SIGTERM/SIGINT để giải phóng Prisma Pool êm ái khi container redeploy
+  app.enableShutdownHooks();
+
   // Global Exception Filter
   app.useGlobalFilters(new HttpExceptionFilter());
 
@@ -23,12 +26,18 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Validation
+  /**
+   * Validation Pipe Chặt Chẽ (Strict Whitelist & Intrusion Detection):
+   * - whitelist: true -> Chỉ giữ lại các trường được định nghĩa trong DTO.
+   * - forbidNonWhitelisted: true -> Ném ngay lỗi 400 Bad Request nếu client gửi trường lạ (role, isSuperUser, balance).
+   *   Giúp phát hiện sớm các đòn tấn công rà quét tham số (Parameter Tampering) và ghi vết IP kẻ tấn công vào Security Log.
+   * - transform: true -> Tự động ép kiểu dữ liệu nguyên thủy sang DTO class.
+   */
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       transform: true,
-      forbidNonWhitelisted: false,
+      forbidNonWhitelisted: true,
     }),
   );
 
