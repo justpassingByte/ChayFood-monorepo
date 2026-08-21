@@ -11,4 +11,5 @@ export * from './schemas/order.schema';
 export * from './schemas/auth.schema';
 export * from './schemas/menu.schema';
 export * from './schemas/user.schema';
+export * from './schemas/recipe.schema';
 
