@@ -1,15 +1,38 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateIngredientDto, CreateStockTransactionDto, QueryIngredientDto, UpdateIngredientDto } from './dto/inventory.dto';
+import {
+  CreateIngredientDto,
+  CreateStockTransactionDto,
+  QueryIngredientDto,
+  QueryStockTransactionDto,
+  UpdateIngredientDto,
+} from './dto/inventory.dto';
 import { StockTransactionType } from '@chayfood/shared-types';
+
+type UnformattedIngredient = {
+  currentStock: Prisma.Decimal | number;
+  minThreshold: Prisma.Decimal | number;
+  costPerUnit: Prisma.Decimal | number;
+};
+
+type UnformattedTransaction = {
+  quantity: Prisma.Decimal | number;
+  previousStock: Prisma.Decimal | number;
+  newStock: Prisma.Decimal | number;
+  unitCost: Prisma.Decimal | number | null;
+  totalCost: Prisma.Decimal | number | null;
+};
 
 @Injectable()
 export class InventoryService {
   constructor(private prisma: PrismaService) {}
 
+  /**
+   * Lấy danh sách nguyên vật liệu kho hỗ trợ tìm kiếm, phân trang an toàn
+   */
   async findAll(query: QueryIngredientDto) {
-    const { query: searchText, category, isLowStockOnly } = query;
+    const { query: searchText, category, isLowStockOnly, page = 1, limit = 50 } = query;
     const where: Prisma.IngredientWhereInput = {};
 
     if (searchText) {
@@ -24,26 +47,46 @@ export class InventoryService {
       where.category = { contains: category, mode: 'insensitive' };
     }
 
-    const items = await this.prisma.ingredient.findMany({
-      where,
-      orderBy: { name: 'asc' },
-    });
+    const skip = (page - 1) * limit;
+    const [items, total] = await Promise.all([
+      this.prisma.ingredient.findMany({
+        where,
+        orderBy: { name: 'asc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.ingredient.count({ where }),
+    ]);
 
-    const mapped = items.map((item) => ({
-      ...item,
-      currentStock: Number(item.currentStock),
-      minThreshold: Number(item.minThreshold),
-      costPerUnit: Number(item.costPerUnit),
-      isLowStock: Number(item.currentStock) <= Number(item.minThreshold),
-    }));
+    const formattedItems = items.map((item) => this.formatIngredient(item));
 
     if (isLowStockOnly) {
-      return mapped.filter((item) => item.isLowStock);
+      const filtered = formattedItems.filter((item) => item.isLowStock);
+      return {
+        items: filtered,
+        pagination: {
+          total: filtered.length,
+          page,
+          limit,
+          totalPages: Math.ceil(filtered.length / limit),
+        },
+      };
     }
 
-    return mapped;
+    return {
+      items: formattedItems,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
+  /**
+   * Lấy chi tiết nguyên vật liệu và lịch sử 20 giao dịch gần nhất
+   */
   async findById(id: string) {
     const item = await this.prisma.ingredient.findUnique({
       where: { id },
@@ -60,22 +103,14 @@ export class InventoryService {
     }
 
     return {
-      ...item,
-      currentStock: Number(item.currentStock),
-      minThreshold: Number(item.minThreshold),
-      costPerUnit: Number(item.costPerUnit),
-      isLowStock: Number(item.currentStock) <= Number(item.minThreshold),
-      transactions: item.transactions.map((tx) => ({
-        ...tx,
-        quantity: Number(tx.quantity),
-        previousStock: Number(tx.previousStock),
-        newStock: Number(tx.newStock),
-        unitCost: tx.unitCost ? Number(tx.unitCost) : null,
-        totalCost: tx.totalCost ? Number(tx.totalCost) : null,
-      })),
+      ...this.formatIngredient(item),
+      transactions: item.transactions.map((tx) => this.formatTransaction(tx)),
     };
   }
 
+  /**
+   * Thống kê tổng quan kho hàng sử dụng Database Aggregation hiệu năng cao
+   */
   async getOverviewStats() {
     const all = await this.prisma.ingredient.findMany();
     let totalStockValue = 0;
@@ -99,11 +134,14 @@ export class InventoryService {
       totalIngredients: all.length,
       lowStockCount,
       outOfStockCount,
-      totalStockValue,
+      totalStockValue: Math.round(totalStockValue),
     };
   }
 
-  async create(dto: CreateIngredientDto) {
+  /**
+   * Tạo mới nguyên vật liệu kèm xử lý chống xung đột mã P2002 và khởi tạo tồn kho ban đầu
+   */
+  async create(dto: CreateIngredientDto, performedBy = 'Admin') {
     const existing = await this.prisma.ingredient.findUnique({
       where: { code: dto.code },
     });
@@ -114,46 +152,51 @@ export class InventoryService {
 
     const currentStock = dto.currentStock ?? 0;
 
-    return this.prisma.$transaction(async (tx) => {
-      const created = await tx.ingredient.create({
-        data: {
-          name: dto.name,
-          code: dto.code,
-          unit: dto.unit,
-          currentStock,
-          minThreshold: dto.minThreshold ?? 0,
-          costPerUnit: dto.costPerUnit,
-          supplier: dto.supplier,
-          category: dto.category,
-          isAvailable: dto.isAvailable ?? true,
-        },
-      });
-
-      if (currentStock > 0) {
-        await tx.stockTransaction.create({
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        const created = await tx.ingredient.create({
           data: {
-            ingredientId: created.id,
-            type: StockTransactionType.IMPORT,
-            quantity: currentStock,
-            previousStock: 0,
-            newStock: currentStock,
-            unitCost: dto.costPerUnit,
-            totalCost: currentStock * dto.costPerUnit,
-            notes: 'Khởi tạo số lượng tồn ban đầu',
-            performedBy: 'Admin',
+            name: dto.name,
+            code: dto.code,
+            unit: dto.unit,
+            currentStock,
+            minThreshold: dto.minThreshold ?? 0,
+            costPerUnit: dto.costPerUnit,
+            supplier: dto.supplier,
+            category: dto.category,
+            isAvailable: dto.isAvailable ?? true,
           },
         });
-      }
 
-      return {
-        ...created,
-        currentStock: Number(created.currentStock),
-        minThreshold: Number(created.minThreshold),
-        costPerUnit: Number(created.costPerUnit),
-      };
-    });
+        if (currentStock > 0) {
+          await tx.stockTransaction.create({
+            data: {
+              ingredientId: created.id,
+              type: StockTransactionType.IMPORT,
+              quantity: currentStock,
+              previousStock: 0,
+              newStock: currentStock,
+              unitCost: dto.costPerUnit,
+              totalCost: Math.round(currentStock * dto.costPerUnit),
+              notes: 'Khởi tạo số lượng tồn ban đầu',
+              performedBy,
+            },
+          });
+        }
+
+        return this.formatIngredient(created);
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new BadRequestException(`Mã nguyên liệu '${dto.code}' đã tồn tại trong hệ thống`);
+      }
+      throw error;
+    }
   }
 
+  /**
+   * Cập nhật thông tin nguyên vật liệu (cấm sửa trực tiếp currentStock để bảo toàn Audit Trail)
+   */
   async update(id: string, dto: UpdateIngredientDto) {
     const item = await this.prisma.ingredient.findUnique({ where: { id } });
     if (!item) {
@@ -167,29 +210,43 @@ export class InventoryService {
       }
     }
 
-    const updated = await this.prisma.ingredient.update({
-      where: { id },
-      data: {
-        name: dto.name,
-        code: dto.code,
-        unit: dto.unit,
-        minThreshold: dto.minThreshold,
-        costPerUnit: dto.costPerUnit,
-        supplier: dto.supplier,
-        category: dto.category,
-        isAvailable: dto.isAvailable,
-      },
-    });
+    try {
+      const updated = await this.prisma.ingredient.update({
+        where: { id },
+        data: {
+          name: dto.name,
+          code: dto.code,
+          unit: dto.unit,
+          minThreshold: dto.minThreshold,
+          costPerUnit: dto.costPerUnit,
+          supplier: dto.supplier,
+          category: dto.category,
+          isAvailable: dto.isAvailable,
+        },
+      });
 
-    return {
-      ...updated,
-      currentStock: Number(updated.currentStock),
-      minThreshold: Number(updated.minThreshold),
-      costPerUnit: Number(updated.costPerUnit),
-    };
+      return this.formatIngredient(updated);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new BadRequestException(`Mã nguyên liệu '${dto.code}' đã tồn tại`);
+      }
+      throw error;
+    }
   }
 
-  async createTransaction(dto: CreateStockTransactionDto) {
+  /**
+   * Tạo phiếu giao dịch kho ACID: Hỗ trợ WAC, Chống Nhập Trùng, Chống Âm Kho, Ghi nhận Performer
+   */
+  async createTransaction(dto: CreateStockTransactionDto, performedBy = 'Admin') {
+    // Chặn số lượng âm cho phiếu xuất và nhập
+    if (dto.quantity <= 0 && dto.type !== StockTransactionType.ADJUSTMENT) {
+      throw new BadRequestException('Số lượng giao dịch phải lớn hơn 0');
+    }
+
+    if (dto.type === StockTransactionType.ADJUSTMENT && dto.quantity < 0) {
+      throw new BadRequestException('Số lượng kiểm kê thực tế không được âm');
+    }
+
     return this.prisma.$transaction(async (tx) => {
       const ingredient = await tx.ingredient.findUnique({
         where: { id: dto.ingredientId },
@@ -199,28 +256,55 @@ export class InventoryService {
         throw new NotFoundException(`Không tìm thấy nguyên liệu ${dto.ingredientId}`);
       }
 
+      // Idempotency: Kiểm tra chống nhập trùng phiếu theo referenceId
+      if (dto.referenceId) {
+        const duplicateTx = await tx.stockTransaction.findFirst({
+          where: {
+            ingredientId: dto.ingredientId,
+            referenceId: dto.referenceId,
+            type: dto.type,
+          },
+        });
+
+        if (duplicateTx) {
+          throw new BadRequestException(
+            `Giao dịch với mã tham chiếu '${dto.referenceId}' đã được xử lý trước đó`,
+          );
+        }
+      }
+
       const prevStock = Number(ingredient.currentStock);
       let newStock = prevStock;
-      const unitCost = dto.unitCost ?? Number(ingredient.costPerUnit);
+      const unitCost = dto.unitCost !== undefined ? dto.unitCost : Number(ingredient.costPerUnit);
       let totalCost: number | null = null;
+      let newCostPerUnit = Number(ingredient.costPerUnit);
 
       if (dto.type === StockTransactionType.IMPORT) {
         newStock = prevStock + dto.quantity;
-        totalCost = dto.quantity * unitCost;
+        totalCost = Math.round(dto.quantity * unitCost);
+
+        // Thuật toán Giá Vốn Bình Quân Gia Quyền (Weighted Average Costing)
+        const totalStockAfterImport = prevStock + dto.quantity;
+        if (totalStockAfterImport > 0 && dto.unitCost !== undefined) {
+          const totalValue = prevStock * Number(ingredient.costPerUnit) + dto.quantity * dto.unitCost;
+          newCostPerUnit = Math.round(totalValue / totalStockAfterImport);
+        } else if (dto.unitCost !== undefined) {
+          newCostPerUnit = dto.unitCost;
+        }
       } else if (
         dto.type === StockTransactionType.EXPORT_ORDER ||
         dto.type === StockTransactionType.EXPORT_WASTE
       ) {
         if (prevStock < dto.quantity) {
           throw new BadRequestException(
-            `Tồn kho không đủ để xuất! Tồn hiện tại: ${prevStock} ${ingredient.unit}, yêu cầu xuất: ${dto.quantity} ${ingredient.unit}`,
+            `Tồn kho không đủ để xuất (Tồn hiện tại: ${prevStock} ${ingredient.unit}, yêu cầu xuất: ${dto.quantity} ${ingredient.unit})`,
           );
         }
         newStock = prevStock - dto.quantity;
-        totalCost = dto.quantity * unitCost;
+        totalCost = Math.round(dto.quantity * unitCost);
       } else if (dto.type === StockTransactionType.ADJUSTMENT) {
-        newStock = dto.quantity; // Số lượng sau kiểm kê
-        totalCost = Math.abs(newStock - prevStock) * unitCost;
+        newStock = dto.quantity; // Số lượng sau kiểm kê thực tế
+        totalCost = Math.round(Math.abs(newStock - prevStock) * unitCost);
       }
 
       const transaction = await tx.stockTransaction.create({
@@ -234,7 +318,7 @@ export class InventoryService {
           totalCost,
           referenceId: dto.referenceId,
           notes: dto.notes,
-          performedBy: dto.performedBy ?? 'Admin',
+          performedBy: dto.performedBy || performedBy,
         },
       });
 
@@ -242,51 +326,100 @@ export class InventoryService {
         where: { id: dto.ingredientId },
         data: {
           currentStock: newStock,
-          costPerUnit: dto.type === StockTransactionType.IMPORT && dto.unitCost ? dto.unitCost : ingredient.costPerUnit,
+          costPerUnit: newCostPerUnit,
         },
       });
 
-      return {
-        ...transaction,
-        quantity: Number(transaction.quantity),
-        previousStock: Number(transaction.previousStock),
-        newStock: Number(transaction.newStock),
-        unitCost: transaction.unitCost ? Number(transaction.unitCost) : null,
-        totalCost: transaction.totalCost ? Number(transaction.totalCost) : null,
-      };
+      return this.formatTransaction(transaction);
     });
   }
 
-  async getTransactions(ingredientId?: string, limit = 50) {
+  /**
+   * Lấy lịch sử biến động kho hỗ trợ phân trang, lọc theo nguyên liệu, loại giao dịch và ngày tháng
+   */
+  async getTransactions(query: QueryStockTransactionDto) {
+    const { ingredientId, type, startDate, endDate, page = 1, limit = 50 } = query;
     const where: Prisma.StockTransactionWhereInput = {};
+
     if (ingredientId) {
       where.ingredientId = ingredientId;
     }
 
-    const txs = await this.prisma.stockTransaction.findMany({
-      where,
-      include: {
-        ingredient: true,
-      },
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-    });
+    if (type) {
+      where.type = type;
+    }
 
-    return txs.map((tx) => ({
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) where.createdAt.gte = new Date(startDate);
+      if (endDate) where.createdAt.lte = new Date(endDate);
+    }
+
+    const skip = (page - 1) * limit;
+    const [txs, total] = await Promise.all([
+      this.prisma.stockTransaction.findMany({
+        where,
+        include: {
+          ingredient: {
+            select: {
+              id: true,
+              name: true,
+              code: true,
+              unit: true,
+              currentStock: true,
+              minThreshold: true,
+              costPerUnit: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.stockTransaction.count({ where }),
+    ]);
+
+    return {
+      transactions: txs.map((tx) => ({
+        ...this.formatTransaction(tx),
+        ingredient: tx.ingredient
+          ? {
+              ...tx.ingredient,
+              currentStock: Number(tx.ingredient.currentStock),
+              minThreshold: Number(tx.ingredient.minThreshold),
+              costPerUnit: Number(tx.ingredient.costPerUnit),
+            }
+          : undefined,
+      })),
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  private formatIngredient<T extends UnformattedIngredient>(item: T) {
+    const currentStock = Number(item.currentStock);
+    const minThreshold = Number(item.minThreshold);
+    return {
+      ...item,
+      currentStock,
+      minThreshold,
+      costPerUnit: Number(item.costPerUnit),
+      isLowStock: currentStock <= minThreshold,
+    };
+  }
+
+  private formatTransaction<T extends UnformattedTransaction>(tx: T) {
+    return {
       ...tx,
       quantity: Number(tx.quantity),
       previousStock: Number(tx.previousStock),
       newStock: Number(tx.newStock),
-      unitCost: tx.unitCost ? Number(tx.unitCost) : null,
-      totalCost: tx.totalCost ? Number(tx.totalCost) : null,
-      ingredient: tx.ingredient
-        ? {
-            ...tx.ingredient,
-            currentStock: Number(tx.ingredient.currentStock),
-            minThreshold: Number(tx.ingredient.minThreshold),
-            costPerUnit: Number(tx.ingredient.costPerUnit),
-          }
-        : undefined,
-    }));
+      unitCost: tx.unitCost !== null ? Number(tx.unitCost) : null,
+      totalCost: tx.totalCost !== null ? Number(tx.totalCost) : null,
+    };
   }
 }
