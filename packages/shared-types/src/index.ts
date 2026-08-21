@@ -10,3 +10,5 @@ export * from './family';
 export * from './schemas/order.schema';
 export * from './schemas/auth.schema';
 export * from './schemas/menu.schema';
+export * from './schemas/user.schema';
+

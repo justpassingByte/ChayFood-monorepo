@@ -4,8 +4,21 @@ import type {
   RegisterInput,
   UpdateProfileInput,
 } from './schemas/auth.schema';
+import type {
+  AddressInput,
+  UserPreferenceInput,
+  ChangePasswordInput,
+} from './schemas/user.schema';
 
-export type { Role, LoginInput, RegisterInput, UpdateProfileInput };
+export type {
+  Role,
+  LoginInput,
+  RegisterInput,
+  UpdateProfileInput,
+  AddressInput,
+  UserPreferenceInput,
+  ChangePasswordInput,
+};
 
 export interface UserProfile {
   id: string;
@@ -30,3 +43,7 @@ export interface AuthResponse {
 export type LoginDto = LoginInput;
 export type RegisterDto = RegisterInput;
 export type UpdateProfileDto = UpdateProfileInput;
+export type AddressDto = AddressInput;
+export type UserPreferenceDto = UserPreferenceInput;
+export type ChangePasswordDto = ChangePasswordInput;
+
