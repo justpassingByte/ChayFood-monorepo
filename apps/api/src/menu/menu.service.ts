@@ -4,6 +4,13 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateMenuItemDto, QueryMenuDto, UpdateMenuItemDto } from './dto/menu.dto';
 import { MenuCategory } from '@chayfood/db';
 
+type UnformattedMenuItem = {
+  price: Prisma.Decimal | number;
+  protein: Prisma.Decimal | number;
+  carbs: Prisma.Decimal | number;
+  fat: Prisma.Decimal | number;
+};
+
 @Injectable()
 export class MenuService {
   constructor(private prisma: PrismaService) {}
@@ -13,9 +20,11 @@ export class MenuService {
 
     const where: Prisma.MenuItemWhereInput = { isAvailable: true };
 
+    // Kiểm tra danh mục an toàn chống Prototype Property Pollution
     if (category) {
       const upper = category.toUpperCase();
-      if (upper in MenuCategory) {
+      const validCategories = Object.values(MenuCategory) as string[];
+      if (validCategories.includes(upper)) {
         where.category = upper as MenuCategory;
       }
     }
@@ -43,6 +52,7 @@ export class MenuService {
     const [items, total] = await Promise.all([
       this.prisma.menuItem.findMany({
         where,
+        include: { tag: true },
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
@@ -51,13 +61,7 @@ export class MenuService {
     ]);
 
     return {
-      items: items.map((item) => ({
-        ...item,
-        price: Number(item.price),
-        protein: Number(item.protein),
-        carbs: Number(item.carbs),
-        fat: Number(item.fat),
-      })),
+      items: items.map((item) => this.formatMenuItem(item)),
       pagination: {
         total,
         page,
@@ -74,16 +78,10 @@ export class MenuService {
     });
 
     if (!item) {
-      throw new NotFoundException('Không tìm thấy món ăn này.');
+      throw new NotFoundException('Không tìm thấy món ăn này');
     }
 
-    return {
-      ...item,
-      price: Number(item.price),
-      protein: Number(item.protein),
-      carbs: Number(item.carbs),
-      fat: Number(item.fat),
-    };
+    return this.formatMenuItem(item);
   }
 
   async create(dto: CreateMenuItemDto) {
@@ -103,13 +101,10 @@ export class MenuService {
         ingredients: dto.ingredients || [],
         allergens: dto.allergens || [],
       },
+      include: { tag: true },
     });
 
-    return {
-      ...item,
-      price: Number(item.price),
-      protein: Number(item.protein),
-    };
+    return this.formatMenuItem(item);
   }
 
   async update(id: string, dto: UpdateMenuItemDto) {
@@ -118,18 +113,29 @@ export class MenuService {
     const updated = await this.prisma.menuItem.update({
       where: { id },
       data: dto,
+      include: { tag: true },
     });
 
-    return {
-      ...updated,
-      price: Number(updated.price),
-      protein: Number(updated.protein),
-    };
+    return this.formatMenuItem(updated);
   }
 
   async remove(id: string) {
     await this.findById(id);
-    await this.prisma.menuItem.delete({ where: { id } });
-    return { message: 'Đã xóa món ăn thành công' };
+    // Soft Deactivation: Ngừng phục vụ món ăn để bảo toàn lịch sử các đơn hàng cũ (Cascade Safety)
+    await this.prisma.menuItem.update({
+      where: { id },
+      data: { isAvailable: false },
+    });
+    return { message: 'Đã ngừng phục vụ món ăn thành công' };
+  }
+
+  private formatMenuItem<T extends UnformattedMenuItem>(item: T) {
+    return {
+      ...item,
+      price: Number(item.price),
+      protein: Number(item.protein),
+      carbs: Number(item.carbs),
+      fat: Number(item.fat),
+    };
   }
 }
