@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
@@ -7,6 +7,9 @@ import { MenuModule } from './menu/menu.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { RecipesModule } from './recipes/recipes.module';
 import { FamilyModule } from './family/family.module';
+import { OrdersModule } from './orders/orders.module';
+import { PaymentModule } from './payment/payment.module';
+import { HttpLoggerMiddleware } from './common/logger/http-logger.middleware';
 
 @Module({
   imports: [
@@ -21,6 +24,12 @@ import { FamilyModule } from './family/family.module';
     InventoryModule,
     RecipesModule,
     FamilyModule,
+    OrdersModule,
+    PaymentModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(HttpLoggerMiddleware).forRoutes('{*path}');
+  }
+}
