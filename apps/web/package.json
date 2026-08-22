@@ -9,8 +9,6 @@
     "lint": "tsc --noEmit",
     "type-check": "tsc --noEmit",
     "test": "vitest run --passWithNoTests"
-
-
   },
   "dependencies": {
     "@chayfood/shared-types": "workspace:*",

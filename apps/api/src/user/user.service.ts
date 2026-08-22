@@ -5,6 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
+import { Prisma, Role } from '@chayfood/db';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   UpdateUserProfileDto,
@@ -213,5 +214,141 @@ export class UserService {
     });
 
     return { status: 'success', message: 'Đổi mật khẩu thành công' };
+  }
+
+  /**
+   * 🛡️ Lấy danh sách khách hàng có phân trang an toàn, tìm kiếm không phân biệt hoa thường.
+   * Ràng buộc bounds cho page và limit để chống tấn công cạn kiệt tài nguyên (Resource Exhaustion).
+   */
+  async getCustomers(page: number = 1, limit: number = 10, search: string = '') {
+    const safePage = Math.max(1, page);
+    const safeLimit = Math.min(100, Math.max(1, limit));
+    const skip = (safePage - 1) * safeLimit;
+
+    const trimmedSearch = search.trim();
+    const where: Prisma.UserWhereInput = trimmedSearch
+      ? {
+          OR: [
+            { name: { contains: trimmedSearch, mode: 'insensitive' } },
+            { email: { contains: trimmedSearch, mode: 'insensitive' } },
+            { phone: { contains: trimmedSearch, mode: 'insensitive' } },
+          ],
+        }
+      : {};
+
+    const [totalCount, users] = await Promise.all([
+      this.prisma.user.count({ where }),
+      this.prisma.user.findMany({
+        where,
+        skip,
+        take: safeLimit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          orders: {
+            select: {
+              id: true,
+              totalAmount: true,
+              status: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    const formattedCustomers = users.map((u) => {
+      const totalOrders = u.orders.length;
+      const totalSpent = u.orders.reduce((sum, o) => sum + Number(o.totalAmount || 0), 0);
+      return {
+        _id: u.id,
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        phone: u.phone || '',
+        role: u.role,
+        joinDate: u.createdAt.toISOString(),
+        createdAt: u.createdAt.toISOString(),
+        totalOrders,
+        totalSpent,
+      };
+    });
+
+    return {
+      status: 'success',
+      data: {
+        customers: formattedCustomers,
+        pagination: {
+          currentPage: safePage,
+          totalPages: Math.ceil(totalCount / safeLimit) || 1,
+          totalCount,
+        },
+      },
+    };
+  }
+
+  async getCustomerById(customerId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: customerId },
+      include: {
+        preference: true,
+        orders: {
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+        },
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Không tìm thấy khách hàng');
+    }
+
+    const totalOrders = user.orders.length;
+    const totalSpent = user.orders.reduce((sum, o) => sum + Number(o.totalAmount || 0), 0);
+
+    return {
+      status: 'success',
+      data: {
+        customer: {
+          _id: user.id,
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone || '',
+          role: user.role,
+          joinDate: user.createdAt.toISOString(),
+          createdAt: user.createdAt.toISOString(),
+          totalOrders,
+          totalSpent,
+          address: user.address ? { street: user.address, city: 'Hồ Chí Minh' } : undefined,
+          orders: user.orders,
+        },
+      },
+    };
+  }
+
+  /**
+   * 🛡️ Xóa khách hàng với chốt chặn an toàn:
+   * Tuyệt đối không cho phép xóa tài khoản có role ADMIN để chống khóa tài khoản ngoài ý muốn.
+   */
+  async deleteCustomer(customerId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: customerId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Không tìm thấy khách hàng để xóa');
+    }
+
+    if (user.role === Role.ADMIN) {
+      throw new BadRequestException('Không thể xóa tài khoản Quản trị viên (ADMIN)');
+    }
+
+    await this.prisma.user.delete({
+      where: { id: customerId },
+    });
+
+    return {
+      status: 'success',
+      message: 'Đã xóa khách hàng thành công',
+    };
   }
 }
