@@ -40,3 +40,8 @@ Thumbs.db
 postgres_data/
 *.sqlite
 *.sqlite-journal
+
+# Temporary & Local Scratch
+scratch/
+.serena/
+
