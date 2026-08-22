@@ -69,7 +69,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 export class JwtAuthGuard extends AuthGuard('jwt') {}
 
 @Injectable()
+export class OptionalJwtAuthGuard extends AuthGuard('jwt') {
+  handleRequest<TUser = AuthenticatedUser>(_err: unknown, user: TUser): TUser {
+    return user;
+  }
+}
+
+@Injectable()
 export class RolesGuard implements CanActivate {
+
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
