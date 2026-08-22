@@ -472,12 +472,13 @@ export const menuService = {
   
   // Update menu item (admin only)
   update: async (id: string, menuItem: Partial<MenuItem>) => {
-    const response = await api.put(`/menu/${id}`, menuItem);
+    const response = await api.patch(`/menu/${id}`, menuItem);
     return {
       data: response.data.data || response.data,
       status: response.status
     };
   },
+
   
   // Delete menu item (admin only)
   delete: async (id: string) => {

@@ -10,8 +10,10 @@ import {
 } from '@stripe/react-stripe-js';
 import { getStripe } from '../../lib/stripe';
 import { paymentService } from '../../services/paymentService';
+import api from '@/lib/services/apiClient';
 import { Button } from '../ui/button';
 import { toast } from 'react-hot-toast';
+
 
 interface StripePaymentFormProps {
   orderId: string;
@@ -69,48 +71,41 @@ const CardForm = ({ orderId, amount, onSuccess, onCancel }: StripePaymentFormPro
 
       if (result.error) {
         // Show error to customer
-        setErrorMessage(result.error.message || 'Payment failed');
-        toast.error(result.error.message || 'Payment failed');
+        const msg = result.error.message || 'Thanh toán không thành công';
+        setErrorMessage(msg);
+        toast.error(msg);
       } else if (result.paymentIntent.status === 'succeeded') {
-        // Payment succeeded, confirm on server
-        const confirmResponse = await fetch(`/api/payment/confirm/${orderId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            paymentIntentId: result.paymentIntent.id,
-          }),
+        // 🌟 Xác nhận thanh toán qua API Client với token tự động
+        const confirmResponse = await api.post(`/payment/confirm/${orderId}`, {
+          paymentIntentId: result.paymentIntent.id,
         });
 
-        if (confirmResponse.ok) {
-          toast.success('Payment successful!');
+        if (confirmResponse.status === 200 || confirmResponse.data) {
+          toast.success('Thanh toán đơn hàng thành công');
           
-          // Call onSuccess callback if provided
           if (onSuccess) {
             onSuccess();
           } else {
-            // Navigate to success page
             router.push(`/order/success?orderId=${orderId}`);
           }
         } else {
-          // Server couldn't confirm the payment
-          setErrorMessage('Payment confirmed, but order could not be updated.');
-          toast.error('Payment confirmed, but order could not be updated.');
+          setErrorMessage('Đã thanh toán nhưng chưa cập nhật được trạng thái đơn hàng');
+          toast.error('Đã thanh toán nhưng chưa cập nhật được trạng thái đơn hàng');
         }
       }
     } catch (error: unknown) {
       if (error instanceof Error) {
-        setErrorMessage(error.message || 'An unexpected error occurred');
-        toast.error(error.message || 'An unexpected error occurred');
+        setErrorMessage(error.message || 'Đã có lỗi xảy ra khi xử lý thanh toán');
+        toast.error(error.message || 'Đã có lỗi xảy ra khi xử lý thanh toán');
       } else {
-        setErrorMessage('An unexpected error occurred');
-        toast.error('An unexpected error occurred');
+        setErrorMessage('Đã có lỗi xảy ra khi xử lý thanh toán');
+        toast.error('Đã có lỗi xảy ra khi xử lý thanh toán');
       }
     } finally {
       setIsLoading(false);
     }
   };
+
 
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-md mx-auto space-y-6">

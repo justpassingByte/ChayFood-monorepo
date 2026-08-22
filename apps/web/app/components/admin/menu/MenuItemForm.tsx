@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import api from '@/lib/services/apiClient';
+import { menuService } from '@/lib/services/menuService';
 import Image from 'next/image';
+
 
 type NutritionInfo = {
   calories: number;
@@ -103,21 +105,24 @@ export default function MenuItemForm({ menuItemId, mode }: MenuItemFormProps) {
       setIsSubmitting(true);
       setError(null);
       
+      // 🌟 Centralized Service Call:
+      // - Chuyển sang dùng menuService để đồng bộ endpoint /menu và phương thức PATCH chuẩn NestJS
       if (mode === 'create') {
-        await api.post('/admin/menu-items', data);
-      } else {
-        await api.put(`/admin/menu-items/${menuItemId}`, data);
+        await menuService.create(data as unknown as Omit<import('@/lib/services/types').MenuItem, '_id'>);
+      } else if (menuItemId) {
+        await menuService.update(menuItemId, data as unknown as Partial<import('@/lib/services/types').MenuItem>);
       }
       
       // Redirect after successful submission
       router.push('/admin/menu');
     } catch (err) {
       console.error('Error submitting form:', err);
-      setError((err as Error).message || 'Failed to save menu item. Please try again.');
+      setError((err as Error).message || 'Không thể lưu món ăn. Vui lòng thử lại');
     } finally {
       setIsSubmitting(false);
     }
   };
+
 
   const handleAddIngredient = () => {
     if (ingredientInput.trim()) {
