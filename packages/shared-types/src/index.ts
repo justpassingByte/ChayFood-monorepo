@@ -12,4 +12,5 @@ export * from './schemas/auth.schema';
 export * from './schemas/menu.schema';
 export * from './schemas/user.schema';
 export * from './schemas/recipe.schema';
+export * from './schemas/family.schema';
 
