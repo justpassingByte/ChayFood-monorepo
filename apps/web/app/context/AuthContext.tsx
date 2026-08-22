@@ -3,9 +3,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authService } from '../lib/services';
 import Cookies from 'js-cookie';
-import { getSafeRedirectUrl } from '../lib/auth/safeRedirect';
-
-export { getSafeRedirectUrl };
 
 interface User {
   _id: string;
@@ -77,9 +74,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        // Xác thực token với API (Giới hạn timeout 4000ms để chống treo luồng nhưng đủ kiên nhẫn với mạng 3G/4G)
+        // Verify token with API with timeout
         const timeoutPromise = new Promise<{ user?: User; isAuthenticated?: boolean }>((_, reject) =>
-          setTimeout(() => reject(new Error('Auth check timeout')), 4000)
+          setTimeout(() => reject(new Error('Auth check timeout')), 2000)
         );
 
         const response = await Promise.race([
@@ -113,25 +110,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             localStorage.removeItem('authToken');
           }
         } else {
-          // Token bị từ chối rõ ràng bởi máy chủ (401 / Invalid) -> Xóa phiên đăng nhập
           setUser(null);
           updateCookies(null, null);
           localStorage.removeItem('authToken');
         }
-      } catch (error) {
-        /**
-         * Graceful Network Fallback: Khi xảy ra lỗi mạng chập chờn hoặc timeout kết nối,
-         * tuyệt đối KHÔNG tự ý xóa token của khách hàng. Duy trì trạng thái đăng nhập từ
-         * bộ nhớ đệm (localStorage) để đảm bảo trải nghiệm người dùng không bị gián đoạn.
-         */
+      } catch {
+        // In case API is unreachable, keep cached user if present or clear
         const cachedUser = localStorage.getItem('currentUser');
-        if (cachedUser) {
-          try {
-            setUser(JSON.parse(cachedUser));
-          } catch {
-            // Không parse được cache
-          }
-        } else {
+        if (!cachedUser) {
           setUser(null);
           updateCookies(null, null);
         }

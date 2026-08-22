@@ -92,9 +92,9 @@ export default function Navbar() {
 
           {/* Right Action Icons & Auth */}
           <div className="flex items-center gap-2.5 shrink-0">
-            {/* Swagger API Quick Link */}
+            {/* 🌟 Dynamic Swagger Docs URL: Tự động trỏ đúng cổng của API (4000/5000/Prod) thay vì hardcode */}
             <a
-              href="http://localhost:5000/api/docs"
+              href={`${(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api').replace(/\/api$/, '')}/api/docs`}
               target="_blank"
               rel="noreferrer"
               className="hidden xl:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-bold bg-teal-50 text-teal-800 border border-teal-200 hover:bg-teal-100 transition-colors"
@@ -103,6 +103,8 @@ export default function Navbar() {
               <BookOpen className="w-3.5 h-3.5 text-teal-600" />
               API Docs
             </a>
+
+
 
             {/* Cart Button */}
             <Link

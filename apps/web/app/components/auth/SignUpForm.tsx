@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { authService } from '../../lib/services'
+import { useAuth } from '../../context/AuthContext'
 import { User, Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import axios from 'axios'
@@ -21,6 +22,7 @@ type FormData = {
 }
 
 export default function SignUpForm({ onSuccess, onSignInClick }: SignUpFormProps) {
+  const { login } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -61,11 +63,22 @@ export default function SignUpForm({ onSuccess, onSignInClick }: SignUpFormProps
 
       if (response.user) {
         toast.success('Đăng ký tài khoản thành công')
+
+        // 🌟 Seamless Auth Hydration & Auto-Login:
+        // - Tự động thiết lập phiên đăng nhập vào AuthContext và Cookies ngay sau khi tạo tài khoản
+        // - Người dùng ngay lập tức thấy avatar và tên trên Navbar mà không cần mở lại form đăng nhập
+        try {
+          await login(data.email, data.password)
+        } catch {
+          // Fallback nếu server yêu cầu kích hoạt email trước
+        }
         onSuccess()
       } else {
+
         toast.success('Đăng ký thành công, vui lòng đăng nhập')
         if (onSignInClick) onSignInClick()
       }
+
     } catch (err: unknown) {
       if (axios.isAxiosError(err) && err.response?.data?.message) {
         setError(err.response.data.message)

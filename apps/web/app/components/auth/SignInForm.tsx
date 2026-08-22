@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useAuth } from '../../context/AuthContext'
+import { getSafeRedirectUrl } from '../../lib/auth/safeRedirect'
 import { useRouter } from 'next/navigation'
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
@@ -41,10 +42,16 @@ export default function SignInForm({ onSuccess }: SignInFormProps) {
       if (user) {
         toast.success(`Chào mừng ${user.name || 'bạn'} trở lại`)
         if (onSuccess) onSuccess()
-        const redirectPath = localStorage.getItem('redirectAfterAuth') || '/'
+
+        // 🛡️ Safe Redirect Defense (CWE-601):
+        // - Làm sạch URL chuyển hướng lưu trong localStorage để chống hacker chèn domain phishing
+        // - Chỉ cho phép Relative Path hợp lệ (/ hoặc /account...) và phân quyền theo user.role
+        const rawRedirect = localStorage.getItem('redirectAfterAuth')
         localStorage.removeItem('redirectAfterAuth')
-        router.push(redirectPath)
+        const safeRedirect = getSafeRedirectUrl(rawRedirect, user.role)
+        router.push(safeRedirect)
       } else {
+
         setError('Email hoặc mật khẩu không chính xác')
       }
     } catch {
@@ -53,6 +60,7 @@ export default function SignInForm({ onSuccess }: SignInFormProps) {
       setIsLoading(false)
     }
   }
+
 
   const handleOAuthLogin = (provider: string) => {
     setError('')

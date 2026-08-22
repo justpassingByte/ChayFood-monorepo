@@ -47,22 +47,34 @@ export function ChatAgent() {
   const [isOpen, setIsOpen] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
+  // 🌟 Smart Bottom-Clamping Auto-Scroll:
+  // - Chỉ tự động cuộn xuống đáy khi người dùng đang ở gần đáy hoặc khi có phản hồi mới từ AI
+  // - Tránh giật màn hình (Scroll Jitter) khi người dùng đang chủ động cuộn lên trên đọc lại lời khuyên cũ
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+      const { scrollTop, scrollHeight, clientHeight } = scrollRef.current
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 150
+      if (isNearBottom || isLoading) {
+        scrollRef.current.scrollTo({ top: scrollHeight, behavior: 'smooth' })
+      }
     }
   }, [chatState.messages, isLoading])
 
+  // 🛡️ Input Bounds & Token Protection:
+  // - Cắt tỉa và giới hạn tối đa 500 ký tự để chống quá tải payload và cạn kiệt token LLM
   const sendQuery = async (queryText: string) => {
-    if (!queryText.trim() || isLoading) return
+    const sanitizedText = queryText.trim().slice(0, 500)
+    if (!sanitizedText || isLoading) return
 
-    const userMessage: Message = { role: 'user', content: queryText }
+
+    const userMessage: Message = { role: 'user', content: sanitizedText }
     setChatState(prev => ({
       ...prev,
       messages: [...prev.messages, userMessage]
     }))
     setInput('')
     setIsLoading(true)
+
 
     try {
       const { data } = await api.post('/chat', {
@@ -326,6 +338,7 @@ export function ChatAgent() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Hỏi về Calo, Protein thực vật, dị ứng..."
+                maxLength={500}
                 disabled={isLoading}
                 className="flex-1 rounded-2xl border-slate-200 bg-slate-50 text-xs focus:bg-white focus-visible:ring-emerald-600"
               />
@@ -337,6 +350,7 @@ export function ChatAgent() {
                 <Send className="h-4 w-4" />
               </button>
             </form>
+
           </motion.div>
         )}
       </AnimatePresence>

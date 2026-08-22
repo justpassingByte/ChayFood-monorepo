@@ -4,23 +4,24 @@ import Image from 'next/image'
 const initiatives = [
   {
     id: 1,
-    title: "Sustainable Packaging",
-    description: "We use eco-friendly packaging materials that are biodegradable and recyclable.",
+    title: "Bao Bì Sinh Học Thân Thiện",
+    description: "Sử dụng hộp bã mía và túi tự hủy sinh học, giảm thiểu tối đa rác thải nhựa ra môi trường.",
     icon: "/icons/leaf.svg"
   },
   {
     id: 2,
-    title: "Carbon Footprint",
-    description: "We actively work to reduce our carbon footprint through efficient delivery routes.",
+    title: "Tối Ưu Vết Carbon Giao Vận",
+    description: "Quy hoạch lộ trình giao cơm thông minh theo tuyến cụm, tiết kiệm nhiên liệu và giảm phát thải.",
     icon: "/icons/globe.svg"
   },
   {
     id: 3,
-    title: "Zero Waste",
-    description: "Our meal planning system helps minimize food waste in our operations.",
+    title: "Giảm Thiểu Thất Thoát Thực Phẩm",
+    description: "Định lượng nguyên liệu chính xác theo từng đơn hàng với thuật toán BOM, bảo tồn nông sản.",
     icon: "/icons/sparkles.svg"
   }
 ]
+
 
 export default function Environmental() {
   return (

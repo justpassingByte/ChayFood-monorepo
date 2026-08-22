@@ -76,10 +76,19 @@ export function MenuItemCard(props: MenuItemCardProps) {
   const protein = Number(itemData.protein ?? itemData.nutritionInfo?.protein ?? 16)
   const carbs = Number(itemData.carbs ?? itemData.nutritionInfo?.carbs ?? 60)
   const fat = Number(itemData.fat ?? itemData.nutritionInfo?.fat ?? 10)
-  const totalMacro = (protein + carbs + fat) || 1
-  const proteinPct = Math.round((protein / totalMacro) * 100)
-  const carbsPct = Math.round((carbs / totalMacro) * 100)
-  const fatPct = Math.round((fat / totalMacro) * 100)
+  
+  // 🌟 Chuẩn Hóa Tỷ Lệ Macro Theo Năng Lượng Thực Tế (Clinical 4-4-9 Standard):
+  // - 1g Protein = 4 kcal, 1g Carbs = 4 kcal, 1g Fat = 9 kcal
+  // - Tránh chia theo trọng lượng gam thô làm méo mó tỷ lệ đóng góp năng lượng của chất béo
+  const proteinKcal = protein * 4
+  const carbsKcal = carbs * 4
+  const fatKcal = fat * 9
+  const totalKcal = (proteinKcal + carbsKcal + fatKcal) || 1
+  const proteinPct = Math.round((proteinKcal / totalKcal) * 100)
+  const carbsPct = Math.round((carbsKcal / totalKcal) * 100)
+  const fatPct = Math.round((fatKcal / totalKcal) * 100)
+
+
 
   const { addToCartWithMessage, isItemInCart, getItemQuantity } = useCart()
   const { isAuthenticated } = useAuth()

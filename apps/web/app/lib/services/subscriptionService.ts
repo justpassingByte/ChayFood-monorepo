@@ -1,19 +1,16 @@
 import api from './apiClient';
-import type { PaymentMethod, PaymentStatus, DeliveryAddressInput } from '@chayfood/shared-types';
 
 export interface Plan {
   id: string;
   name: string;
-  code?: string;
   description: string;
   price: number;
   duration: number; // số ngày
   mealsPerDay: number;
-  snacksPerDay?: number;
   isActive: boolean;
   features?: string[];
   tag?: string;
-  isRecommended?: boolean;
+  recommended?: boolean;
 }
 
 export interface UserSubscription {
@@ -22,28 +19,38 @@ export interface UserSubscription {
   planId: string;
   startDate: string;
   endDate: string;
-  deliveryAddress: DeliveryAddressInput;
-  paymentMethod: PaymentMethod;
-  paymentStatus: PaymentStatus;
+  deliveryAddress: {
+    street: string;
+    city: string;
+    phone?: string;
+    additionalInfo?: string;
+  };
+  paymentMethod: string;
+  paymentStatus: string;
   totalAmount: number;
   isActive: boolean;
-  pausedAt?: string | null;
   specialInstructions?: string | null;
-  selectedMenuItems?: string[] | Record<string, string[]> | null;
   plan: Plan;
   createdAt: string;
-  updatedAt?: string;
 }
 
 export interface CreateSubscriptionPayload {
   planId: string;
   startDate: string;
-  deliveryAddress: DeliveryAddressInput;
-  paymentMethod: PaymentMethod;
+  deliveryAddress: {
+    street: string;
+    city: string;
+    phone?: string;
+    additionalInfo?: string;
+  };
+  paymentMethod: string;
   specialInstructions?: string;
-  selectedMenuItems?: string[] | Record<string, string[]>;
+  selectedMenuItems?: Array<{
+    day: number;
+    mealTime: string;
+    menuItemId: string;
+  }>;
 }
-
 
 export const planService = {
   // Lấy tất cả gói ăn
@@ -74,7 +81,7 @@ export const subscriptionService = {
 
   // Tạm dừng / Kích hoạt lại gói ăn
   toggle: async (id: string): Promise<UserSubscription> => {
-    const response = await api.patch(`/subscriptions/${id}/toggle`);
+    const response = await api.post(`/subscriptions/${id}/toggle`);
     return response.data.data || response.data;
   },
-};
+};
