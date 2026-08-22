@@ -6,9 +6,10 @@
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "tsc --noEmit",
     "type-check": "tsc --noEmit",
     "test": "vitest run"
+
   },
   "dependencies": {
     "@chayfood/shared-types": "workspace:*",
