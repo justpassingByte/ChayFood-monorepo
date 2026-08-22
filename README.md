@@ -14,16 +14,46 @@
 </p>
 
 <p align="center">
-  <strong>Giải pháp mâm cơm gia đình đa thế hệ</strong> • <strong>Định lượng dinh dưỡng lâm sàng cá nhân hóa</strong> • <strong>Trí tuệ nhân tạo lắng nghe thực khách</strong> • <strong>Quản trị định mức giá vốn nguyên liệu</strong>
+  <strong>Giải pháp mâm cơm gia đình đa thế hệ</strong> • <strong>Định lượng dinh dưỡng lâm sàng cá nhân hóa</strong> • <strong>AI phân tích cảm xúc & gợi ý cho bếp</strong> • <strong>Định mức giá vốn nguyên liệu (BOM)</strong>
 </p>
 
 </div>
 
 ---
 
-## 🌟 1. Tổng Quan Nền Tảng (Platform Overview)
+## 📸 Bộ Ảnh Giao Diện Thực Tế (Visual Showcase & User Flows)
 
-**ChayFood** là nền tảng ẩm thực thuần thực vật thế hệ mới, kết hợp hài hòa giữa nét tinh tế của ẩm thực truyền thống Việt Nam và khoa học dinh dưỡng lâm sàng hiện đại. Hệ thống giải quyết trọn vẹn bài toán chăm sóc sức khỏe cho **mâm cơm gia đình đa thế hệ** — nơi mỗi thành viên đều có thể trạng và nhu cầu dinh dưỡng riêng biệt.
+### 1. 🌐 Trải Nghiệm Thực Đơn & Dinh Dưỡng Khách Hàng
+
+| Thực Đơn Đa Chế Độ (Dual-View Matrix) | Chi Tiết Món Ăn & Dược Tính Thảo Mộc |
+|:---:|:---:|
+| <img width="100%" alt="Menu Matrix" src="https://github.com/user-attachments/assets/fc3d7b2c-bd85-4d95-8c84-723f42966699" /> | <img width="100%" alt="Dish Details" src="https://github.com/user-attachments/assets/213197fc-51da-48f4-bb8e-11ff734556ae" /> |
+
+| Giỏ Hàng & Macro Toàn Bữa (4-4-9 Standard) | Hồ Sơ Sức Khỏe & Chỉ Số Sinh Học Cá Nhân |
+|:---:|:---:|
+| <img width="100%" alt="Cart Drawer" src="https://github.com/user-attachments/assets/d26a2620-2a94-400c-b31d-d53a61e9c789" /> | <img width="100%" alt="Health Biomarkers" src="https://github.com/user-attachments/assets/63fe4b2e-cfa3-4ad8-a299-db82b562f332" /> |
+
+| Tiến Trình Theo Dõi Đơn Hàng (Live Stepper) | Thuê Bao Gói Ăn Chay Định Kỳ (Subscriptions) |
+|:---:|:---:|
+| <img width="100%" alt="Order Tracking" src="https://github.com/user-attachments/assets/0a144016-8f43-4219-969a-cd6af5ca2e66" /> | <img width="100%" alt="Subscriptions" src="https://github.com/user-attachments/assets/4bfb06ab-8ada-4b35-8a3b-25f464ba22d8" /> |
+
+---
+
+### 2. 👑 Cổng Quản Trị Vận Hành & Giá Vốn (Admin Operations Portal)
+
+| Bảng Điều Khiển Quản Trị & Biểu Đồ Recharts BI | Quản Lý Định Mức BOM & Kho Bãi Nguyên Liệu |
+|:---:|:---:|
+| <img width="100%" alt="Admin Dashboard" src="https://github.com/user-attachments/assets/d8d82d62-b191-4590-8648-842b37b0a006" /> | <img width="100%" alt="Recipe BOM Costing" src="https://github.com/user-attachments/assets/930c06fc-3b63-471b-8af9-b415a8bf5a03" /> |
+
+| Quản Lý Thực Đơn & Tạo Món 2 Cột | Danh Mục Khách Hàng & Slide-over Drawer |
+|:---:|:---:|
+| <img width="100%" alt="Menu Admin" src="https://github.com/user-attachments/assets/0d05aeba-aa30-450a-ab29-cb3dcc4ed02f" /> | <img width="100%" alt="Customer Hub" src="https://github.com/user-attachments/assets/f8186398-2d3d-40ff-b137-90abe013f4e2" /> |
+
+---
+
+## 🌟 1. Tổng Quan Nền Tảng & Các Tính Năng Đột Phá (Platform Highlights)
+
+**ChayFood** là nền tảng ẩm thực thuần thực vật thế hệ mới, tiên phong kết hợp giữa nghệ thuật ẩm thực truyền thống Việt Nam và khoa học dinh dưỡng lâm sàng. Hệ thống giải quyết trọn vẹn bài toán dinh dưỡng cho **mâm cơm gia đình đa thế hệ** — nơi mỗi thành viên đều có thể trạng và kiêng kị dị ứng riêng biệt.
 
 ```
        👨‍👩‍👧‍👦 MÂM CƠM GIA ĐÌNH ĐA THẾ HỆ CHAYFOOD
@@ -36,76 +66,76 @@
 
 ---
 
-### 🏆 Các Trụ Cột Năng Lực Trọng Tâm:
+### 🏆 Danh Mục Năng Lực Trọng Tâm Của Hệ Thống:
 
-#### 1. 👨‍👩‍👧‍👦 Dinh Dưỡng Mâm Cơm Gia Đình & Kiểm Soát Dị Ứng Đa Thế Hệ
-- **Cân đối thể trạng từng thành viên**: Tự động xác định nhu cầu năng lượng (BMR/TDEE) theo công thức Mifflin-St Jeor cho từng người trong nhà
-- **Kiểm soát dị ứng 2 chiều**: Tự động nhận diện và loại trừ các món có chứa thành phần kiêng kị của bất kỳ thành viên nào trong bữa ăn
-- **Phân bổ khẩu phần linh hoạt**: Cho phép chỉ định từng món ăn cho từng người thân ngay khi chọn món
+#### 1. 👨‍👩‍👧‍👦 Động Cơ Dinh Dưỡng Mâm Cơm Gia Đình & Kiểm Toán Dị Ứng Chéo (Family Nutrition Engine)
+- **Cá nhân hóa theo từng thành viên**: Tự động tính toán nhu cầu năng lượng (BMR/TDEE) theo công thức Mifflin-St Jeor cho từng người trong gia đình.
+- **Kiểm toán dị ứng chéo (Cross-Allergy Audit)**: Thuật toán quét toàn bộ thực đơn theo thời gian thực, loại bỏ các món chứa nguyên liệu kích ứng của bất kỳ thành viên nào trong mâm cơm.
+- **Gán khẩu phần riêng biệt**: Cho phép gán từng món ăn cho từng người cụ thể (Bản thân, Cha mẹ, Con cái) ngay trong giỏ hàng.
 
-#### 2. 🧠 AI Lắng Nghe Cảm Nhận Thực Khách & Đề Xuất Cải Tiến Bếp Trưởng
-- **Thấu hiểu phản hồi đa chiều**: Trí tuệ nhân tạo tự động đọc hiểu và phân tích cảm xúc từ bài đánh giá (độ đậm đà, vị ngọt thanh tự nhiên, cảm giác nhẹ bụng sau ăn)
-- **Khuyến nghị thiết thực cho bếp trưởng**: Tự động tổng hợp insight gửi về bộ phận bếp (ví dụ: tinh chỉnh lượng gia vị thảo mộc cho người cao tuổi hoặc bổ sung thêm đạm thực vật cho người tập luyện)
-- **Vòng lặp nâng chuẩn ẩm thực khép kín**: Kết nối trực tiếp giữa trải nghiệm thực tế tại bàn ăn và quy trình sáng tạo món của đội ngũ đầu bếp
+#### 2. 🧠 AI Phân Tích Cảm Xúc Thực Khách & Gợi Ý Cho Bếp Trưởng (AI Sentiment & Kitchen Insights Engine)
+- **Phân tích cảm xúc bình luận đa chiều**: AI tự động đọc hiểu và phân tích sắc thái cảm xúc trong từng bài đánh giá của thực khách (độ đậm đà, vị ngọt tự nhiên của rau củ, độ giòn của nấm, cảm giác nhẹ bụng sau ăn).
+- **Gợi ý cải tiến công thức cho bếp**: Tự động tổng hợp phản hồi thành các khuyến nghị thiết thực gửi trực tiếp về Cổng Bếp Trưởng (ví dụ: tinh chỉnh lượng gia vị thảo mộc cho nhóm khách cao tuổi hoặc tăng tỷ lệ hạt họ đậu cho nhóm tập gym).
+- **Vòng lặp phản hồi ẩm thực khép kín**: Kết nối liền mạch giữa cảm nhận thực tế của gia đình thực khách và quy trình nâng chuẩn món ăn của đội ngũ đầu bếp.
 
-#### 3. 🤖 Trợ Lý AI Đồng Hành Dinh Dưỡng & Tư Vấn Khẩu Phần
-- **Tư vấn thực đơn thông minh**: Trợ lý AI sẵn sàng giải đáp về Calo, Đạm thực vật, chỉ số đường huyết và gợi ý món ăn theo mục tiêu thể hình
-- **Cơ chế dự phòng lâm sàng**: Tự động chuyển sang các quy tắc dinh dưỡng y khoa chuẩn hóa khi mất kết nối mạng
-- **Trải nghiệm cuộn êm ái**: Tự động điều chỉnh vị trí màn hình thông minh giúp người dùng dễ dàng xem lại các lời khuyên trước đó
+#### 3. 🤖 Trợ Lý Ảo AI Dinh Dưỡng Thực Vật (AI Dietary Assistant 2.0)
+- **Tư vấn thông minh thời gian thực**: Trợ lý AI nổi (Floating Chat Agent) sẵn sàng giải đáp về Calo, Đạm thực vật, chỉ số đường huyết (GI) và thực đơn tăng cơ/giảm mỡ.
+- **Cơ chế Fallback lâm sàng xác định**: Tự động chuyển sang các luật dinh dưỡng chuẩn hóa khi mất kết nối mạng hoặc cạn token API.
+- **Smart Bottom-Clamping Scroll**: Tự động cuộn thông minh chống hiện tượng giật màn hình khi đọc lại tin nhắn cũ.
 
-#### 4. 🍽️ Thực Đơn Đa Tầng: Trải Nghiệm Ẩm Thực & Phân Tích Vi Chất
-- **Chuyển đổi giao diện linh hoạt**: Lựa chọn giữa góc nhìn nhiếp ảnh ẩm thực nghệ thuật và bảng ma trận định lượng vi chất
-- **Tùy biến định lượng món ăn**: Dễ dàng lựa chọn Khẩu phần tiêu chuẩn, Tăng cường đạm thực vật (+10g đạm từ nấm và đậu hũ nướng) hoặc Khẩu phần nhẹ Low-Carb
-- **Bộ lọc chuyên sâu**: Tìm kiếm nhanh theo khoảng năng lượng, lượng đạm mong muốn, món thuần chay không cay, không gluten, không đậu phộng
+#### 4. 🍽️ Thực Đơn Đa Chế Độ & Tùy Biến Khẩu Phần (Dual-View Menu & Portion Matrix)
+- **Dual-View Switcher**: Chuyển đổi linh hoạt giữa chế độ Nhiếp ảnh ẩm thực sang trọng và Ma trận Mật độ vi chất dinh dưỡng.
+- **Tùy biến khẩu phần linh hoạt**: Khẩu phần tiêu chuẩn, Tăng cường đạm thực vật (+10g đạm từ nấm và đậu nướng), hoặc Khẩu phần nhẹ Low-Carb.
+- **Bộ lọc đa chiều**: Lọc theo khoảng calo, ngưỡng đạm tối thiểu, món cay, không gluten, không đậu phộng.
 
-#### 5. ⭐ Lắng Nghe Cảm Nhận Thực Khách & Gắn Kết Gia Đình
-- **Chia sẻ trải nghiệm chân thực**: Thực khách gửi cảm nhận về độ thanh tao, hương vị thảo mộc và cảm giác thư thái sau bữa ăn
-- **Đánh giá theo từng thành viên**: Gắn liền cảm nhận với người thưởng thức trong gia đình (Bản thân, Cha mẹ, Con nhỏ) để tạo nguồn tham khảo hữu ích cho cộng đồng
-- **Bảo vệ tính minh bạch**: Rào chắn xác thực tài khoản giúp ngăn chặn các đánh giá ảo và giữ trọn sự tin cậy
+#### 5. ⭐ Cộng Đồng Đánh Giá & Cảm Nhận Ẩm Thực Gia Đình (Customer Reviews & Sensory Feedback)
+- **Đánh giá trải nghiệm thực tế**: Người dùng gửi cảm nhận về độ thanh đạm, hương vị thảo mộc và chỉ số no lâu của món ăn.
+- **Gắn liền thành viên thưởng thức**: Cho phép người gửi chọn danh tính thành viên gia đình đã trải nghiệm món để cung cấp góc nhìn chân thực cho cộng đồng.
+- **Xác thực bảo mật**: Rào chắn kiểm tra phiên đăng nhập chặt chẽ giúp ngăn chặn đánh giá ảo và nội dung rác.
 
-#### 6. 🌿 Minh Bạch Dược Tính Thảo Mộc & Nguồn Gốc Nguyên Liệu
-- **Thuyết minh công dụng thảo mộc**: Phân tích giá trị thanh nhiệt, dưỡng nhan, hỗ trợ tim mạch và phục hồi thể lực của từng món ăn
-- **Rõ ràng nguồn gốc nông sản**: Minh bạch xuất xứ nguyên liệu hữu cơ, quy trình sơ chế sạch và kỹ thuật chế biến bảo toàn vi chất
+#### 6. 🌿 Minh Bạch Công Thức & Dược Tính Món Ăn (Transparent Culinary Recipe & Health Benefits)
+- **Phân tích dược tính thảo mộc**: Thuyết minh chi tiết công dụng thanh nhiệt, dưỡng nhan, hỗ trợ tim mạch và phục hồi thể lực của từng món.
+- **Minh bạch nguyên liệu**: Liệt kê nguồn gốc nguyên liệu hữu cơ, quy trình sơ chế và cách thức chế biến giữ trọn vi chất.
 
-#### 7. 🧮 Khảo Sát Thể Trạng & Hoạch Định Dinh Dưỡng Cá Nhân Hóa
-- **Khảo sát thể trạng 4 bước**: Thu thập thông tin độ tuổi, giới tính sinh học, chiều cao, cân nặng, mức độ vận động và mục tiêu sức khỏe
-- **Phân tích chỉ số sinh học**: Đánh giá chỉ số thể trọng BMI chuẩn WHO Châu Á, ước tính chuyển hóa cơ bản BMR và tổng tiêu hao năng lượng TDEE
-- **Gợi ý thực đơn theo ngày**: Thiết lập kế hoạch ăn uống phân bổ năng lượng sáng, trưa, tối theo tỷ lệ vàng $4\text{-}4\text{-}9$ (Đạm - Đường - Béo)
+#### 7. 🧮 Phòng Khám Dinh Dưỡng Cá Nhân Hóa (Nutrition Planner & Biomarkers Wizard)
+- **Khảo sát thể trạng 4 bước**: Khảo sát tuổi, giới tính sinh học, chiều cao, cân nặng, tần suất vận động và mục tiêu sức khỏe.
+- **Đánh giá chỉ số sinh học**: Tính BMI theo thang chuẩn WHO Châu Á, ước tính BMR và tổng tiêu hao năng lượng TDEE.
+- **Lập kế hoạch bữa ăn theo ngày**: Tạo thực đơn gợi ý phân bổ năng lượng sáng, trưa, tối chuẩn tỷ lệ $4\text{-}4\text{-}9$ (Đạm - Đường - Béo).
 
-#### 8. ⚡ Quy Trình Đặt Món Chuẩn Xác & Thanh Toán VietQR Liền Mạch
-- **Tính toán chi phí an toàn**: Đơn giá, ưu đãi thành viên và phí vận chuyển được xác thực độc lập tại máy chủ trung tâm
-- **Kiểm soát đặt món đồng thời**: Cơ chế khóa giao dịch thông minh giúp chống tình trạng đặt vượt quá số lượng món ăn sẵn có
-- **Mã VietQR động**: Tự động sinh mã chuyển khoản chuẩn NAPAS247 kèm mã đơn hàng định danh, kích hoạt xử lý đơn hàng tức thì
+#### 8. ⚡ Pipeline Đặt Hàng & Thanh Toán Bất Biến (Idempotent Orders & VietQR)
+- **Server-Authoritative Pricing**: Giá món ăn, phí giao hàng và voucher được tính toán độc lập tại server, chống can thiệp giá từ client.
+- **Khóa bi quan (Pessimistic Locking)**: Chống Race Condition khi nhiều khách hàng cùng đặt món có số lượng giới hạn.
+- **VietQR Động**: Tự động sinh mã QR chuẩn NAPAS247 kèm mã đơn hàng định danh, kích hoạt webhook xác nhận thanh toán tức thì.
 
-#### 9. 📦 Quản Trị Định Mức Nguyên Liệu (BOM) & Giá Vốn Tồn Kho (WAC)
-- **Định mức công thức món ăn (BOM)**: Quản lý chi tiết từng gram nguyên liệu thô cấu thành món ăn kèm hệ số quy đổi đơn vị chuẩn mực
-- **Giá vốn bình quân gia quyền (WAC)**: Tự động cập nhật giá vốn nguyên liệu sau mỗi đợt nhập hàng từ nông trại
-- **Trừ kho chuẩn xác theo giao dịch**: Tự động khấu trừ kho nguyên liệu ngay khi tiếp nhận đơn hàng, bảo đảm số liệu tồn kho luôn khớp với thực tế
+#### 9. 📦 Quản Trị Kho ACID & Định Mức Giá Vốn (BOM & WAC Inventory Engine)
+- **Định mức nguyên liệu (Bill of Materials - BOM)**: Quản lý công thức món ăn chi tiết tới từng gram nguyên liệu thô kèm hệ số quy đổi đơn vị chuẩn hóa.
+- **Giá vốn bình quân gia quyền (Weighted Average Cost - WAC)**: Cập nhật giá vốn nguyên liệu chính xác sau mỗi đợt nhập kho.
+- **Trừ kho nguyên tử (ACID Stock Deduction)**: Trừ kho trực tiếp trong Transaction cơ sở dữ liệu ngay khi tạo đơn, ngăn chặn triệt để tình trạng âm kho.
 
-#### 10. 📅 Gói Cơm Chay Định Kỳ & Thuật Toán Đổi Vị Hàng Ngày
-- **Đặt lịch giao cơm tự động**: Đăng ký gói ăn dinh dưỡng theo tuần hoặc tháng với các khung giờ giao thuận tiện
-- **Luân chuyển món ăn thông minh**: Tự động gợi ý thực đơn đa dạng mỗi ngày, tránh lặp món và phù hợp với khẩu vị riêng của khách hàng
-- **Cơ chế mở rộng tiêu chí linh hoạt**: Tự động nới lỏng tiêu chí lựa chọn khi các điều kiện lọc dinh dưỡng quá nghiêm ngặt
+#### 10. 📅 Thuê Bao Gói Ăn Chay Định Kỳ & Gợi Ý Đổi Vị (Smart Meal Subscriptions)
+- **Lên lịch giao cơm tự động**: Đăng ký gói ăn theo tuần hoặc tháng với các khung giờ giao linh hoạt.
+- **Thuật toán gợi ý chống trùng lặp**: Tự động luân phiên đổi vị món ăn mỗi ngày dựa trên hồ sơ kiêng kị của khách hàng.
+- **Cơ chế Starvation Fallback**: Tự động mở rộng tiêu chí chọn món khi các điều kiện lọc calo/protein quá khắt khe.
 
-#### 11. 👑 Trung Tâm Điều Hành Vận Hành & Phân Tích Dữ Liệu Chuyên Sâu
-- **Giao diện quản trị trực quan**: 6 biểu đồ phân tích xu hướng kinh doanh, doanh thu theo thời gian, món ăn được yêu thích và mật độ giờ cao điểm
-- **Quản lý thực đơn & định mức**: Cập nhật trạng thái mở bán, biên tập mô tả món và điều chỉnh công thức nguyên liệu nhanh chóng
-- **Thiết lập chương trình ưu đãi**: Quản lý các voucher tri ân khách hàng và khung giờ ưu đãi với hạn mức rõ ràng
+#### 11. 👑 Cổng Quản Trị Vận Hành & Bộ Biểu Đồ Phân Tích (Admin Operations & Recharts BI)
+- **Dashboard trực quan với 6 loại biểu đồ**: Phân tích doanh thu, xu hướng đơn hàng, top món bán chạy, bản đồ phân bổ vùng miền và mật độ giờ cao điểm.
+- **Quản lý thực đơn & công thức BOM**: Thêm, sửa, đóng/mở bán món ăn và cập nhật công thức định lượng trực tiếp.
+- **Quản trị khuyến mãi Flash Sale**: Thiết lập voucher giảm giá theo phần trăm hoặc số tiền cố định với giới hạn lượt dùng chặt chẽ.
 
-#### 12. 🔒 Hệ Thống Xác Thực Bảo Mật & Trải Nghiệm Đăng Nhập Cao Cấp
-- **Giao diện xác thực thanh lịch**: Hỗ trợ Đăng nhập, Đăng ký và Khôi phục mật khẩu trên nền giao diện hiện đại
-- **Bộ lọc chuyển hướng an toàn**: Làm sạch địa chỉ điều hướng sau đăng nhập nhằm bảo vệ người dùng khỏi các liên kết giả mạo
-- **Đăng nhập nhanh với Google**: Tích hợp Google OAuth tiện lợi và đồng bộ trạng thái đăng nhập tức thì trên thanh điều hướng
+#### 12. 🔒 Hệ Thống Bảo Mật & Xác Thực Luxury (NIST 800-63B & Safe Redirect Defense)
+- **Modal xác thực đa năng**: Hỗ trợ Đăng nhập, Đăng ký, Quên mật khẩu và Đặt lại mật khẩu với giao diện Glassmorphism cao cấp.
+- **Safe Redirect Sanitizer (CWE-601)**: Bộ lọc làm sạch URL chuyển hướng chống tấn công Open Redirect và lừa đảo chiếm quyền.
+- **Đăng nhập Google 1-Click**: Tích hợp OAuth liền mạch và tự động đồng bộ phiên đăng nhập vào Navbar mà không cần tải lại trang.
 
-#### 13. 💳 Cổng Thanh Toán Đa Nền Tảng Linh Hoạt
-- **Kiến trúc cổng kết nối mở rộng**: Cho phép vận hành linh hoạt giữa môi trường thử nghiệm và hạ tầng thanh toán thực tế
-- **Đa dạng phương thức**: Hỗ trợ chuyển khoản ngân hàng qua VietQR, thẻ thanh toán quốc tế Stripe và cổng thanh toán tự động Sepay
+#### 13. 💳 Kiến Trúc Thanh Toán Đa Kênh Linh Hoạt (Pluggable Payment Gateway Factory)
+- **Strategy & Factory Pattern**: Cho phép hoán đổi cổng thanh toán linh hoạt giữa môi trường phát triển (Mock/Dev) và môi trường thực tế (Production).
+- **Đa dạng kênh giao dịch**: Hỗ trợ Chuyển khoản ngân hàng VietQR, Thẻ thanh toán quốc tế Stripe và cổng thanh toán tự động Sepay.
 
 ---
 
 ## 📐 2. Sơ Đồ Kiến Trúc Hệ Thống (System Architecture)
 
-Hệ thống được tổ chức theo kiến trúc **Domain-Driven Modular Monorepo** với các phân tầng trách nhiệm tách bạch:
+Hệ thống được thiết kế theo mô hình **Domain-Driven Modular Monorepo** với ranh giới trách nhiệm rõ ràng:
 
 ```mermaid
 flowchart TB
@@ -116,13 +146,13 @@ flowchart TB
     classDef sharedStyle fill:#064E3B,stroke:#10B981,stroke-width:2px,color:#FFFFFF;
 
     subgraph CLIENT ["🌐 TẦNG TRẢI NGHIỆM KHÁCH HÀNG (Next.js 15 App Router - Port 3000)"]
-        UI_Home["Trang Chủ & Thực Đơn Nghệ Thuật"]:::clientStyle
+        UI_Home["Trang Chủ & Thực Đơn Editorial"]:::clientStyle
         UI_Family["Hồ Sơ Dinh Dưỡng Gia Đình"]:::clientStyle
         UI_Planner["Phòng Khám Dinh Dưỡng Cá Nhân"]:::clientStyle
-        UI_AI["Trợ Lý AI Đồng Hành Dinh Dưỡng"]:::clientStyle
-        UI_Cart["Giỏ Hàng & Tỷ Lệ Năng Lượng Bữa Ăn"]:::clientStyle
-        UI_Review["Lắng Nghe Cảm Nhận Thực Khách"]:::clientStyle
-        UI_Admin["Trung Tâm Điều Hành & Biểu Đồ Quản Trị"]:::clientStyle
+        UI_AI["Trợ Lý Ảo AI Dinh Dưỡng 2.0"]:::clientStyle
+        UI_Cart["Giỏ Hàng & Macro Toàn Bữa"]:::clientStyle
+        UI_Review["Cảm Nhận Ẩm Thực Gia Đình"]:::clientStyle
+        UI_Admin["Cổng Quản Trị & Biểu Đồ Recharts"]:::clientStyle
     end
 
     subgraph API ["🚀 TẦNG DỊCH VỤ NGHIỆP VỤ (NestJS 11 Server - Port 5000)"]
@@ -159,44 +189,44 @@ flowchart TB
 ```text
 chayfood/
 ├── apps/
-│   ├── web/                     # Ứng dụng Web Next.js 15 App Router (@chayfood/web)
+│   ├── web/                     # Frontend Next.js 15 App Router (@chayfood/web)
 │   │   ├── app/
-│   │   │   ├── account/         # Hồ sơ cá nhân, dinh dưỡng gia đình & lịch sử đơn hàng
-│   │   │   │   ├── family/      # Quản lý thành viên gia đình & kiểm soát dị ứng
-│   │   │   │   └── orders/      # Lịch sử đơn hàng & đặt lại nhanh (1-Click Reorder)
-│   │   │   ├── admin/           # Trung tâm điều hành, kho bãi, BOM & biểu đồ phân tích
-│   │   │   ├── cart/            # Giỏ hàng thông minh & tổng hợp tỷ lệ năng lượng bữa ăn
-│   │   │   ├── checkout/        # Quy trình thanh toán & sổ địa chỉ giao hàng
+│   │   │   ├── account/         # Hồ sơ cá nhân, hồ sơ gia đình & lịch sử đơn hàng
+│   │   │   │   ├── family/      # Quản lý thành viên gia đình & ma trận dị ứng
+│   │   │   │   └── orders/      # Lịch sử đơn hàng & mua lại nhanh (Reorder)
+│   │   │   ├── admin/           # Cổng quản trị thực đơn, kho bãi, BOM & biểu đồ
+│   │   │   ├── cart/            # Giỏ hàng thông minh & tổng hợp macro toàn bữa
+│   │   │   ├── checkout/        # Quy trình thanh toán an toàn & địa chỉ giao hàng
 │   │   │   ├── menu/            # Khám phá thực đơn 2 chế độ, đánh giá & chi tiết món
-│   │   │   ├── nutrition-planner/ # Khảo sát thể trạng & hoạch định bữa ăn cá nhân hóa
-│   │   │   ├── order/           # Theo dõi tiến trình giao nhận & thanh toán VietQR
-│   │   │   ├── components/      # UI Components, Hộp thoại xác thực, Trợ lý AI
-│   │   │   ├── globals.css      # Hệ thống Design Tokens & CSS Variables
-│   │   │   └── layout.tsx       # RootLayout chuẩn SEO & Server Component SSR
+│   │   │   ├── nutrition-planner/ # Phòng khám dinh dưỡng & hồ sơ sức khỏe
+│   │   │   ├── order/           # Theo dõi trạng thái đơn hàng & mã VietQR
+│   │   │   ├── components/      # UI Components, Auth Modals, AI Chat Agent
+│   │   │   ├── globals.css      # Design Tokens & CSS Variables
+│   │   │   └── layout.tsx       # RootLayout chuẩn SEO & Server Component
 │   │   └── package.json
 │   │
-│   └── api/                     # Máy chủ Backend NestJS 11 Enterprise (@chayfood/api)
+│   └── api/                     # Backend NestJS 11 Enterprise Server (@chayfood/api)
 │       ├── src/
 │       │   ├── auth/            # JWT Strategy, RolesGuard, NIST 800-63B Auth
-│       │   ├── family/          # Dinh dưỡng gia đình lâm sàng & kiểm soát dị ứng
-│       │   ├── menu/            # Quản lý món ăn, phân trang & lọc vi chất
-│       │   ├── inventory/       # Quản trị tồn kho, giá vốn WAC & khóa giao dịch
-│       │   ├── recipes/         # Định mức nguyên liệu BOM, tính toán food cost
-│       │   ├── orders/          # Pipeline xử lý đơn hàng, khóa bi quan, VietQR
-│       │   ├── subscriptions/   # Gói cơm định kỳ & gợi ý thực đơn thông minh
+│       │   ├── family/          # Dinh dưỡng gia đình lâm sàng & kiểm toán dị ứng
+│       │   ├── menu/            # Quản lý món ăn, phân trang, lọc calo & protein
+│       │   ├── inventory/       # Động cơ kho ACID, giá vốn WAC, khóa chống âm kho
+│       │   ├── recipes/         # Định mức nguyên liệu BOM, tính food cost
+│       │   ├── orders/          # Pipeline đặt hàng, khóa bi quan, VietQR
+│       │   ├── subscriptions/   # Gói ăn định kỳ & gợi ý thực đơn thông minh
 │       │   ├── payment/         # Xử lý cổng thanh toán (Strategy / Factory Pattern)
 │       │   └── prisma/          # Prisma Global Module & Lifecycle Hooks
 │       └── package.json
 │
 ├── packages/
-│   ├── db/                      # Prisma Schema, PostgreSQL Migrations & Dữ liệu mẫu
+│   ├── db/                      # Prisma Schema, PostgreSQL Migrations & Seed Data
 │   ├── shared-types/            # Nguồn chân lý duy nhất (SSOT Zod Schemas & Types)
-│   └── tsconfig/                # Cấu hình TypeScript kế thừa toàn hệ thống
+│   └── tsconfig/                # Cấu hình TypeScript chuẩn toàn hệ thống
 │
-├── public/                      # Tài nguyên tĩnh, Logo nhận diện thương hiệu
+├── public/                      # Static Assets, Brand Logo & Showcase Images
 │   └── logo.png                 # Logo biểu trưng ChayFood chính thức
 ├── docker-compose.yml           # Hạ tầng PostgreSQL 16 + pgAdmin Docker
-├── pnpm-workspace.yaml          # Cấu hình không gian làm việc Turborepo
+├── pnpm-workspace.yaml          # Cấu hình Turborepo Workspaces
 └── turbo.json                   # Pipeline biên dịch và Remote Caching
 ```
 
@@ -204,23 +234,23 @@ chayfood/
 
 ## 🧮 4. Các Động Cơ Kỹ Thuật Trọng Điểm (Core Engineering Engines)
 
-### 1. Dinh Dưỡng Mâm Cơm Gia Đình Lâm Sàng (Family Nutrition Engine)
+### 1. Động Cơ Dinh Dưỡng Mâm Cơm Gia Đình (Family Nutrition Engine)
 - **Công thức Mifflin-St Jeor**: Tính toán BMR và TDEE chuẩn xác theo từng thành viên:
   $$\text{BMR (Nam)} = 10W + 6.25H - 5A + 5 \qquad \text{BMR (Nữ)} = 10W + 6.25H - 5A - 161$$
-- **Phân bổ tỷ lệ năng lượng chuẩn $4\text{-}4\text{-}9$**:
+- **Phân bổ tỷ lệ Calo chuẩn $4\text{-}4\text{-}9$**:
   $$\text{Tổng Năng Lượng (kcal)} = (\text{Protein} \times 4) + (\text{Carbs} \times 4) + (\text{Fat} \times 9)$$
-- **Kiểm soát dị ứng bữa ăn gia đình**: Quét thực đơn theo thời gian thực để loại bỏ các món chứa nguyên liệu kích ứng của bất kỳ thành viên nào trong mâm cơm
+- **Kiểm toán dị ứng chéo mâm cơm (Family Cross-Allergy Audit)**: Thuật toán quét toàn bộ thực đơn theo thời gian thực, loại bỏ các món chứa nguyên liệu kích ứng của bất kỳ thành viên nào trong mâm cơm.
 
-### 2. Định Mức Nguyên Liệu BOM & Giá Vốn WAC (BOM & Inventory Engine)
-- **Định mức công thức (Bill of Materials - BOM)**: Mỗi món ăn được xây dựng từ danh mục nguyên liệu thô với hệ số quy đổi đơn vị chuẩn hóa ($g \to kg$, $ml \to l$)
+### 2. Động Cơ Định Mức BOM & Giá Vốn WAC (BOM & Inventory Engine)
+- **Bill of Materials (BOM)**: Mỗi món ăn được cấu thành từ danh mục nguyên liệu thô với hệ số quy đổi đơn vị chuẩn hóa ($g \to kg$, $ml \to l$).
 - **Giá vốn bình quân gia quyền (Weighted Average Cost - WAC)**:
   $$\text{WAC Mới} = \frac{(\text{Tồn Cũ} \times \text{Giá Vốn Cũ}) + (\text{Nhập Mới} \times \text{Giá Nhập Mới})}{\text{Tổng Tồn Mới}}$$
-- **Khấu trừ kho chuẩn xác theo giao dịch**: Tự động trừ kho trực tiếp trong Transaction cơ sở dữ liệu ngay khi tạo đơn nhằm bảo đảm tính toàn vẹn số liệu
+- **Tự động trừ kho nguyên tử (ACID Stock Deduction)**: Trừ kho trực tiếp trong Database Transaction ngay khi đơn hàng được tạo, chặn triệt để tình trạng âm kho hoặc Over-selling.
 
-### 3. Quy Trình Xử Lý Đơn Hàng Chuẩn Xác (Idempotent Orders)
-- **Xác thực giá từ máy chủ**: Đơn giá món ăn, phí giao hàng và voucher được tính toán độc lập tại máy chủ trung tâm
-- **Khóa giao dịch chống đặt quá số lượng**: Ngăn ngừa tranh chấp tài nguyên khi nhiều khách hàng cùng đặt món có số lượng giới hạn
-- **Mã VietQR động**: Tự động khởi tạo mã chuyển khoản ngân hàng kèm mã đơn hàng định danh phục vụ xác nhận thanh toán tự động
+### 3. Pipeline Đặt Hàng & Thanh Toán Bất Biến (Idempotent Orders)
+- **Server-Authoritative Pricing**: Giá món ăn, phí giao hàng và khuyến mãi voucher được tính toán độc lập tại server, miễn nhiễm với tấn công can thiệp dữ liệu từ client.
+- **Khóa bi quan (Pessimistic Locking)**: Chống Race Condition khi nhiều khách hàng cùng đặt món ăn có số lượng giới hạn tại cùng một thời điểm.
+- **VietQR Động**: Tự động sinh mã QR ngân hàng kèm mã đơn hàng định danh, kích hoạt webhook xác nhận thanh toán tức thì.
 
 ---
 
@@ -229,7 +259,7 @@ chayfood/
 ### Yêu Cầu Môi Trường
 - **Node.js**: `>= 18.0.0`
 - **pnpm**: `>= 9.0.0`
-- **Docker & Docker Desktop**: Khởi chạy cơ sở dữ liệu PostgreSQL
+- **Docker & Docker Desktop**: Chạy cơ sở dữ liệu PostgreSQL
 
 ### Các Bước Khởi Chạy:
 
@@ -248,65 +278,65 @@ pnpm db:seed
 pnpm dev
 ```
 
-### 🌐 Danh Mục Cổng Dịch Vụ:
-- 🌐 **Giao Diện Web Khách Hàng**: [http://localhost:3000](http://localhost:3000)
+### 🌐 Các Cổng Dịch Vụ:
+- 🌐 **Frontend Web Client**: [http://localhost:3000](http://localhost:3000)
 - 🧮 **Phòng Khám Dinh Dưỡng Cá Nhân**: [http://localhost:3000/nutrition-planner](http://localhost:3000/nutrition-planner)
-- 🚀 **Cổng Giao Tiếp API NestJS**: [http://localhost:5000/api](http://localhost:5000/api)
-- 📖 **Tài Liệu Swagger API Tương Tác**: [http://localhost:5000/api/docs](http://localhost:5000/api/docs)
-- 📊 **Giao Diện Tra Cứu CSDL Prisma Studio**: `pnpm db:studio` ➔ [http://localhost:5555](http://localhost:5555)
+- 🚀 **Backend NestJS REST API**: [http://localhost:5000/api](http://localhost:5000/api)
+- 📖 **Swagger API Interactive Documentation**: [http://localhost:5000/api/docs](http://localhost:5000/api/docs)
+- 📊 **Prisma Studio (Giao diện xem CSDL)**: `pnpm db:studio` ➔ [http://localhost:5555](http://localhost:5555)
 
 ---
 
 ## 🧪 6. Quy Trình Kiểm Thử Tự Động & CI/CD Pipeline
 
-Dự án áp dụng tiêu chuẩn kiểm thử tự động nghiêm ngặt bảo đảm chất lượng kỹ thuật toàn diện:
+Dự án áp dụng tiêu chuẩn kiểm thử tự động nghiêm ngặt bảo vệ chất lượng mã nguồn:
 
 ```text
   [ Push / Pull Request ]
              │
              ▼
   ┌─────────────────────────────────────────────────────────────┐
-  │  Chặng 1: Kiểm Tra Toàn Vẹn Kiểu Dữ Liệu (Turborepo)       │
-  │  • Hoàn thành kiểm tra trên toàn bộ 5 packages (0 Type Err) │
-  │  • Tuân thủ nghiêm ngặt chuẩn Strict TypeScript            │
+  │  Stage 1: Strict Type-Check & Linting (Turborepo)           │
+  │  • 100% PASS trên toàn bộ 5 packages (0 Type Error)        │
+  │  • Tuân thủ nghiêm ngặt RULE-CODE-001 (Zero any / unknown) │
   └──────────────────────────────┬──────────────────────────────┘
-                                 │ ĐẠT
+                                 │ PASS
                                  ▼
   ┌─────────────────────────────────────────────────────────────┐
-  │  Chặng 2: Kiểm Thử Đơn Vị Tự Động (Unit & Integration)      │
-  │  • 12/12 Bộ Kiểm Thử Đạt, 79/79 Trường Hợp Thử Nghiệm Đạt   │
-  │  • Kiểm thử toàn diện Dinh dưỡng, Auth, WAC, BOM, Đơn hàng  │
+  │  Stage 2: Automated Unit & Integration Tests               │
+  │  • 12/12 Test Suites PASS, 79/79 Unit Tests PASS           │
+  │  • Kiểm thử toàn diện Family, Auth, WAC, BOM, Orders, Subs │
   └──────────────────────────────┬──────────────────────────────┘
-                                 │ ĐẠT
+                                 │ PASS
                                  ▼
   ┌─────────────────────────────────────────────────────────────┐
-  │  Chặng 3: Xác Thực Di Trú & Nạp Dữ Liệu Mẫu Cơ Sở Dữ Liệu   │
-  │  • Kiểm tra vận hành vùng chứa PostgreSQL 16 Alpine        │
-  │  • Bảo đảm tính nhất quán của lược đồ và mối quan hệ bảng  │
+  │  Stage 3: Database Migration & Seeding Validation          │
+  │  • PostgreSQL 16 Container Sanity Verification             │
+  │  • Schema Invariants & Relationship Integrity              │
   └──────────────────────────────┬──────────────────────────────┘
-                                 │ ĐẠT
+                                 │ PASS
                                  ▼
   ┌─────────────────────────────────────────────────────────────┐
-  │  Chặng 4: Biên Dịch Đóng Gói Bản Phát Hành (Build Release)  │
-  │  • Biên dịch gói phát hành Next.js App Router SSR/SSG       │
-  │  • Biên dịch phân phối máy chủ NestJS Server Production     │
+  │  Stage 4: Production Build Validation                      │
+  │  • Next.js App Router SSR/SSG Bundle Compilation           │
+  │  • NestJS Server Production Dist Compilation               │
   └─────────────────────────────────────────────────────────────┘
 ```
 
-### Lệnh Thực Thi Kiểm Thử:
+### Lệnh Chạy Kiểm Thử:
 ```bash
-# 1. Chạy toàn bộ 79 bài kiểm thử đơn vị backend
+# 1. Chạy toàn bộ 79 unit tests backend
 pnpm test
 
-# 2. Kiểm tra toàn vẹn kiểu dữ liệu toàn bộ 5 packages trong monorepo
+# 2. Chạy type-check toàn bộ 5 packages trong monorepo
 pnpm type-check
 
-# 3. Chạy kiểm tra quy trình đóng gói phát hành
+# 3. Chạy kiểm tra build production
 pnpm build
 ```
 
 ---
 
-## 👨‍💻 Thông Tin Dự Án
-- **Dự Án**: ChayFood Monorepo (Nền Tảng Ẩm Thực Thuần Thực Vật & Dinh Dưỡng Gia Đình Chuẩn Khoa Học)
-- **Mục Đích**: Dự án kỹ thuật tiêu chuẩn thể hiện tư duy Thiết Kế Hệ Thống, Tư Duy Sản Phẩm và Kiến Trúc Mã Nguồn Sạch
+## 👨‍💻 Tác Giả & Tuyên Bố Dự Án
+- **Dự Án**: ChayFood Monorepo (Precision Plant-Based Nutrition & Family Culinary Platform)
+- **Mục Đích**: Dự án kỹ thuật tiêu chuẩn thể hiện tư duy System Design, Product Thinking và Clean Code Architecture
