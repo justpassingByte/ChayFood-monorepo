@@ -1,10 +1,4 @@
 import apiClient from "./apiClient";
-import type {
-  UpdateProfileDto,
-  AddressDto,
-  UserPreferenceDto,
-  ChangePasswordDto,
-} from "@chayfood/shared-types";
 
 export const userService = {
   // Profile
@@ -12,7 +6,7 @@ export const userService = {
     const res = await apiClient.get("/user/profile/full");
     return res.data;
   },
-  async updateProfile(data: UpdateProfileDto | FormData) {
+  async updateProfile(data: Record<string, unknown> | FormData) {
     const res = await apiClient.put("/user/profile", data);
     return res.data;
   },
@@ -22,11 +16,11 @@ export const userService = {
     const res = await apiClient.get("/user/addresses");
     return res.data;
   },
-  async addAddress(data: AddressDto) {
+  async addAddress(data: Record<string, unknown>) {
     const res = await apiClient.post("/user/addresses", data);
     return res.data;
   },
-  async updateAddress(addressId: string, data: AddressDto) {
+  async updateAddress(addressId: string, data: Record<string, unknown>) {
     const res = await apiClient.put(`/user/addresses/${addressId}`, data);
     return res.data;
   },
@@ -34,15 +28,20 @@ export const userService = {
     const res = await apiClient.delete(`/user/addresses/${addressId}`);
     return res.data;
   },
-
   // Dietary Preferences & Macros
-  async updatePreference(data: UserPreferenceDto) {
+  async updatePreference(data: {
+    maxCalories?: number;
+    minProtein?: number;
+    dislikedIngredients?: string[];
+    favoriteCategories?: string[];
+    dietaryRestrictions?: string[];
+  }) {
     const res = await apiClient.put("/user/preference", data);
     return res.data;
   },
 
   // Security
-  async changePassword(data: ChangePasswordDto) {
+  async changePassword(data: { currentPassword: string; newPassword: string }) {
     const res = await apiClient.put("/user/password", data);
     return res.data;
   },
