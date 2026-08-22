@@ -17,7 +17,8 @@ import {
   UpdateUserPreferenceDto,
   ChangePasswordDto,
 } from './dto/user.dto';
-import { JwtAuthGuard, CurrentUser, AuthenticatedUser } from '../auth/jwt.strategy';
+import { JwtAuthGuard, RolesGuard, Roles, CurrentUser, AuthenticatedUser } from '../auth/jwt.strategy';
+import { Role } from '@chayfood/db';
 
 @ApiTags('User')
 @Controller('user')
@@ -98,7 +99,13 @@ export class UserController {
     return this.userService.changePassword(user.id, dto);
   }
 
+  /**
+   * 🛡️ RBAC Gate: Chỉ có Quản trị viên (ADMIN) mới có quyền tra cứu toàn bộ danh sách khách hàng.
+   * Ngăn chặn triệt để đòn tấn công Broken Object Level Authorization (CWE-269 / OWASP API1:2023).
+   */
   @Get('admin/all')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
   @ApiOperation({ summary: 'Lấy danh sách tất cả khách hàng (Admin)' })
   getCustomers(
     @Query('page') page?: string,
@@ -112,15 +119,26 @@ export class UserController {
     );
   }
 
+  /**
+   * 🛡️ RBAC Gate: Tra cứu thông tin chi tiết một khách hàng dành riêng cho ADMIN.
+   */
   @Get('admin/:id')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
   @ApiOperation({ summary: 'Lấy thông tin chi tiết một khách hàng (Admin)' })
   getCustomerById(@Param('id') id: string) {
     return this.userService.getCustomerById(id);
   }
 
+  /**
+   * 🛡️ RBAC Gate: Xóa khách hàng dành riêng cho ADMIN.
+   */
   @Delete('admin/:id')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
   @ApiOperation({ summary: 'Xóa khách hàng (Admin)' })
   deleteCustomer(@Param('id') id: string) {
     return this.userService.deleteCustomer(id);
   }
 }
+

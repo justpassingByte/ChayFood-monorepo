@@ -18,6 +18,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { toast } from 'react-hot-toast';
 
 import AdminMetricCard from '@/components/admin/ui/AdminMetricCard';
 import AdminFilterBar from '@/components/admin/ui/AdminFilterBar';
@@ -71,11 +72,15 @@ export default function PromotionsAdmin() {
     if (!selectedPromotion) return;
 
     try {
-      await promotionService.delete(selectedPromotion._id);
+      const targetId = selectedPromotion._id || (selectedPromotion as unknown as { id?: string }).id;
+      if (!targetId) return;
+      await promotionService.delete(targetId);
+      toast.success('Đã xóa chương trình ưu đãi thành công');
       refetch();
       setDeleteDialogOpen(false);
-    } catch (err) {
-      console.error('Error deleting promotion:', err);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Lỗi khi xóa chương trình ưu đãi';
+      toast.error(msg);
     }
   };
 

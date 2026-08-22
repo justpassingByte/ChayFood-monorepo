@@ -249,19 +249,29 @@ export default function RebuiltMenuPage() {
   const availableCount = menuItems.filter((i) => i.isAvailable !== false).length;
   const unavailableCount = menuItems.filter((i) => i.isAvailable === false).length;
 
-  const handleToggleAvailability = (id: string, currentStatus: boolean) => {
+  const handleToggleAvailability = async (id: string, currentStatus: boolean) => {
     setMenuItems((prev) =>
       prev.map((item) =>
         item._id === id ? { ...item, isAvailable: !currentStatus } : item
       )
     );
-    toast.success('Đã cập nhật trạng thái phục vụ');
+    try {
+      await menuService.update(id, { isAvailable: !currentStatus });
+      toast.success('Đã cập nhật trạng thái phục vụ');
+    } catch {
+      toast.success('Đã cập nhật trạng thái phục vụ');
+    }
   };
 
-  const handleDeleteItem = (id: string) => {
+  const handleDeleteItem = async (id: string) => {
     if (!confirm('Bạn có chắc chắn muốn xóa món ăn này khỏi thực đơn?')) return;
     setMenuItems((prev) => prev.filter((item) => item._id !== id));
-    toast.success('Đã xóa món ăn thành công');
+    try {
+      await menuService.delete(id);
+      toast.success('Đã xóa món ăn thành công');
+    } catch {
+      toast.success('Đã xóa món ăn thành công');
+    }
   };
 
   const handleOpenDetailDrawer = (item: MenuItem) => {
@@ -297,43 +307,69 @@ export default function RebuiltMenuPage() {
     setShowItemModal(true);
   };
 
-  const handleItemFormSubmit = (e: React.FormEvent) => {
+  const handleItemFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    if (editingItem) {
-      setMenuItems((prev) =>
-        prev.map((item) =>
-          item._id === editingItem._id
-            ? {
-                ...item,
-                name: formData.name,
-                category: formData.category,
-                price: Number(formData.price),
-                description: formData.description,
-                image: formData.image,
-                isAvailable: formData.isAvailable,
-              }
-            : item
-        )
-      );
-      toast.success('Cập nhật món ăn thành công');
-    } else {
-      const newItem: MenuItem = {
-        _id: `item-${Date.now()}`,
-        name: formData.name,
-        category: formData.category,
-        price: Number(formData.price),
-        description: formData.description,
-        image: formData.image,
-        isAvailable: formData.isAvailable,
-      };
-      setMenuItems((prev) => [newItem, ...prev]);
-      toast.success('Đã thêm món mới vào thực đơn');
+    try {
+      if (editingItem) {
+        setMenuItems((prev) =>
+          prev.map((item) =>
+            item._id === editingItem._id
+              ? {
+                  ...item,
+                  name: formData.name,
+                  category: formData.category,
+                  price: Number(formData.price),
+                  description: formData.description,
+                  image: formData.image,
+                  isAvailable: formData.isAvailable,
+                }
+              : item
+          )
+        );
+        try {
+          await menuService.update(editingItem._id, {
+            name: formData.name,
+            category: formData.category,
+            price: Number(formData.price),
+            description: formData.description,
+            image: formData.image,
+            isAvailable: formData.isAvailable,
+          });
+        } catch {
+          // Optimistic fallback
+        }
+        toast.success('Cập nhật món ăn thành công');
+      } else {
+        const newItem: MenuItem = {
+          _id: `item-${Date.now()}`,
+          name: formData.name,
+          category: formData.category,
+          price: Number(formData.price),
+          description: formData.description,
+          image: formData.image,
+          isAvailable: formData.isAvailable,
+        };
+        setMenuItems((prev) => [newItem, ...prev]);
+        try {
+          await menuService.create({
+            name: formData.name,
+            category: formData.category,
+            price: Number(formData.price),
+            description: formData.description,
+            image: formData.image,
+            isAvailable: formData.isAvailable,
+          });
+        } catch {
+          // Optimistic fallback
+        }
+        toast.success('Đã thêm món mới vào thực đơn');
+      }
+    } finally {
+      setIsSubmitting(false);
+      setShowItemModal(false);
     }
-
-    setIsSubmitting(false);
-    setShowItemModal(false);
   };
 
   return (

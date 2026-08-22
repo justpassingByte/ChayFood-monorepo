@@ -216,19 +216,41 @@ export default function AdminRecipesPage() {
   const lowStockCount = ingredients.filter((ing) => ing.currentStock <= ing.minThreshold).length;
   const totalInventoryValue = ingredients.reduce((sum, ing) => sum + ing.currentStock * ing.costPerUnit, 0);
 
+  /**
+   * 🧮 Xử lý nhập kho nguyên liệu và tự động tái tính toán Giá vốn bình quân gia quyền (WAC).
+   * WAC = ((Tồn cũ * Giá cũ) + (Nhập mới * Giá mới)) / Tổng tồn mới
+   */
   const handleStockImport = (e: React.FormEvent) => {
     e.preventDefault();
     const target = ingredients.find((i) => i.id === stockImportData.ingredientId);
     if (!target) return;
 
+    const importQty = Number(stockImportData.quantity) || 0;
+    const importUnitCost = Number(stockImportData.unitCost) > 0 ? Number(stockImportData.unitCost) : target.costPerUnit;
+
+    if (importQty <= 0) {
+      toast.error('Số lượng nhập kho phải lớn hơn 0');
+      return;
+    }
+
     setIngredients((prev) =>
-      prev.map((i) =>
-        i.id === stockImportData.ingredientId
-          ? { ...i, currentStock: i.currentStock + Number(stockImportData.quantity) }
-          : i
-      )
+      prev.map((i) => {
+        if (i.id !== stockImportData.ingredientId) return i;
+        const oldStock = i.currentStock;
+        const oldCost = i.costPerUnit;
+        const newStock = oldStock + importQty;
+        const newWacCost = newStock > 0
+          ? Math.round(((oldStock * oldCost) + (importQty * importUnitCost)) / newStock)
+          : importUnitCost;
+
+        return {
+          ...i,
+          currentStock: newStock,
+          costPerUnit: newWacCost,
+        };
+      })
     );
-    toast.success(`Đã nhập thêm ${stockImportData.quantity} ${target.unit} ${target.name} vào kho`);
+    toast.success(`Đã nhập thêm ${importQty} ${target.unit} ${target.name} và cập nhật giá vốn WAC`);
     setShowStockModal(false);
   };
 

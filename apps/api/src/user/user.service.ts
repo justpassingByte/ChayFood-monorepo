@@ -5,7 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
-import { Prisma } from '@chayfood/db';
+import { Prisma, Role } from '@chayfood/db';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   UpdateUserProfileDto,
@@ -216,14 +216,22 @@ export class UserService {
     return { status: 'success', message: 'Đổi mật khẩu thành công' };
   }
 
-  async getCustomers(page = 1, limit = 10, search = '') {
-    const skip = (page - 1) * limit;
-    const where: Prisma.UserWhereInput = search
+  /**
+   * 🛡️ Lấy danh sách khách hàng có phân trang an toàn, tìm kiếm không phân biệt hoa thường.
+   * Ràng buộc bounds cho page và limit để chống tấn công cạn kiệt tài nguyên (Resource Exhaustion).
+   */
+  async getCustomers(page: number = 1, limit: number = 10, search: string = '') {
+    const safePage = Math.max(1, page);
+    const safeLimit = Math.min(100, Math.max(1, limit));
+    const skip = (safePage - 1) * safeLimit;
+
+    const trimmedSearch = search.trim();
+    const where: Prisma.UserWhereInput = trimmedSearch
       ? {
           OR: [
-            { name: { contains: search, mode: 'insensitive' } },
-            { email: { contains: search, mode: 'insensitive' } },
-            { phone: { contains: search, mode: 'insensitive' } },
+            { name: { contains: trimmedSearch, mode: 'insensitive' } },
+            { email: { contains: trimmedSearch, mode: 'insensitive' } },
+            { phone: { contains: trimmedSearch, mode: 'insensitive' } },
           ],
         }
       : {};
@@ -233,7 +241,7 @@ export class UserService {
       this.prisma.user.findMany({
         where,
         skip,
-        take: limit,
+        take: safeLimit,
         orderBy: { createdAt: 'desc' },
         include: {
           orders: {
@@ -269,8 +277,8 @@ export class UserService {
       data: {
         customers: formattedCustomers,
         pagination: {
-          currentPage: page,
-          totalPages: Math.ceil(totalCount / limit) || 1,
+          currentPage: safePage,
+          totalPages: Math.ceil(totalCount / safeLimit) || 1,
           totalCount,
         },
       },
@@ -317,6 +325,10 @@ export class UserService {
     };
   }
 
+  /**
+   * 🛡️ Xóa khách hàng với chốt chặn an toàn:
+   * Tuyệt đối không cho phép xóa tài khoản có role ADMIN để chống khóa tài khoản ngoài ý muốn.
+   */
   async deleteCustomer(customerId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: customerId },
@@ -324,6 +336,10 @@ export class UserService {
 
     if (!user) {
       throw new NotFoundException('Không tìm thấy khách hàng để xóa');
+    }
+
+    if (user.role === Role.ADMIN) {
+      throw new BadRequestException('Không thể xóa tài khoản Quản trị viên (ADMIN)');
     }
 
     await this.prisma.user.delete({
