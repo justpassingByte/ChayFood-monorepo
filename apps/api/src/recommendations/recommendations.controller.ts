@@ -2,7 +2,12 @@ import { Body, Controller, Get, Put, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { RecommendationsService } from './recommendations.service';
 import { UpdatePreferenceDto } from './dto/preference.dto';
-import { JwtAuthGuard, CurrentUser, AuthenticatedUser } from '../auth/jwt.strategy';
+import {
+  JwtAuthGuard,
+  OptionalJwtAuthGuard,
+  CurrentUser,
+  AuthenticatedUser,
+} from '../auth/jwt.strategy';
 
 @ApiTags('Recommendations & Preferences')
 @Controller('recommendations')
@@ -10,9 +15,10 @@ export class RecommendationsController {
   constructor(private recommendationsService: RecommendationsService) {}
 
   @Get()
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({ summary: 'Lấy danh sách món ăn gợi ý theo sở thích cá nhân' })
-  getRecommendations() {
-    return this.recommendationsService.getRecommendations();
+  getRecommendations(@CurrentUser() user?: AuthenticatedUser) {
+    return this.recommendationsService.getRecommendations(user?.id);
   }
 
   @Put('preferences')
@@ -23,3 +29,4 @@ export class RecommendationsController {
     return this.recommendationsService.updatePreference(user.id, dto);
   }
 }
+

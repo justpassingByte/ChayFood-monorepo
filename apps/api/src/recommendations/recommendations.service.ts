@@ -30,13 +30,29 @@ export class RecommendationsService {
       if (preference.minProtein) {
         where.protein = { gte: Number(preference.minProtein) };
       }
+      // 🛡️ Disliked Ingredients Exclusion: Loại trừ món chứa nguyên liệu người dùng kiêng kị
+      if (preference.dislikedIngredients && preference.dislikedIngredients.length > 0) {
+        where.NOT = {
+          ingredients: { hasSome: preference.dislikedIngredients },
+        };
+      }
     }
 
-    const items = await this.prisma.menuItem.findMany({
+
+    let items = await this.prisma.menuItem.findMany({
       where,
       take: 8,
       orderBy: { createdAt: 'desc' },
     });
+
+    // 🛡️ Recommendation Starvation Fallback: Nếu không có món nào thỏa mãn, fallback lấy các món khả dụng mặc định
+    if (items.length === 0) {
+      items = await this.prisma.menuItem.findMany({
+        where: { isAvailable: true },
+        take: 8,
+        orderBy: { createdAt: 'desc' },
+      });
+    }
 
     return items.map((i) => ({
       ...i,
@@ -46,6 +62,7 @@ export class RecommendationsService {
       fat: Number(i.fat),
     }));
   }
+
 
   /**
    * 🛡️ Cập nhật sở thích dinh dưỡng người dùng (Upsert)

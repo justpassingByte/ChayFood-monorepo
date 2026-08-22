@@ -81,7 +81,7 @@ export const subscriptionService = {
 
   // Tạm dừng / Kích hoạt lại gói ăn
   toggle: async (id: string): Promise<UserSubscription> => {
-    const response = await api.post(`/subscriptions/${id}/toggle`);
+    const response = await api.patch(`/subscriptions/${id}/toggle`);
     return response.data.data || response.data;
   },
-};
+};
