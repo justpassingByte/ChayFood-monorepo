@@ -24,14 +24,15 @@ export class SubscriptionsController {
     return this.subscriptionsService.findUserSubscriptions(user.id);
   }
 
-  @Post(':id/toggle')
+  @Patch(':id/toggle')
   @ApiOperation({ summary: 'Tạm dừng hoặc kích hoạt lại gói ăn định kỳ' })
   toggle(
     @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.subscriptionsService.toggleSubscription(id, user.id);
+    return this.subscriptionsService.toggleSubscription(id, user.id, user.role === Role.ADMIN);
   }
+
 
   @Get()
   @UseGuards(RolesGuard)

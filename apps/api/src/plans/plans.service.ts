@@ -24,7 +24,7 @@ export class PlansService {
     });
 
     if (!plan) {
-      throw new NotFoundException('Không tìm thấy gói ăn này.');
+      throw new NotFoundException('Không tìm thấy gói ăn này');
     }
 
     return {
@@ -32,6 +32,7 @@ export class PlansService {
       price: Number(plan.price),
     };
   }
+
 
   async create(dto: CreatePlanDto) {
     const plan = await this.prisma.plan.create({
