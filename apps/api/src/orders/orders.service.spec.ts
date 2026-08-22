@@ -9,7 +9,7 @@ describe('OrdersService', () => {
     menuItem: { findMany: jest.Mock; findUnique: jest.Mock; update: jest.Mock };
     order: { create: jest.Mock; findMany: jest.Mock; findUnique: jest.Mock; update: jest.Mock };
     recipe: { findUnique: jest.Mock };
-    ingredient: { update: jest.Mock };
+    ingredient: { findUnique: jest.Mock; update: jest.Mock };
     stockTransaction: { create: jest.Mock };
     $transaction: jest.Mock;
   };
@@ -31,6 +31,7 @@ describe('OrdersService', () => {
         findUnique: jest.fn(),
       },
       ingredient: {
+        findUnique: jest.fn(),
         update: jest.fn(),
       },
       stockTransaction: {
@@ -55,9 +56,10 @@ describe('OrdersService', () => {
 
     it('phải tạo đơn hàng thành công và tính đúng tổng tiền dựa trên giá cơ sở dữ liệu', async () => {
       mockPrisma.menuItem.findMany.mockResolvedValue([
-        { id: 'item-1', name: 'Đậu Hũ Sốt Nấm', price: 45000 },
-        { id: 'item-2', name: 'Canh Chua Chay', price: 35000 },
+        { id: 'item-1', name: 'Đậu Hũ Sốt Nấm', price: 45000, isAvailable: true },
+        { id: 'item-2', name: 'Canh Chua Chay', price: 35000, isAvailable: true },
       ]);
+
 
       mockPrisma.order.create.mockImplementation(({ data }: { data: { totalAmount: number } }) =>
         Promise.resolve({
@@ -81,9 +83,23 @@ describe('OrdersService', () => {
       expect(result.totalAmount).toBe(45000 * 2 + 35000 * 1); // 125,000 VND
     });
 
+    it('phải ném lỗi BadRequestException nếu món ăn đang tạm ngừng phục vụ (isAvailable = false)', async () => {
+      mockPrisma.menuItem.findMany.mockResolvedValue([
+        { id: 'item-1', name: 'Đậu Hũ Sốt Nấm', price: 45000, isAvailable: false },
+      ]);
+
+      await expect(
+        service.create('user-1', {
+          items: [{ menuItemId: 'item-1', quantity: 1 }],
+          deliveryAddress: { street: '123 Đỗ Xuân Hợp', city: 'Thủ Đức', state: 'TP.HCM', postalCode: '70000' },
+          paymentMethod: PaymentMethod.COD,
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
     it('phải ném lỗi nếu menuItemId không tồn tại trong DB', async () => {
       mockPrisma.menuItem.findMany.mockResolvedValue([
-        { id: 'item-1', name: 'Đậu Hũ Sốt Nấm', price: 45000 },
+        { id: 'item-1', name: 'Đậu Hũ Sốt Nấm', price: 45000, isAvailable: true },
       ]);
 
       await expect(
@@ -98,6 +114,44 @@ describe('OrdersService', () => {
       ).rejects.toThrow(BadRequestException);
     });
   });
+
+  describe('findById (IDOR Defense)', () => {
+    it('cho phép chủ sở hữu đơn hàng xem chi tiết đơn của mình', async () => {
+      mockPrisma.order.findUnique.mockResolvedValue({
+        id: 'order-1',
+        userId: 'user-1',
+        totalAmount: 100000,
+        items: [],
+      });
+
+      const order = await service.findById('order-1', 'user-1', false);
+      expect(order.id).toBe('order-1');
+    });
+
+    it('cho phép Admin xem chi tiết đơn hàng của bất kỳ người dùng nào', async () => {
+      mockPrisma.order.findUnique.mockResolvedValue({
+        id: 'order-1',
+        userId: 'user-1',
+        totalAmount: 100000,
+        items: [],
+      });
+
+      const order = await service.findById('order-1', 'admin-id', true);
+      expect(order.id).toBe('order-1');
+    });
+
+    it('ném ForbiddenException nếu người dùng khác cố tình xem đơn hàng không thuộc về mình', async () => {
+      mockPrisma.order.findUnique.mockResolvedValue({
+        id: 'order-1',
+        userId: 'user-1',
+        totalAmount: 100000,
+        items: [],
+      });
+
+      await expect(service.findById('order-1', 'user-stranger', false)).rejects.toThrow();
+    });
+  });
+
 
   describe('updateStatus & BOM Auto Deduction', () => {
     it('phải tự động trừ kho nguyên liệu theo định mức BOM khi đơn chuyển sang CONFIRMED', async () => {
@@ -130,10 +184,18 @@ describe('OrdersService', () => {
         ],
       });
 
+      mockPrisma.ingredient.findUnique.mockResolvedValue({
+        id: 'ing-tofu',
+        name: 'Đậu Hũ Non',
+        currentStock: 1000,
+        costPerUnit: 25,
+      });
+
       mockPrisma.order.update.mockResolvedValue({
         id: 'order-10',
         status: OrderStatus.CONFIRMED,
       });
+
 
       const updated = await service.updateStatus('order-10', {
         status: OrderStatus.CONFIRMED,

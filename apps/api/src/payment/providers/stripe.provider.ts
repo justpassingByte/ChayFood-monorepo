@@ -12,6 +12,26 @@ import {
   PaymentIntentMetadata,
 } from '../interfaces/payment-provider.interface';
 
+interface StripeSessionObject {
+  id?: string;
+  amount_total?: number;
+  client_reference_id?: string;
+}
+
+interface StripeWebhookData {
+  object?: StripeSessionObject;
+}
+
+interface StripeWebhookPayload {
+  type?: string;
+  data?: StripeWebhookData;
+}
+
+/**
+ * 🌟 Cổng thanh toán thẻ quốc tế Stripe (Strategy Pattern Implementation):
+ * - Hỗ trợ chuẩn bị session thanh toán Checkout an toàn.
+ * - Xác thực Webhook `checkout.session.completed` và bóc tách `client_reference_id` để khớp nối đơn hàng.
+ */
 @Injectable()
 export class StripePaymentProvider implements IPaymentProvider {
   readonly providerType: PaymentProviderType = PaymentProviderType.STRIPE;
@@ -30,7 +50,7 @@ export class StripePaymentProvider implements IPaymentProvider {
     const transactionId = `stripe_session_${orderId}_${Date.now()}`;
 
     if (!stripeSecretKey) {
-      this.logger.warn('STRIPE_SECRET_KEY is not set. Providing simulated Stripe redirect URL.');
+      this.logger.warn('STRIPE_SECRET_KEY is not set. Providing simulated Stripe redirect URL');
       return {
         transactionId,
         status: PaymentTransactionStatus.PENDING,
@@ -39,7 +59,6 @@ export class StripePaymentProvider implements IPaymentProvider {
     }
 
     try {
-      // Gọi REST API của Stripe hoặc SDK
       const params = new URLSearchParams();
       params.append('payment_method_types[]', 'card');
       params.append('line_items[0][price_data][currency]', 'vnd');
@@ -76,8 +95,8 @@ export class StripePaymentProvider implements IPaymentProvider {
         status: PaymentTransactionStatus.PENDING,
         redirectUrl: session.url,
       };
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Unknown Stripe error';
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Lỗi không xác định từ Stripe';
       this.logger.error(`Stripe error: ${msg}`);
       return {
         transactionId,
@@ -90,10 +109,10 @@ export class StripePaymentProvider implements IPaymentProvider {
   async verifyWebhook(
     payload: Record<string, string | number | boolean | object | null>,
   ): Promise<WebhookVerificationResult> {
-    const eventType = String(payload.type || '');
+    const typedPayload = payload as unknown as StripeWebhookPayload;
+    const eventType = String(typedPayload.type || '');
     if (eventType === 'checkout.session.completed' || eventType === 'payment_intent.succeeded') {
-      const dataObj = payload.data as Record<string, unknown> | undefined;
-      const sessionObj = (dataObj?.object || {}) as Record<string, unknown>;
+      const sessionObj = typedPayload.data?.object || {};
       return {
         isValid: true,
         transactionId: String(sessionObj.id || ''),
@@ -113,3 +132,4 @@ export class StripePaymentProvider implements IPaymentProvider {
     };
   }
 }
+

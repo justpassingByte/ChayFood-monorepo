@@ -112,6 +112,28 @@ describe('PaymentService (Orchestration & Idempotency)', () => {
       expect(mockPrisma.order.update).not.toHaveBeenCalled();
     });
 
+    it('phải từ chối xác nhận đơn nếu số tiền chuyển khoản không đủ (Underpayment Exploit Defense)', async () => {
+      mockProvider.verifyWebhook.mockResolvedValue({
+        isValid: true,
+        transactionId: 'sepay_tx_underpaid',
+        amount: 2000, // Khách chỉ chuyển 2.000đ
+        content: 'CF 21082026 5',
+      });
+
+      mockPrisma.paymentTransaction.findUnique.mockResolvedValue(null);
+      mockPrisma.order.findFirst.mockResolvedValue({
+        id: 'order-1',
+        orderNumber: 'CF-123456',
+        totalAmount: 150000, // Đơn hàng 150.000đ
+        status: OrderStatus.PENDING,
+      });
+
+      const result = await service.handleWebhook('sepay', { id: 1000 });
+      expect(result.received).toBe(true);
+      expect(result.message).toContain('Số tiền thanh toán không đủ');
+      expect(mockPrisma.order.update).not.toHaveBeenCalled();
+    });
+
     it('phải ném BadRequestException nếu chữ ký webhook không hợp lệ', async () => {
       mockProvider.verifyWebhook.mockResolvedValue({
         isValid: false,
@@ -121,3 +143,4 @@ describe('PaymentService (Orchestration & Idempotency)', () => {
     });
   });
 });
+

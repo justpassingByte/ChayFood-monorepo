@@ -79,10 +79,15 @@ export class OrdersController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Lấy chi tiết đơn hàng theo ID' })
-  findById(@Param('id') id: string) {
-    return this.ordersService.findById(id);
+  @ApiOperation({ summary: 'Lấy chi tiết đơn hàng theo ID (Chủ đơn hàng hoặc Admin)' })
+  findById(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    const isAdmin = user.role === Role.ADMIN;
+    return this.ordersService.findById(id, user.id, isAdmin);
   }
+
 
   @Patch(':id/status')
   @UseGuards(RolesGuard)

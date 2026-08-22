@@ -78,10 +78,11 @@ export function generateTransferContent(
 export function parseTransferContent(
   content: string,
 ): { date: string; sequenceNumber: number } | null {
-  const match = content.match(/CF\s*(\d{8})\s+(\d+)/i);
+  const match = content.match(/CF\s*(\d{8})\s+(\d+)\b/i);
   if (!match) return null;
   return {
     date: match[1],
     sequenceNumber: parseInt(match[2], 10),
   };
 }
+

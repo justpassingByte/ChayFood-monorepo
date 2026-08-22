@@ -45,9 +45,10 @@ export class PaymentProviderFactory {
       }
 
       default:
-        this.logger.warn(`Unknown payment method: ${paymentMethod}. Falling back to Mock.`);
+        this.logger.warn(`Unknown payment method: ${paymentMethod}. Falling back to Mock`);
         return this.mockProvider;
     }
+
   }
 
   /**

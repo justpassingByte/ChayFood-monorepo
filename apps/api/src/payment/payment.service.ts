@@ -26,7 +26,10 @@ export class PaymentService {
   ) {}
 
   /**
-   * Tạo Payment Intent cho đơn hàng
+   * 🌟 Tạo Payment Intent (Pluggable Provider Architecture & VietQR Standard):
+   * 1. Định tuyến Provider động qua Factory Pattern dựa trên `order.paymentMethod`.
+   * 2. Sinh mã nội dung chuyển khoản chuẩn hóa `CF <DDMMYYYY> <SEQ>` (dễ nhận diện trên sao kê ngân hàng).
+   * 3. Lưu bản ghi kiểm toán `PaymentTransaction` trạng thái PENDING.
    */
   async createPaymentIntent(orderId: string): Promise<PaymentIntentResult> {
     const order = await this.prisma.order.findUnique({
@@ -95,8 +98,8 @@ export class PaymentService {
             'Mock auto-approved payment',
           );
           this.logger.log(`[MOCK] Auto-confirmed payment for order #${order.orderNumber}`);
-        } catch (err: unknown) {
-          const msg = err instanceof Error ? err.message : 'Unknown error';
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'Lỗi không xác định';
           this.logger.error(`[MOCK] Auto-confirmation failed: ${msg}`);
         }
       }, 2000);
@@ -105,8 +108,13 @@ export class PaymentService {
     return intentResult;
   }
 
+
   /**
-   * Xử lý Webhook từ cổng thanh toán (RULE-INT-002: Signature + Idempotency)
+   * 🛡️ Xử lý Webhook từ cổng thanh toán (RULE-INT-002: Signature Verification & Idempotency Defense):
+   * 1. Xác thực tính toàn vẹn chữ ký HMAC / Secret Token của Webhook.
+   * 2. Idempotency Check: Tra cứu `providerTxId` để chặn xử lý trùng lặp khi webhook gửi lại nhiều lần (At-least-once delivery).
+   * 3. Phân tích nội dung chuyển khoản để khớp nối đơn hàng theo `sequenceNumber`.
+   * 4. Bọc cập nhật trạng thái `PAID` và chuyển đơn `PENDING -> CONFIRMED` trong 1 giao dịch ACID duy nhất.
    */
   async handleWebhook(
     providerName: string,
@@ -133,6 +141,7 @@ export class PaymentService {
         return { received: true, message: 'Giao dịch đã được xử lý trước đó (Idempotent)' };
       }
     }
+
 
     // 1. Thử match đơn hàng qua nội dung CK (CF DDMMYYYY N)
     let order = null;
@@ -162,10 +171,20 @@ export class PaymentService {
       return { received: true, message: 'Đã nhận webhook nhưng không tìm thấy đơn hàng tương ứng' };
     }
 
+    // 🛡️ Underpayment Defense: Chặn thanh toán thiếu tiền gian lận
+    const receivedAmount = Number(verification.amount || 0);
+    const requiredAmount = Number(order.totalAmount);
+    if (receivedAmount < requiredAmount) {
+      this.logger.warn(
+        `Underpayment detected for order #${order.orderNumber}: expected ${requiredAmount}, got ${receivedAmount}`,
+      );
+      return { received: true, message: 'Số tiền thanh toán không đủ so với giá trị đơn hàng' };
+    }
+
     await this.confirmPaymentSuccess(
       order.id,
       txId || `tx_${Date.now()}`,
-      verification.amount || Number(order.totalAmount),
+      receivedAmount,
       content,
     );
 
@@ -219,7 +238,9 @@ export class PaymentService {
   }
 
   /**
-   * Cập nhật xác nhận thanh toán thành công trong Transaction (Nguyên tử & Chuyển trạng thái)
+   * 🛡️ Cập nhật xác nhận thanh toán thành công trong Transaction:
+   * - Áp dụng Consistent Lock Ordering: Luôn cập nhật bảng Order trước, sau đó mới cập nhật PaymentTransaction để chống Deadlock.
+   * - Phục hồi đơn hàng (Revive) nếu tiền về sau khi đã bị hết hạn/hủy tạm thời.
    */
   private async confirmPaymentSuccess(
     orderId: string,
@@ -234,7 +255,21 @@ export class PaymentService {
 
       if (!order) return;
 
-      // Cập nhật PaymentTransaction
+      // 1. 🛡️ Cập nhật bảng Order trước (Consistent Lock Ordering Invariant chống Deadlock)
+      const nextStatus =
+        order.status === OrderStatus.PENDING || order.status === OrderStatus.CANCELLED
+          ? OrderStatus.CONFIRMED
+          : order.status;
+
+      await tx.order.update({
+        where: { id: orderId },
+        data: {
+          paymentStatus: PaymentStatus.PAID,
+          status: nextStatus,
+        },
+      });
+
+      // 2. Cập nhật bảng PaymentTransaction sau
       const existingTx = await tx.paymentTransaction.findFirst({
         where: { orderId },
         orderBy: { createdAt: 'desc' },
@@ -255,20 +290,8 @@ export class PaymentService {
           },
         });
       }
-
-      // Cập nhật Order: paymentStatus -> PAID, auto-transition PENDING -> CONFIRMED
-      const nextStatus =
-        order.status === OrderStatus.PENDING
-          ? OrderStatus.CONFIRMED
-          : order.status;
-
-      await tx.order.update({
-        where: { id: orderId },
-        data: {
-          paymentStatus: PaymentStatus.PAID,
-          status: nextStatus,
-        },
-      });
     });
   }
+
+
 }
