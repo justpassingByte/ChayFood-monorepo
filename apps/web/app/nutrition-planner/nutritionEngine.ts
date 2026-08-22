@@ -13,14 +13,18 @@ export interface NutritionProfile {
 }
 
 export function calculateBMI(weightKg: number, heightCm: number): { bmi: number; category: string } {
-  const heightM = heightCm / 100;
-  const bmi = Math.round((weightKg / (heightM * heightM)) * 10) / 10;
+  // 🛡️ Arithmetic Safety Bounds: Chặn trường hợp heightCm = 0 hoặc NaN gây lỗi Division by Zero
+  const safeHeightCm = Math.max(50, Math.min(250, heightCm || 160));
+  const safeWeightKg = Math.max(20, Math.min(300, weightKg || 60));
+  const heightM = safeHeightCm / 100;
+  const bmi = Math.round((safeWeightKg / (heightM * heightM)) * 10) / 10;
   let category = 'Bình thường';
   if (bmi < 18.5) category = 'Thiếu cân';
   else if (bmi >= 23 && bmi < 25) category = 'Tiền béo phì (WHO Châu Á)';
   else if (bmi >= 25) category = 'Béo phì';
   return { bmi, category };
 }
+
 
 export function calculateTargetCalories(profile: NutritionProfile): {
   bmr: number;

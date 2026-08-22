@@ -174,10 +174,16 @@ export default function MenuItemDetailPage() {
       toast.error("Vui lòng nhập nội dung đánh giá")
       return
     }
+
+    const token = typeof window !== 'undefined' ? localStorage.getItem("authToken") : null
+    if (!token) {
+      toast.error("Vui lòng đăng nhập tài khoản để gửi đánh giá món ăn")
+      return
+    }
+
     setIsSubmittingReview(true)
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem("authToken") : null
-      if (token && item) {
+      if (item) {
         await createReview(item._id || item.id || id, userRating, userComment, token)
       }
       const newRev: Review = {
@@ -197,6 +203,7 @@ export default function MenuItemDetailPage() {
       setIsSubmittingReview(false)
     }
   }
+
 
   if (loading) {
     return (
