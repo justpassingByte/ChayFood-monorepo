@@ -1,0 +1,42 @@
+# ==============================================================================
+# Production Dockerfile cho Next.js 15 Frontend (@chayfood/web)
+# Multi-stage Build tối ưu dung lượng Image & Cache
+# ==============================================================================
+
+# --- STAGE 1: Base ---
+FROM node:20-alpine AS base
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable && corepack prepare pnpm@10.12.1 --activate
+WORKDIR /app
+
+# --- STAGE 2: Builder ---
+FROM base AS builder
+WORKDIR /app
+
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json ./
+COPY packages ./packages
+COPY apps/web ./apps/web
+
+RUN pnpm install --frozen-lockfile
+RUN pnpm --filter @chayfood/web build
+
+# --- STAGE 3: Production Runner ---
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ENV PORT=3000
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/apps/web/public ./apps/web/public
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next ./apps/web/.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/apps/web/package.json ./apps/web/package.json
+
+USER nextjs
+
+EXPOSE 3000
+
+CMD ["pnpm", "--filter", "@chayfood/web", "start"]

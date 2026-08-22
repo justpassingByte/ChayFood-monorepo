@@ -1,0 +1,38 @@
+{
+  "name": "chayfood-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Monorepo cho nền tảng thương mại điện tử ẩm thực chay ChayFood",
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "dev:web": "turbo run dev --filter=@chayfood/web",
+    "dev:api": "turbo run dev --filter=@chayfood/api",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "type-check": "turbo run type-check",
+    "test": "turbo run test",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:generate": "pnpm --filter @chayfood/db generate",
+    "db:migrate": "pnpm --filter @chayfood/db migrate:dev",
+    "db:migrate:deploy": "pnpm --filter @chayfood/db migrate:deploy",
+    "db:push": "pnpm --filter @chayfood/db push",
+    "db:studio": "pnpm --filter @chayfood/db studio",
+    "db:seed": "pnpm --filter @chayfood/db seed",
+    "infra:prod:up": "docker compose -f infra/docker/docker-compose.prod.yml up -d --build",
+    "infra:prod:down": "docker compose -f infra/docker/docker-compose.prod.yml down"
+  },
+  "devDependencies": {
+    "dotenv-cli": "^11.0.0",
+    "prettier": "^3.5.2",
+    "turbo": "^2.4.4",
+    "typescript": "^5.7.3"
+  },
+  "packageManager": "pnpm@10.12.1",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=9.0.0"
+  }
+}
