@@ -1,16 +1,19 @@
 import api from './apiClient';
+import type { PaymentMethod, PaymentStatus, DeliveryAddressInput } from '@chayfood/shared-types';
 
 export interface Plan {
   id: string;
   name: string;
+  code?: string;
   description: string;
   price: number;
   duration: number; // số ngày
   mealsPerDay: number;
+  snacksPerDay?: number;
   isActive: boolean;
   features?: string[];
   tag?: string;
-  recommended?: boolean;
+  isRecommended?: boolean;
 }
 
 export interface UserSubscription {
@@ -19,38 +22,28 @@ export interface UserSubscription {
   planId: string;
   startDate: string;
   endDate: string;
-  deliveryAddress: {
-    street: string;
-    city: string;
-    phone?: string;
-    additionalInfo?: string;
-  };
-  paymentMethod: string;
-  paymentStatus: string;
+  deliveryAddress: DeliveryAddressInput;
+  paymentMethod: PaymentMethod;
+  paymentStatus: PaymentStatus;
   totalAmount: number;
   isActive: boolean;
+  pausedAt?: string | null;
   specialInstructions?: string | null;
+  selectedMenuItems?: string[] | Record<string, string[]> | null;
   plan: Plan;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface CreateSubscriptionPayload {
   planId: string;
   startDate: string;
-  deliveryAddress: {
-    street: string;
-    city: string;
-    phone?: string;
-    additionalInfo?: string;
-  };
-  paymentMethod: string;
+  deliveryAddress: DeliveryAddressInput;
+  paymentMethod: PaymentMethod;
   specialInstructions?: string;
-  selectedMenuItems?: Array<{
-    day: number;
-    mealTime: string;
-    menuItemId: string;
-  }>;
+  selectedMenuItems?: string[] | Record<string, string[]>;
 }
+
 
 export const planService = {
   // Lấy tất cả gói ăn
