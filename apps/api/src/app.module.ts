@@ -9,6 +9,9 @@ import { RecipesModule } from './recipes/recipes.module';
 import { FamilyModule } from './family/family.module';
 import { OrdersModule } from './orders/orders.module';
 import { PaymentModule } from './payment/payment.module';
+import { PlansModule } from './plans/plans.module';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { RecommendationsModule } from './recommendations/recommendations.module';
 import { HttpLoggerMiddleware } from './common/logger/http-logger.middleware';
 
 @Module({
@@ -26,6 +29,9 @@ import { HttpLoggerMiddleware } from './common/logger/http-logger.middleware';
     FamilyModule,
     OrdersModule,
     PaymentModule,
+    PlansModule,
+    SubscriptionsModule,
+    RecommendationsModule,
   ],
 })
 export class AppModule implements NestModule {
